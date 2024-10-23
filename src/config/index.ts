@@ -21,6 +21,9 @@ export const navLinks: NavItem[] = [
       {
         label: "Form",
         link: "/dashboard/form",
+      },{
+        label: "Surat Saya",
+        link: "/dashboard/surat",
       },
     ],
   },

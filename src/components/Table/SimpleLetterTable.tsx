@@ -3,6 +3,9 @@
 import { Paper, Space, Title } from "@mantine/core";
 import { type MRT_ColumnDef, MantineReactTable } from "mantine-react-table";
 import { useMemo } from "react";
+import { useLetters } from "@/services/letters";
+import { Letters } from "@/services/letters/types";
+import { convertUTC } from "@/utils/utils";
 
 type Person = {
   name: {
@@ -63,29 +66,35 @@ const data: Person[] = [
   },
 ];
 
-export const SimpleTable = () => {
+export const SimpleTableLetter = () => {
+  const { data } = useLetters();
   //should be memoized or stable
-  const columns = useMemo<MRT_ColumnDef<Person>[]>(
+  const columns = useMemo<MRT_ColumnDef<Letters>[]>(
     () => [
       {
-        accessorKey: "name.firstName", //access nested data with dot notation
-        header: "First Name",
+        accessorKey: "number",
+        header: "Nomor Surat",
       },
       {
-        accessorKey: "name.lastName",
-        header: "Last Name",
+        accessorKey: "id",
+        header: "ID",
       },
       {
-        accessorKey: "address", //normal accessorKey
-        header: "Address",
+        accessorKey: "date",
+        header: "Tanggal",
+        accessorFn: (row) => convertUTC(row.date),
       },
       {
-        accessorKey: "city",
-        header: "City",
+        accessorKey: "subject",
+        header: "Perihal",
       },
       {
-        accessorKey: "state",
-        header: "State",
+        accessorKey: "to",
+        header: "Kepada",
+      },
+      {
+        accessorKey: "filename",
+        header: "File",
       },
     ],
     [],
@@ -93,13 +102,14 @@ export const SimpleTable = () => {
 
   return (
     <Paper withBorder radius="md" p="md">
-      <Title order={5}>Simple</Title>
-      <Space h="md" />
+      {/* <Title order={5}></Title> */}
+      {/* <Space h="md" /> */}
       <MantineReactTable
         columns={columns}
-        data={data}
+        data={data ?? []}
         mantinePaperProps={{ shadow: "0", withBorder: false }}
       />
+      
     </Paper>
   );
 };
