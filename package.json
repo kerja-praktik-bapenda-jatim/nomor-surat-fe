@@ -4,7 +4,9 @@
   "author": "Joshua Lee <jotyy318@gmail.com>",
   "description": "A Modern Admin Dashboard made with Mantine/React/NextJS!",
   "lint-staged": {
-    ".": ["bun run lint"]
+    ".": [
+      "bun run lint"
+    ]
   },
   "husky": {
     "hooks": {
