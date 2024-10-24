@@ -1,6 +1,3 @@
-"use client";
-
-import { Button, Paper} from "@mantine/core";
 import { type MRT_ColumnDef, MantineReactTable } from "mantine-react-table";
 import { useMemo } from "react";
 import { useLetters } from "@/services/letters";
@@ -45,19 +42,10 @@ export const SimpleTableLetter = () => {
   );
 
   return (
-    <Paper withBorder radius="md" p="md">
-      <Button 
-        fullWidth 
-        onClick={() => router.push('http://localhost:3000/dashboard/surat/tambah')} // Add onClick event to navigate
-      >
-        Buat Surat
-      </Button>
-      <MantineReactTable
-        columns={columns}
-        data={data ?? []}
-        mantinePaperProps={{ shadow: "0", withBorder: false }}
-      />
-      
-    </Paper>
+    <MantineReactTable
+      columns={columns}
+      data={data ?? []}
+      mantinePaperProps={{ shadow: "0", withBorder: false }}
+    />
   );
 };

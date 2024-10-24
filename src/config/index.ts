@@ -30,6 +30,10 @@ export const navLinks: NavItem[] = [
         label: "Tambah Surat",
         link: "/dashboard/surat/tambah",
       },
+      {
+        label: "Spare Surat",
+        link: "/dashboard/surat/spare",
+      },
     ],
   },
   {

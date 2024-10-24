@@ -3,7 +3,7 @@ import ky from "ky";
 import type { Letters } from "./types";
 
 export const getLetters = async () => {
-  const token = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5NDZjYTg2Yi05YmU4LTQ2OTgtODk0MC0xZmMyYjUxODY1N2IiLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzI5NjUxMDkwLCJleHAiOjE3MzAyNTU4OTB9.LYnksWHpoNyozf-7Hnfk3wu-Mt7nyacQKKdrjw7KsZYi3qaRKheL8utpbfvbx27c';
+  const token = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlOTVlN2ExYi1jYjNkLTRiMjQtYmU2OC1lOWJkMDU1N2YyNTQiLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3Mjk3ODM2MzksImV4cCI6MTczMDM4ODQzOX0.4CFCvhQJypzgxfDoKOBdolpCB9Hj-cjLZQbnjzR9Yr16s-Q4nbUIjk1AXD1c72i9';
   
   const res = await ky.get("http://localhost:5000/api/letter",{
     headers: {
