@@ -1,12 +1,14 @@
 "use client"
 import { useState } from 'react';
-import { Box, Button, Paper, TextInput, Text } from '@mantine/core';
+import { Button, Paper, TextInput, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import ky from 'ky'; // Menggunakan ky untuk fetch API
 import { useRouter } from "next/navigation";
+import { getAuthToken } from '@/utils/utils';
+import { IconArrowLeft } from '@tabler/icons-react';
 
 export default function SparePage() {
-    const token = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlOTVlN2ExYi1jYjNkLTRiMjQtYmU2OC1lOWJkMDU1N2YyNTQiLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3Mjk3ODM2MzksImV4cCI6MTczMDM4ODQzOX0.4CFCvhQJypzgxfDoKOBdolpCB9Hj-cjLZQbnjzR9Yr16s-Q4nbUIjk1AXD1c72i9';
+    const token = getAuthToken('admin');
     const router = useRouter();
     const form = useForm({
         initialValues: { 
@@ -37,7 +39,7 @@ export default function SparePage() {
 
         const data = await response.json();
         setSubmittedValues(data); // Menyimpan hasil response
-        router.push('http://localhost:3000/dashboard/surat');
+        router.push('/dashboard/surat');
         } catch (error) {
             console.error('Failed to submit:', error);
         } finally {
@@ -45,19 +47,26 @@ export default function SparePage() {
         }
     };
 
+    const handleBack = () => {
+        router.push('/dashboard/surat');
+    };
+
     return (
         <Paper withBorder shadow="md" p="md">
+            <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
+                Kembali
+            </Button>
             <Text component="h2" fw="bold" fz="lg">
                 Tambah Spare Surat
             </Text>
-            <form onSubmit={form.onSubmit(handleSubmit)}> {/* Hanya satu form */}
+            <form onSubmit={form.onSubmit(handleSubmit)}>
                 <TextInput
                     {...form.getInputProps('spareCounts')}
                     label="Jumlah"
                     placeholder="1-100"
                     disabled={loading} // Disabled saat loading
                 />
-                <Button type="submit" mt="md" loading={loading}> {/* Loading button */}
+                <Button type="submit" mt="md" loading={loading}>
                     Submit
                 </Button>
             </form>

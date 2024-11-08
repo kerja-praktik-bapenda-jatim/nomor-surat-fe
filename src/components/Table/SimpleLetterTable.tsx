@@ -4,6 +4,8 @@ import { useLetters } from "@/services/letters";
 import { Letters } from "@/services/letters/types";
 import { convertUTC } from "@/utils/utils";
 import { useRouter } from "next/navigation";
+import { ActionIcon, Group } from "@mantine/core";
+import { IconEdit, IconEye, IconTrash, IconViewfinder } from "@tabler/icons-react";
 
 
 export const SimpleTableLetter = () => {
@@ -36,6 +38,17 @@ export const SimpleTableLetter = () => {
       {
         accessorKey: "filename",
         header: "File",
+      },
+      {
+        accessorKey: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <ActionIcon
+            onClick={() => router.push(`/dashboard/surat/view/${row.original.id}`)}
+          >
+            <IconEye size={14} />
+          </ActionIcon>
+        ),
       },
     ],
     [],
