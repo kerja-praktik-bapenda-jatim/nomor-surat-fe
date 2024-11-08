@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import ky from "ky";
 import type { Letters } from "./types";
-import { getAuthToken } from "@/utils/utils";
+import Cookies from "js-cookie";
 
 export const getLetters = async () => {
-  const token = getAuthToken('admin');
-  
+  const token = Cookies.get("authToken")
+
   const res = await ky.get("http://localhost:5000/api/letter",{
     headers: {
       Authorization: `Bearer ${token}`,
