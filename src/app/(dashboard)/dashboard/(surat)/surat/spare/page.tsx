@@ -6,12 +6,14 @@ import ky from 'ky'; // Menggunakan ky untuk fetch API
 import { useRouter } from "next/navigation";
 import { getAuthToken } from '@/utils/utils';
 import { IconArrowLeft } from '@tabler/icons-react';
+import {PageContainer} from "@/components/PageContainer/PageContainer";
+import {SimpleTableSpareLetter} from "@/components/Table/SimpleSpareLetterTable";
 
 export default function SparePage() {
     const token = getAuthToken('admin');
     const router = useRouter();
     const form = useForm({
-        initialValues: { 
+        initialValues: {
             spareCounts: '',
         },
         validate: {
@@ -52,24 +54,27 @@ export default function SparePage() {
     };
 
     return (
-        <Paper withBorder shadow="md" p="md">
-            <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
-                Kembali
-            </Button>
-            <Text component="h2" fw="bold" fz="lg">
-                Tambah Spare Surat
-            </Text>
-            <form onSubmit={form.onSubmit(handleSubmit)}>
-                <TextInput
-                    {...form.getInputProps('spareCounts')}
-                    label="Jumlah"
-                    placeholder="1-100"
-                    disabled={loading} // Disabled saat loading
-                />
-                <Button type="submit" mt="md" loading={loading}>
-                    Submit
-                </Button>
-            </form>
-        </Paper>
+			<PageContainer title="Spare Surat">
+				<Paper withBorder shadow="md" p="md">
+					<Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
+						Kembali
+					</Button>
+					<Text component="h2" fw="bold" fz="lg">
+						Tambah Spare Surat
+					</Text>
+					<form onSubmit={form.onSubmit(handleSubmit)}>
+						<TextInput
+							{...form.getInputProps('spareCounts')}
+							label="Jumlah"
+							placeholder="1-100"
+							disabled={loading} // Disabled saat loading
+						/>
+						<Button type="submit" mt="md" loading={loading}>
+							Submit
+						</Button>
+					</form>
+				</Paper>
+				<SimpleTableSpareLetter/>
+			</PageContainer>
     );
 }
