@@ -1,13 +1,13 @@
 "use client";
 import { useState } from 'react';
-import { Button, FileInput, TextInput, Text, Space, Modal, Box, Paper } from '@mantine/core';
+import { Button, FileInput, TextInput, Text, Space, Box, Paper, CopyButton, Tooltip, ActionIcon } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
-import ky from 'ky';
 import { useRouter } from "next/navigation";
-import { useDisclosure } from '@mantine/hooks';
-import { convertUTC, getAuthToken } from '@/utils/utils';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { convertUTC } from '@/utils/utils';
+import { IconArrowLeft, IconCheck, IconCopy } from '@tabler/icons-react';
+import { postLetters } from '@/services/letters';
+import { modals } from '@mantine/modals';
 
 export function CreateLetterForm() {
     const form = useForm({
@@ -27,18 +27,9 @@ export function CreateLetterForm() {
     });
 
     const [loading, setLoading] = useState(false);
-    const [opened, { open, close }] = useDisclosure(false);
-    const [apiResponse, setApiResponse] = useState<{date: string, subject: string, to: string, number: string} | null>(null);
     const router = useRouter();
-    interface LetterResponse {
-        date: string;
-        to: string;
-        subject: string;
-        number: string;
-    }
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
-        const token = getAuthToken(); // Ganti dengan token JWT yang sesuai
 
         try {
             const formData = new FormData();
@@ -55,16 +46,35 @@ export function CreateLetterForm() {
                 formData.append('file', values.file);
             }
 
-            const response: LetterResponse = await ky.post('http://localhost:5000/api/letter', {
-                headers: {
-                Authorization: `Bearer ${token}`,
-                },
-                body: formData,
-            }).json();
-
-            const { date, subject, to, number } = response;
-            setApiResponse({ date, subject, to, number });
-            open();
+            const response = await postLetters(formData);
+            modals.open({
+                title: 'Surat berhasil dibuat',
+                centered: true,
+                children: (
+                    <>
+                        <Text size="sm">
+                            <strong>Nomor Surat:</strong> {response.number} 
+                            <CopyButton value={response.number} timeout={2000}>
+                                {({ copied, copy }) => (
+                                    <Tooltip label={copied ? 'Disalin' : 'Salin'} withArrow position="right">
+                                        <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy} ml="xs">
+                                            {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                                        </ActionIcon>
+                                    </Tooltip>
+                                )}
+                            </CopyButton>
+                            <br />
+                            <strong>Tanggal:</strong> {convertUTC(response.date)}<br />
+                            <strong>Kepada:</strong> {response.to}<br />
+                            <strong>Perihal:</strong> {response.subject}<br />
+                            <strong>File:</strong> {response.filename}<br />
+                        </Text>
+                        <Button onClick={() => { form.reset(); modals.closeAll(); handleBack(); } } mt="md">
+                            OK
+                        </Button>
+                    </>
+                )
+            })
 
         } catch (error: any) {
             if (error.response) {
@@ -128,26 +138,6 @@ export function CreateLetterForm() {
                 Submit
             </Button>
         </Box>
-
-        <Modal opened={opened} onClose={close} title="Surat berhasil dibuat" centered>
-            {apiResponse && (
-                <Text size="sm">
-                <strong>Tanggal:</strong> {convertUTC(apiResponse.date)}<br />
-                <strong>Kepada:</strong> {apiResponse.to}<br />
-                <strong>Perihal:</strong> {apiResponse.subject}<br />
-                <strong>Nomor Surat:</strong> {apiResponse.number}<br />
-                </Text>
-            )}
-            <Button
-            onClick={() => {
-                close();
-                form.reset();
-                router.push('/dashboard/surat');
-            }}
-            >
-            OK
-            </Button>
-        </Modal>
     </Paper>
     </>
         
