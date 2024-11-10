@@ -1,70 +1,33 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { TextInput, Text, Space, Box, Paper, Center, Loader, Group, Button, ActionIcon} from '@mantine/core';
-import ky from 'ky';
+import { useEffect} from 'react';
+import { TextInput, Text, Space, Box, Paper, Center, Loader, Group, Button } from '@mantine/core';
 import { useParams, useRouter } from "next/navigation";
-import { convertUTC, getAuthToken } from '@/utils/utils';
+import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
+import { deleteLetter, useDownloadLetterFile, useLetterById } from '@/services/letters';
 
 export function ViewLetterForm() {
     const { id } = useParams();
+    const letterId = Array.isArray(id) ? id[0] : id;
     const router = useRouter();
-    const [letter, setLetter] = useState<{ number: string; date: string; to: string; subject: string; filename: string } | null>(null);
-    const [fileUrl, setFileUrl] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-    const token = getAuthToken();
-
+    const { data: letter, isLoading: isLetterLoading, error: letterError } = useLetterById(letterId);
+    const { data: fileUrl, isLoading: isFileLoading, error: fileError } = useDownloadLetterFile(letterId);
+    
     useEffect(() => {
-        const fetchLetterData = async () => {
-            if (!id) return;
-            try {
-                const response = await ky.get(`http://localhost:5000/api/letter/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }).json();
-                // const data = await response;
-                setLetter(response);
-            } catch (error) {
-                console.error("Gagal mengambil data surat:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const fetchFile = async () => {
-            try {
-                const response = await ky.get(`http://localhost:5000/api/letter/download/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = URL.createObjectURL(blob);
-                    setFileUrl(url);
-                } else {
-                    console.error("Gagal mengambil file:", response.statusText);
-                }
-            } catch (error) {
-                console.error("Error fetching file:", error);
-            }
-        };
-
-        fetchLetterData();
-        fetchFile();
-
         return () => {
-            // Hapus URL dari blob saat komponen di-unmount untuk menghindari memory leaks
             if (fileUrl) {
                 URL.revokeObjectURL(fileUrl);
             }
         };
-    }, [id]);
+    }, [fileUrl]);
 
     const handleEdit = () => {
         router.push(`/dashboard/surat/edit/${id}`); // Navigasi ke halaman edit
+    };
+
+    const handleBack = () => {
+        router.push('/dashboard/surat');
     };
 
     const openDeleteModal = () => {
@@ -79,34 +42,26 @@ export function ViewLetterForm() {
             labels: { confirm: 'Hapus', cancel: 'Batal' },
             confirmProps: { color: 'red' },
             onCancel: () => console.log('Penghapusan dibatalkan'),
-            onConfirm: handleDelete,
+            onConfirm: async () => {
+                const isDeleted = await deleteLetter(letterId);
+                if (isDeleted) {
+                    router.push('/dashboard/surat');
+                } else {
+                    console.error('Gagal menghapus surat');
+                }
+            },
         });
     };
 
-    const handleDelete = async () => {
-        try {
-            await ky.delete(`http://localhost:5000/api/letter/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            // Jika penghapusan berhasil, arahkan kembali ke halaman daftar surat
-            router.push('/dashboard/surat');
-        } catch (error) {
-            console.error('Gagal menghapus surat:', error);
-        }
-    };
-
-    const handleBack = () => {
-        router.push('/dashboard/surat');
-    };
-
-    if (loading) {
+    if (isLetterLoading) {
         return (
             <Center>
                 <Loader size="lg" />
             </Center>
         );
+    }
+    if (letterError) {
+        return <Text>Error: {letterError.message}</Text>;
     }
 
     return (
