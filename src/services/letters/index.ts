@@ -1,6 +1,6 @@
 import {useQuery} from "@tanstack/react-query";
 import ky from "ky";
-import type {LetterResponse, Letters} from "./types";
+import type {LetterResponse, Letters, UpdateLetterResponse} from "./types";
 import Cookies from "js-cookie";
 
 const token = Cookies.get("authToken")
@@ -52,6 +52,26 @@ export const postLetters = async (formData: FormData): Promise<LetterResponse> =
         body: formData,
     }).json<LetterResponse>();
     return res;
+};
+
+export const patchLetter = async (id: string, formData: UpdateLetterResponse): Promise<boolean> => {
+    try {
+        const formDataToSend = new FormData();
+        formDataToSend.append('subject', formData.subject);
+        formDataToSend.append('to', formData.to);
+        if (formData.file) formDataToSend.append('file', formData.file);
+
+        await ky.patch(`${BASE_URL}/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formDataToSend,
+        });
+        return true;
+    } catch (error) {
+        console.error("Gagal memperbarui surat:", error);
+        return false;
+    }
 };
 
 export const deleteLetter = async (id: string) => {

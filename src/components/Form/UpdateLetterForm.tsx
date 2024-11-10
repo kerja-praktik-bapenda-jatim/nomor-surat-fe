@@ -2,39 +2,32 @@
 import { useEffect, useState } from 'react';
 import { TextInput, Text, Space, Box, Paper, Center, Loader, Button, FileInput } from '@mantine/core';
 import { modals } from '@mantine/modals';
-import ky from 'ky';
 import { useParams, useRouter } from "next/navigation";
-import { convertUTC, getAuthToken } from '@/utils/utils';
+import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft } from '@tabler/icons-react';
+import { patchLetter, useLetterById } from '@/services/letters';
+import { UpdateLetterResponse } from '@/services/letters/types';
 
 export function UpdateLetterForm() {
     const { id } = useParams();
+    const letterId = Array.isArray(id) ? id[0] : id;
     const router = useRouter();
-    const [letter, setLetter] = useState<{ number: string; date: string; filename: string } | null>(null);
-    const [formData, setFormData] = useState<{ subject: string; to: string; file: File | null }>({ subject: '', to: '', file: null });
-    const [loading, setLoading] = useState(true);
-    const token = getAuthToken();
+    const { data: letter, isLoading: isLetterLoading, error: letterError } = useLetterById(letterId);
+    const [formData, setFormData] = useState<UpdateLetterResponse>({
+        subject: '',
+        to: '',
+        file: null,
+    });
 
-    // Fetch initial letter data
     useEffect(() => {
-        const fetchLetterData = async () => {
-            if (!id) return;
-            try {
-                const response = await ky.get(`http://localhost:5000/api/letter/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }).json();
-                setLetter(response);
-                setFormData({ subject: response.subject, to: response.to, file: null });
-            } catch (error) {
-                console.error("Gagal mengambil data surat:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchLetterData();
-    }, [id]);
+        if (letter) {
+            setFormData({
+                subject: letter.subject,
+                to: letter.to,
+                file: null,
+            });
+        }
+    }, [letter]);
 
     // Handle input changes
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,33 +39,22 @@ export function UpdateLetterForm() {
         setFormData((prev) => ({ ...prev, file }));
     };
 
-    // Submit updated data
     const handleSubmit = async () => {
-        const formDataToSend = new FormData();
-        formDataToSend.append('subject', formData.subject);
-        formDataToSend.append('to', formData.to);
-        if (formData.file) formDataToSend.append('file', formData.file);
-        try {
-            await ky.patch(`http://localhost:5000/api/letter/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                body: formDataToSend,
-            });
+        if (!id) return;
+        const updateSuccess = await patchLetter(letterId, formData);
+        if (updateSuccess) {
             modals.open({
                 title: 'Pembaharuan Berhasil',
                 centered: true,
                 children: (
                     <>
-                        <Text size="sm">Data surat berhasil diperbarui.</Text>,
-                        <Button onClick={() => { modals.closeAll(); handleBack(); } } mt="md">
+                        <Text size="sm">Data surat berhasil diperbarui.</Text>
+                        <Button onClick={() => { modals.closeAll(); handleBack(); }} mt="md">
                             OK
                         </Button>
                     </>
-                )
-            })
-        } catch (error) {
-            console.error("Gagal memperbarui data surat:", error);
+                ),
+            });
         }
     };
 
@@ -80,7 +62,7 @@ export function UpdateLetterForm() {
         router.push(`/dashboard/surat/view/${id}`);
     };
 
-    if (loading) {
+    if (isLetterLoading) {
         return (
             <Center>
                 <Loader size="lg" />

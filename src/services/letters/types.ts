@@ -24,3 +24,9 @@ export interface LetterResponse{
   createdAt: string;
   number: string;
 }
+
+export interface UpdateLetterResponse{
+  subject: string;
+  to: string;
+  file: File | null;
+};
