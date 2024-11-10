@@ -30,3 +30,8 @@ export interface UpdateLetterResponse{
   to: string;
   file: File | null;
 };
+
+export interface SpareLetters{
+  date: string | null;
+  spareCounts: string;
+}

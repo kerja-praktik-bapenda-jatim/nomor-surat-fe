@@ -1,10 +1,11 @@
 import {useQuery} from "@tanstack/react-query";
 import ky from "ky";
-import type {LetterResponse, Letters, UpdateLetterResponse} from "./types";
+import type {LetterResponse, Letters, SpareLetters, UpdateLetterResponse} from "./types";
 import Cookies from "js-cookie";
 
 const token = Cookies.get("authToken")
 const BASE_URL = "http://localhost:5000/api/letter";
+
 export const getLetters = async (params?: Record<string, string>) => {
 	const res = await ky.get(`${BASE_URL}`, {
 		headers: {
@@ -52,6 +53,22 @@ export const postLetters = async (formData: FormData): Promise<LetterResponse> =
         body: formData,
     }).json<LetterResponse>();
     return res;
+};
+
+export const addSpareLetter = async (payload: SpareLetters): Promise<{ message: string }> => {
+    try {
+        const response = await ky.post(`${BASE_URL}`, {
+            json: payload,
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        }).json();
+        return response as { message: string };
+    } catch (error: any) {
+        console.error("Gagal menambahkan spare surat:", error);
+        throw error.response ? await error.response.json() : { message: 'Gagal menambahkan spare surat.' };
+    }
 };
 
 export const patchLetter = async (id: string, formData: UpdateLetterResponse): Promise<boolean> => {
