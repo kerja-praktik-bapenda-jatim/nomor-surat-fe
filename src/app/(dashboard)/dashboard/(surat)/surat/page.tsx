@@ -11,12 +11,8 @@ export default function SuratPage() {
         <PageContainer title="Surat Saya">
             <Paper withBorder radius="md" p="md">
                 <Group>
-                    <Button onClick={() => router.push('http://localhost:3000/dashboard/surat/tambah')}>
+                    <Button onClick={() => router.push('/dashboard/surat/tambah')}>
                         Buat Surat
-                    </Button>
-
-                    <Button onClick={() => router.push('http://localhost:3000/dashboard/surat/spare')}>
-                        Buat Spare Surat
                     </Button>
                 </Group>
                 <SimpleTableLetter />

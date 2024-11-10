@@ -13,7 +13,7 @@ export function ViewLetterForm() {
     const [letter, setLetter] = useState<{ number: string; date: string; to: string; subject: string; filename: string } | null>(null);
     const [fileUrl, setFileUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const token = getAuthToken('admin');
+    const token = getAuthToken();
 
     useEffect(() => {
         const fetchLetterData = async () => {
@@ -124,7 +124,6 @@ export function ViewLetterForm() {
                     </Button>
                 </Group>
             </Group>
-            
             <Box>
                 <Text component="h2" fw="bold" fz="lg">
                     View Surat
@@ -132,7 +131,7 @@ export function ViewLetterForm() {
                 <TextInput value={letter?.number} label="Nomor Surat" readOnly />
                 <Space h="sm" />
 
-                <TextInput value={convertUTC(letter.date)} label="Tanggal" readOnly />
+                <TextInput value={letter?.date ? convertUTC(letter.date) : ''} label="Tanggal" readOnly />
                 <Space h="sm" />
                 
                 <TextInput value={letter?.to} label="Kepada" readOnly />

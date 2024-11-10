@@ -2,67 +2,92 @@
 import { useState } from 'react';
 import { Button, Paper, TextInput, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import ky from 'ky'; // Menggunakan ky untuk fetch API
+import ky from 'ky';
 import { useRouter } from "next/navigation";
 import { getAuthToken } from '@/utils/utils';
 import { IconArrowLeft } from '@tabler/icons-react';
 import {PageContainer} from "@/components/PageContainer/PageContainer";
 import {SimpleTableSpareLetter} from "@/components/Table/SimpleSpareLetterTable";
+import { DateInput } from '@mantine/dates';
+import { modals } from '@mantine/modals';
 
 export default function SparePage() {
-    const token = getAuthToken('admin');
+    const token = getAuthToken();
     const router = useRouter();
     const form = useForm({
         initialValues: {
+            date: null,
             spareCounts: '',
         },
         validate: {
-        spareCounts: (value) =>
-            !Number.isNaN(Number(value)) && Number(value) > 0
-            ? null
-            : 'Jumlah Harus Lebih dari 0',
+            date: (value) => value ? null : 'Tanggal harus dipilih',
+            spareCounts: (value) =>
+                !Number.isNaN(Number(value)) && Number(value) > 0
+                ? null
+                : 'Jumlah Harus Lebih dari 0',
         },
     });
 
     const [loading, setLoading] = useState(false);
-    const [submittedValues, setSubmittedValues] = useState<typeof form.values | null>(null);
 
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
         try {
-        // Melakukan POST request ke localhost:5000/api/letter
-        const response = await ky.post('http://localhost:5000/api/letter', {
-            json: values,
-            headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, // Jika perlu token JWT
-            },
-        });
+            const response = await ky.post('http://localhost:5000/api/letter', {
+                json: values,
+                headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+                },
+            }).json();
 
-        const data = await response.json();
-        setSubmittedValues(data); // Menyimpan hasil response
-        router.push('/dashboard/surat');
-        } catch (error) {
-            console.error('Failed to submit:', error);
+            modals.open({
+                title: 'Penambahan Spare Surat',
+                centered: true,
+                children: (
+                    <>
+                        <Text size="sm">{response.message}</Text>,
+                        <Button onClick={() => { modals.closeAll();} } mt="md">
+                            OK
+                        </Button>
+                    </>
+                )
+            })
+        } catch (error:any) {
+            const errorMessage = error.response ? await error.response.json() : { message: 'Gagal menambahkan spare surat.' };
+            modals.open({
+                title: 'Error',
+                centered: true,
+                children: (
+                    <>
+                        <Text size="sm">{errorMessage.message}</Text>
+                        <Button onClick={() => modals.closeAll()} mt="md">
+                            OK
+                        </Button>
+                    </>
+                )
+            });
         } finally {
             setLoading(false);
         }
     };
 
-    const handleBack = () => {
-        router.push('/dashboard/surat');
-    };
-
     return (
 			<PageContainer title="Spare Surat">
 				<Paper withBorder shadow="md" p="md">
-					<Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
-						Kembali
-					</Button>
 					<Text component="h2" fw="bold" fz="lg">
 						Tambah Spare Surat
 					</Text>
 					<form onSubmit={form.onSubmit(handleSubmit)}>
+                        <DateInput
+                            clearable
+                            valueFormat="DD-MMMM-YYYY"
+                            minDate={new Date(new Date().setDate(new Date().getDate() - 1))}
+                            maxDate={new Date()}
+                            {...form.getInputProps('date')}
+                            label="Tanggal"
+                            placeholder="Pilih tanggal"
+                        />
 						<TextInput
 							{...form.getInputProps('spareCounts')}
 							label="Jumlah"

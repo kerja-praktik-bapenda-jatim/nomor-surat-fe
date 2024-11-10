@@ -30,6 +30,6 @@ export function convertUTC(utcTimestamp: string): string {
     return `${formattedDate} ${formattedTime}`;
 }
 
-export function getAuthToken(role = "user") {
+export function getAuthToken() {
     return Cookies.get("authToken");
 }
