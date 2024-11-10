@@ -1,6 +1,9 @@
 import ky from "ky";
 import {LoginRequest, LoginResponse, RegisterRequest, RegisterResponse} from "@/services/auth/types";
 import Cookies from "js-cookie";
+import {NextRequest} from "next/server";
+import {useRouter} from "next/navigation";
+import {useEffect} from "react";
 
 const BASE_URL = "http://localhost:5000/api/auth";
 
@@ -52,6 +55,43 @@ export const register = async (data: RegisterRequest) => {
 		throw new Error("An error occurred while register.");
 	}
 }
+
+
+export const useAuthRedirect = () => {
+
+	const router = useRouter();
+
+	useEffect(() => {
+		const token = Cookies.get("authToken")
+
+		if (!token) {
+			router.push('/login')
+			return
+		}
+
+		const decoded = decodeToken(token)
+		if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+			Cookies.remove("authToken")
+			router.push('/login')
+		}
+	}, [router]);
+}
+
+export const useUnauthRedirect = () => {
+	const router = useRouter();
+
+	useEffect(() => {
+		const token = Cookies.get("authToken")
+
+		if (token) {
+			const decoded = decodeToken(token)
+			if (decoded.exp && decoded.exp * 1000 > Date.now()) {
+				router.push('/dashboard')
+				return
+			}
+		}
+	}, [router]);
+};
 
 export const logout = () => {
 	Cookies.remove("authToken");

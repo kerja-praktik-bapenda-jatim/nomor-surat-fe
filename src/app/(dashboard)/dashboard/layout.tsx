@@ -11,12 +11,15 @@ import { useDisclosure } from "@mantine/hooks";
 import { AdminHeader } from "@/components/Headers/AdminHeader";
 import { Navbar } from "@/components/Navbar/Navbar";
 import { navLinks } from "@/config";
+import {useAuthRedirect} from "@/services/auth";
 
 interface Props {
   children: React.ReactNode;
 }
 
 export default function DashboardLayout({ children }: Props) {
+	useAuthRedirect()
+
   const [opened, { toggle }] = useDisclosure();
   const { colorScheme } = useMantineColorScheme();
   const theme = useMantineTheme();

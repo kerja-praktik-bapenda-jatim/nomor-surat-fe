@@ -28,7 +28,7 @@ export function LoginForm() {
 			await login({username, password});
 
 			// On success, redirect to the dashboard
-			router.push("/dashboard");
+			router.push("/dashboard/surat");
 		} catch (err) {
 			// Set the error message if an error occurs
 			if (err instanceof Error) {

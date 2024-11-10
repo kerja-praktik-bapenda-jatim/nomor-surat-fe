@@ -1,12 +1,14 @@
 "use client";
 
-import { ActionIcon, Box, Drawer, Stack, TextInput } from "@mantine/core";
+import {ActionIcon, Box, Button, Drawer, Stack, TextInput} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconSearch, IconSettings } from "@tabler/icons-react";
 import classes from "./AdminHeader.module.css";
 import { DirectionSwitcher } from "../DirectionSwitcher/DirectionSwitcher";
 import { Logo } from "../Logo/Logo";
 import { ThemeSwitcher } from "../ThemeSwitcher/ThemeSwitcher";
+import {useRouter} from "next/navigation";
+import Cookies from "js-cookie";
 
 interface Props {
   burger?: React.ReactNode;
@@ -14,6 +16,12 @@ interface Props {
 
 export function AdminHeader({ burger }: Props) {
   const [opened, { close, open }] = useDisclosure(false);
+	const router = useRouter();
+
+	const handleLogout = () => {
+		Cookies.remove('authToken');
+		router.push('/login');
+	};
 
   return (
     <header className={classes.header}>
@@ -40,6 +48,9 @@ export function AdminHeader({ burger }: Props) {
         <Stack gap="lg">
           <ThemeSwitcher />
           <DirectionSwitcher />
+					<Button onClick={handleLogout} color="red" variant="outline">
+						Logout
+					</Button>
         </Stack>
       </Drawer>
     </header>
