@@ -57,7 +57,6 @@ export const register = async (data: RegisterRequest) => {
 
 
 export const useAuthRedirect = () => {
-
 	const router = useRouter();
 
 	useEffect(() => {
@@ -65,33 +64,14 @@ export const useAuthRedirect = () => {
 
 		if (!token) {
 			router.push('/login')
-			return
-		}
-
-		const decoded = decodeToken(token)
-		if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-			Cookies.remove("authToken")
-			router.push('/login')
-		}
-	}, [router]);
-}
-
-export const useUnauthRedirect = () => {
-	const router = useRouter();
-
-	useEffect(() => {
-		const token = Cookies.get("authToken")
-
-		if (token) {
+		} else {
 			const decoded = decodeToken(token)
-			if (decoded.exp && decoded.exp * 1000 > Date.now()) {
-				router.push('/')
-				return
+			if (decoded.exp * 1000 < Date.now()) {
+				Cookies.remove("authToken")
+				router.push('/login')
+			} else {
+				router.push('/surat')
 			}
 		}
 	}, [router]);
-};
-
-export const logout = () => {
-	Cookies.remove("authToken");
 }

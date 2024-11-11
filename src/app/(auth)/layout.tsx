@@ -1,15 +1,15 @@
 "use client"
 
-import { Anchor, Box, Text, Title } from "@mantine/core";
+import {Box, Title} from "@mantine/core";
 import classes from "./layout.module.css";
-import {useUnauthRedirect} from "@/services/auth";
+import {useAuthRedirect} from "@/services/auth";
 
 interface Props {
   children: React.ReactNode;
 }
 
 export default function AuthLayout({ children }: Props) {
-	useUnauthRedirect()
+	useAuthRedirect()
 
   return (
     <Box className={classes.wrapper}>

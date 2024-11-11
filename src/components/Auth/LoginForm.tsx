@@ -8,7 +8,7 @@ import {
 	Group,
 	PasswordInput,
 	TextInput,
-	Text, LoadingOverlay
+	Text, LoadingOverlay, Center
 } from "@mantine/core";
 import {useRouter} from "next/navigation";
 import React, {useState} from "react";
@@ -68,12 +68,14 @@ export function LoginForm() {
 
 			{error && <Text color="red" size="sm" mt="sm">{error}</Text>}
 
-			<Text c="dimmed" size="sm" mt={10} align="center">
-				Don&apos;t have an account?{" "}
-				<Anchor size="sm" href="/register">
-					Sign Up
-				</Anchor>
-			</Text>
+			<Center>
+				<Text c="dimmed" size="sm" mt={10}>
+					Don&apos;t have an account?{" "}
+					<Anchor size="sm" href="/register">
+						Sign Up
+					</Anchor>
+				</Text>
+			</Center>
 			<Button fullWidth mt="xl" onClick={handleLogin}>
 				Sign In
 			</Button>
