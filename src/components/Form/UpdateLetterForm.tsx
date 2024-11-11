@@ -59,7 +59,7 @@ export function UpdateLetterForm() {
     };
 
     const handleBack = () => {
-        router.push(`/dashboard/surat/view/${id}`);
+        router.push(`/surat/view/${id}`);
     };
 
     if (isLetterLoading) {

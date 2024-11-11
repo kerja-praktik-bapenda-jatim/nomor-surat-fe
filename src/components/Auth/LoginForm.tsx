@@ -28,7 +28,7 @@ export function LoginForm() {
 			await login({username, password});
 
 			// On success, redirect to the dashboard
-			router.push("/dashboard/surat");
+			router.push("/surat");
 		} catch (err) {
 			// Set the error message if an error occurs
 			if (err instanceof Error) {
@@ -62,7 +62,7 @@ export function LoginForm() {
 			<Group mt="md" justify="space-between">
 				<Checkbox label="Remember me"/>
 				<Anchor size="sm" href="#">
-					Forgot Password？
+					Forgot Password?
 				</Anchor>
 			</Group>
 

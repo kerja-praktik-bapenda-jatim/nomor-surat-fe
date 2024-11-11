@@ -23,11 +23,11 @@ export function ViewLetterForm() {
     }, [fileUrl]);
 
     const handleEdit = () => {
-        router.push(`/dashboard/surat/edit/${id}`); // Navigasi ke halaman edit
+        router.push(`/surat/edit/${id}`);
     };
 
     const handleBack = () => {
-        router.push('/dashboard/surat');
+        router.push('/surat');
     };
 
     const openDeleteModal = () => {
@@ -45,7 +45,7 @@ export function ViewLetterForm() {
             onConfirm: async () => {
                 const isDeleted = await deleteLetter(letterId);
                 if (isDeleted) {
-                    router.push('/dashboard/surat');
+                    router.push('/surat');
                 } else {
                     console.error('Gagal menghapus surat');
                 }

@@ -44,7 +44,7 @@ export const SimpleTableLetter = () => {
         header: "Actions",
         Cell: ({ row }) => (
           <ActionIcon
-            onClick={() => router.push(`/dashboard/surat/view/${row.original.id}`)}
+            onClick={() => router.push(`/surat/view/${row.original.id}`)}
           >
             <IconEye size={14} />
           </ActionIcon>

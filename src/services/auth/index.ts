@@ -1,7 +1,6 @@
 import ky from "ky";
 import {LoginRequest, LoginResponse, RegisterRequest, RegisterResponse} from "@/services/auth/types";
 import Cookies from "js-cookie";
-import {NextRequest} from "next/server";
 import {useRouter} from "next/navigation";
 import {useEffect} from "react";
 
@@ -86,7 +85,7 @@ export const useUnauthRedirect = () => {
 		if (token) {
 			const decoded = decodeToken(token)
 			if (decoded.exp && decoded.exp * 1000 > Date.now()) {
-				router.push('/dashboard')
+				router.push('/')
 				return
 			}
 		}

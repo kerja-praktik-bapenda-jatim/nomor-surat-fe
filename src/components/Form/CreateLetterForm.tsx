@@ -89,7 +89,7 @@ export function CreateLetterForm() {
     };
 
     const handleBack = () => {
-        router.push('/dashboard/surat');
+        router.push('/surat');
     };
 
     return (
