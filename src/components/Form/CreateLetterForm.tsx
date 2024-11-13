@@ -77,12 +77,27 @@ export function CreateLetterForm() {
             })
 
         } catch (error: any) {
-            if (error.response) {
-                const apiError = await error.response.json();
-                console.error("Error:", apiError);
-            } else {
-                console.error("Error tidak terdeteksi dari response:", error);
+            let anyError = error;
+            if (error.response){
+                anyError = await error.response.json();
             }
+            modals.open({
+                title: 'Error',
+                centered: true,
+                children: (
+                    <>
+                        <Text size="sm">{anyError.message}</Text>
+                        <Button
+                            onClick={() => {
+                                modals.closeAll();
+                            }}
+                            mt="md"
+                        >
+                            OK
+                        </Button>
+                    </>
+                )
+            });
         } finally {
             setLoading(false);
         }
@@ -103,6 +118,7 @@ export function CreateLetterForm() {
                 Buat Surat
             </Text>
             <DateInput
+                readOnly
                 clearable
                 valueFormat="DD-MMMM-YYYY"
                 minDate={new Date()}
