@@ -6,7 +6,7 @@ import { DateInput } from '@mantine/dates';
 import { useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconCheck, IconCopy } from '@tabler/icons-react';
-import { postLetters } from '@/services/letters';
+import { postLetters } from '@/services/surat';
 import { modals } from '@mantine/modals';
 
 export function CreateLetterForm() {

@@ -1,7 +1,7 @@
 import {MantineReactTable, type MRT_ColumnDef} from "mantine-react-table";
 import {useMemo} from "react";
-import {useSpareLetters} from "@/services/letters";
-import {Letters} from "@/services/letters/types";
+import {useSpareLetters} from "@/services/nota";
+import {Letters} from "@/services/nota/types";
 import {convertUTC} from "@/utils/utils";
 import {useRouter} from "next/navigation";
 import {ActionIcon} from "@mantine/core";

@@ -1,18 +1,18 @@
 "use client";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
-import { SimpleTableLetter } from "@/components/Table/SimpleLetterTable";
+import { SimpleTableLetter } from "@/components/Table/Nota/SimpleLetterTable";
 import { Button, Group, Paper } from "@mantine/core";
 import { useRouter } from "next/navigation";
 
-export default function SuratPage() {
+export default function NotaPage() {
     const router = useRouter();
 
     return (
-        <PageContainer title="Surat Saya">
+        <PageContainer title="Nota Dinas Saya">
             <Paper withBorder radius="md" p="md">
                 <Group>
-                    <Button onClick={() => router.push('/surat/tambah')}>
-                        Buat Surat
+                    <Button onClick={() => router.push('/nota/add')}>
+                        Buat Nota Dinas
                     </Button>
                 </Group>
                 <SimpleTableLetter />

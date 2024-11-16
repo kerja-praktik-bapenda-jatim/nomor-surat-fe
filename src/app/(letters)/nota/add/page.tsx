@@ -1,8 +1,8 @@
 "use client"; 
-import { CreateLetterForm } from "@/components/Form/CreateLetterForm";
+import { CreateLetterForm } from "@/components/Form/Nota/CreateLetterForm";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 
-export default function TambahSuratPage() {
+export default function AddNotaPage() {
   return (
     <PageContainer title="">
       <CreateLetterForm />

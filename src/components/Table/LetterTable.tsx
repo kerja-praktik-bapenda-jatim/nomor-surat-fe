@@ -4,8 +4,8 @@ import { Badge, Paper, Rating, Space, Title } from "@mantine/core";
 import { MantineReactTable, type MRT_ColumnDef } from "mantine-react-table";
 import { useMemo } from "react";
 import { useCustomTable } from "@/hooks/use-custom-table";
-import { useLetters } from "@/services/letters";
-import { Letters } from "@/services/letters/types";
+import { useLetters } from "@/services/surat";
+import { Letters } from "@/services/surat/types";
 
 export function LetterTable() {
   const { data, isError, isFetching, isLoading } = useLetters();

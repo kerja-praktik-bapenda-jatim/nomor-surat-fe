@@ -1,11 +1,11 @@
 import { type MRT_ColumnDef, MantineReactTable } from "mantine-react-table";
 import { useMemo } from "react";
-import { useLetters } from "@/services/letters";
-import { Letters } from "@/services/letters/types";
+import { useLetters } from "@/services/surat";
+import { Letters } from "@/services/surat/types";
 import { convertUTC } from "@/utils/utils";
 import { useRouter } from "next/navigation";
-import { ActionIcon, Group } from "@mantine/core";
-import { IconEdit, IconEye, IconTrash, IconViewfinder } from "@tabler/icons-react";
+import { ActionIcon } from "@mantine/core";
+import { IconEye } from "@tabler/icons-react";
 
 
 export const SimpleTableLetter = () => {

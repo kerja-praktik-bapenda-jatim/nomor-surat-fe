@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
-import { deleteLetter, useDownloadLetterFile, useLetterById } from '@/services/letters';
+import { deleteLetter, useDownloadLetterFile, useLetterById } from '@/services/nota';
 
 export function ViewLetterForm() {
     const { id } = useParams();

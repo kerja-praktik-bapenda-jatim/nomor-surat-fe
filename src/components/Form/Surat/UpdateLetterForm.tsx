@@ -5,8 +5,8 @@ import { modals } from '@mantine/modals';
 import { useParams, useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { patchLetter, useLetterById } from '@/services/letters';
-import { UpdateLetterResponse } from '@/services/letters/types';
+import { patchLetter, useLetterById } from '@/services/surat';
+import { UpdateLetterResponse } from '@/services/surat/types';
 
 export function UpdateLetterForm() {
     const { id } = useParams();

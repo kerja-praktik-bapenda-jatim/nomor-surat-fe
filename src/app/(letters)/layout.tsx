@@ -3,7 +3,6 @@
 import {
   AppShell,
   Burger,
-  Text,
   useMantineColorScheme,
   useMantineTheme,
 } from "@mantine/core";
@@ -52,11 +51,6 @@ export default function DashboardLayout({ children }: Props) {
         />
       </AppShell.Header>
       <AppShell.Main bg={bg}>{children}</AppShell.Main>
-      <AppShell.Footer>
-        <Text w="full" size="sm" c="gray">
-          CopyRight © 2023 Jotyy
-        </Text>
-      </AppShell.Footer>
     </AppShell>
   );
 }

@@ -1,10 +1,10 @@
 "use client"
 import { useState } from 'react';
-import { Button, Paper, TextInput, Text } from '@mantine/core';
+import { Button, Paper, TextInput, Text, NativeSelect, Space } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
-import { addSpareLetter } from '@/services/letters';
+import { addSpareLetter } from '@/services/nota';
 
 export function SpareLetterForm() {
     const form = useForm({
@@ -45,8 +45,8 @@ export function SpareLetterForm() {
                             OK
                         </Button>
                     </>
-                )
-            })
+                ),
+            });
         } catch (error:any) {
             modals.open({
                 title: 'Error',
@@ -66,7 +66,7 @@ export function SpareLetterForm() {
                             OK
                         </Button>
                     </>
-                )
+                ),
             });
         } finally {
             setLoading(false);
@@ -88,12 +88,14 @@ export function SpareLetterForm() {
                     label="Tanggal"
                     placeholder="Pilih tanggal"
                 />
+                <Space h="md" />
                 <TextInput
                     {...form.getInputProps('spareCounts')}
                     label="Jumlah"
                     placeholder="1-100"
                     disabled={loading}
                 />
+                <Space h="md" />
                 <Button type="submit" mt="md" loading={loading}>
                     Submit
                 </Button>
