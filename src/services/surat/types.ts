@@ -9,6 +9,7 @@ export interface Letters {
   createdAt: string;
   updatedAt: string;
   userId: string;
+  department_id: string;
 }
 
 export interface LetterResponse{

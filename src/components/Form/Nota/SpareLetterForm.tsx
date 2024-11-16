@@ -1,10 +1,10 @@
 "use client"
 import { useState } from 'react';
-import { Button, Paper, TextInput, Text, NativeSelect, Space } from '@mantine/core';
+import { Button, Paper, TextInput, Text, Space } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
-import { addSpareLetter } from '@/services/nota';
+import { addSpareNota } from '@/services/nota';
 
 export function SpareLetterForm() {
     const form = useForm({
@@ -26,7 +26,7 @@ export function SpareLetterForm() {
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
         try {
-            const response = await addSpareLetter(values);
+            const response = await addSpareNota(values);
             modals.open({
                 title: 'Penambahan Spare Surat',
                 centered: true,

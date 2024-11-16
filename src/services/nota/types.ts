@@ -1,4 +1,4 @@
-export interface Letters {
+export interface Nota {
   id: string;
   date: string;
   number: number;
@@ -11,7 +11,7 @@ export interface Letters {
   userId: string;
 }
 
-export interface LetterResponse{
+export interface NotaResponse{
   id: string;
   date: string;
   reserved: string;
@@ -25,13 +25,13 @@ export interface LetterResponse{
   number: string;
 }
 
-export interface UpdateLetterResponse{
+export interface UpdateNotaResponse{
   subject: string;
   to: string;
   file: File | null;
 };
 
-export interface SpareLetters{
+export interface SpareNota{
   date: string | null;
   spareCounts: string;
 }

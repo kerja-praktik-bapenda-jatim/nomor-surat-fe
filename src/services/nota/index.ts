@@ -1,35 +1,35 @@
 import {useQuery} from "@tanstack/react-query";
 import ky from "ky";
-import type {LetterResponse, Letters, SpareLetters, UpdateLetterResponse} from "./types";
+import type {NotaResponse, Nota, SpareNota, UpdateNotaResponse} from "./types";
 import Cookies from "js-cookie";
 
 const token = Cookies.get("authToken")
-const BASE_URL = "http://localhost:5000/api/letter";
+const BASE_URL = "http://localhost:5000/api/nota";
 
-export const getLetters = async (params?: Record<string, string>) => {
+export const getNota = async (params?: Record<string, string>) => {
 	const res = await ky.get(`${BASE_URL}`, {
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
 		searchParams: params
-	}).json<Letters[]>();
+	}).json<Nota[]>();
 	return res;
 };
 
-export const getSpareLetters = async () => {
-	return getLetters({reserved: "false"});
+export const getSpareNota = async () => {
+	return getNota({reserved: "false"});
 };
 
-export const getLetterById = async (id: string): Promise<Letters> => {
+export const getNotaById = async (id: string): Promise<Nota> => {
     const res = await ky.get(`${BASE_URL}/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    }).json<Letters>();
+    }).json<Nota>();
     return res;
 };
 
-export const downloadLetterFile = async (id: string): Promise<string | null> => {
+export const downloadNotaFile = async (id: string): Promise<string | null> => {
     const res = await ky.get(`${BASE_URL}/download/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`,
@@ -45,17 +45,17 @@ export const downloadLetterFile = async (id: string): Promise<string | null> => 
     }
 };
 
-export const postLetters = async (formData: FormData): Promise<LetterResponse> => {
+export const postNota = async (formData: FormData): Promise<NotaResponse> => {
     const res = await ky.post(`${BASE_URL}`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
         body: formData,
-    }).json<LetterResponse>();
+    }).json<NotaResponse>();
     return res;
 };
 
-export const addSpareLetter = async (payload: SpareLetters): Promise<{ message: string }> => {
+export const addSpareNota = async (payload: SpareNota): Promise<{ message: string }> => {
     try {
         const response = await ky.post(`${BASE_URL}`, {
             json: payload,
@@ -71,7 +71,7 @@ export const addSpareLetter = async (payload: SpareLetters): Promise<{ message: 
     }
 };
 
-export const patchLetter = async (id: string, formData: UpdateLetterResponse): Promise<boolean> => {
+export const patchNota = async (id: string, formData: UpdateNotaResponse): Promise<boolean> => {
     try {
         const formDataToSend = new FormData();
         formDataToSend.append('subject', formData.subject);
@@ -91,7 +91,7 @@ export const patchLetter = async (id: string, formData: UpdateLetterResponse): P
     }
 };
 
-export const deleteLetter = async (id: string) => {
+export const deleteNota = async (id: string) => {
     try {
         await ky.delete(`${BASE_URL}/${id}`, {
             headers: {
@@ -105,28 +105,28 @@ export const deleteLetter = async (id: string) => {
     }
 };
 
-export const useLetters = () =>
-	useQuery<Letters[]>({
-		queryKey: ["Letters"],
-		queryFn: () => getLetters(),
+export const useNota = () =>
+	useQuery<Nota[]>({
+		queryKey: ["Nota"],
+		queryFn: () => getNota(),
 	});
 
-export const useSpareLetters = () =>
-	useQuery<Letters[]>({
-		queryKey: ["SpareLetters"],
-		queryFn: () => getSpareLetters(),
+export const useSpareNota = () =>
+	useQuery<Nota[]>({
+		queryKey: ["SpareNota"],
+		queryFn: () => getSpareNota(),
 	});
 
-export const useLetterById = (id: string) =>
-	useQuery<Letters>({
-		queryKey: ["Letter", id],
-		queryFn: () => getLetterById(id),
+export const useNotaById = (id: string) =>
+	useQuery<Nota>({
+		queryKey: ["Nota", id],
+		queryFn: () => getNotaById(id),
 		enabled: !!id,
 	});
 
-export const useDownloadLetterFile = (id: string) => 
+export const useDownloadNotaFile = (id: string) => 
 	useQuery<string | null>({
-		queryKey: ["LetterFile", id],
-		queryFn: () => downloadLetterFile(id),
+		queryKey: ["NotaFile", id],
+		queryFn: () => downloadNotaFile(id),
 		enabled: !!id,
 	});

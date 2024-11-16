@@ -6,7 +6,7 @@ import { DateInput } from '@mantine/dates';
 import { useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconCheck, IconCopy } from '@tabler/icons-react';
-import { postLetters } from '@/services/nota';
+import { postNota } from '@/services/nota';
 import { modals } from '@mantine/modals';
 
 export function CreateLetterForm() {
@@ -46,7 +46,7 @@ export function CreateLetterForm() {
                 formData.append('file', values.file);
             }
 
-            const response = await postLetters(formData);
+            const response = await postNota(formData);
             modals.open({
                 title: 'Surat berhasil dibuat',
                 centered: true,
@@ -104,7 +104,7 @@ export function CreateLetterForm() {
     };
 
     const handleBack = () => {
-        router.push('/surat');
+        router.push('/nota');
     };
 
     return (

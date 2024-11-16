@@ -5,15 +5,15 @@ import { modals } from '@mantine/modals';
 import { useParams, useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { patchLetter, useLetterById } from '@/services/nota';
-import { UpdateLetterResponse } from '@/services/nota/types';
+import { patchNota, useNotaById } from '@/services/nota';
+import { UpdateNotaResponse } from '@/services/nota/types';
 
 export function UpdateLetterForm() {
     const { id } = useParams();
     const letterId = Array.isArray(id) ? id[0] : id;
     const router = useRouter();
-    const { data: letter, isLoading: isLetterLoading, error: letterError } = useLetterById(letterId);
-    const [formData, setFormData] = useState<UpdateLetterResponse>({
+    const { data: letter, isLoading: isLetterLoading, error: letterError } = useNotaById(letterId);
+    const [formData, setFormData] = useState<UpdateNotaResponse>({
         subject: '',
         to: '',
         file: null,
@@ -41,7 +41,7 @@ export function UpdateLetterForm() {
 
     const handleSubmit = async () => {
         if (!id) return;
-        const updateSuccess = await patchLetter(letterId, formData);
+        const updateSuccess = await patchNota(letterId, formData);
         if (updateSuccess) {
             modals.open({
                 title: 'Pembaharuan Berhasil',
@@ -59,7 +59,7 @@ export function UpdateLetterForm() {
     };
 
     const handleBack = () => {
-        router.push(`/surat/view/${id}`);
+        router.push(`/nota/view/${id}`);
     };
 
     if (isLetterLoading) {

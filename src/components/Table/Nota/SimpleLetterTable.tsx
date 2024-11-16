@@ -1,7 +1,7 @@
 import { type MRT_ColumnDef, MantineReactTable } from "mantine-react-table";
 import { useMemo } from "react";
-import { useLetters } from "@/services/nota";
-import { Letters } from "@/services/nota/types";
+import { useNota } from "@/services/nota";
+import { Nota } from "@/services/nota/types";
 import { convertUTC } from "@/utils/utils";
 import { useRouter } from "next/navigation";
 import { ActionIcon } from "@mantine/core";
@@ -9,10 +9,10 @@ import { IconEye } from "@tabler/icons-react";
 
 
 export const SimpleTableLetter = () => {
-  const { data } = useLetters();
+  const { data } = useNota();
   const router = useRouter();
   //should be memoized or stable
-  const columns = useMemo<MRT_ColumnDef<Letters>[]>(
+  const columns = useMemo<MRT_ColumnDef<Nota>[]>(
     () => [
       {
         accessorKey: "number",
@@ -44,7 +44,7 @@ export const SimpleTableLetter = () => {
         header: "Actions",
         Cell: ({ row }) => (
           <ActionIcon
-            onClick={() => router.push(`/surat/view/${row.original.id}`)}
+            onClick={() => router.push(`/nota/view/${row.original.id}`)}
           >
             <IconEye size={14} />
           </ActionIcon>

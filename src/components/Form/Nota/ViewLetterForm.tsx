@@ -5,14 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
-import { deleteLetter, useDownloadLetterFile, useLetterById } from '@/services/nota';
+import { deleteNota, useDownloadNotaFile, useNotaById } from '@/services/nota';
 
 export function ViewLetterForm() {
     const { id } = useParams();
     const letterId = Array.isArray(id) ? id[0] : id;
     const router = useRouter();
-    const { data: letter, isLoading: isLetterLoading, error: letterError } = useLetterById(letterId);
-    const { data: fileUrl, isLoading: isFileLoading, error: fileError } = useDownloadLetterFile(letterId);
+    const { data: letter, isLoading: isLetterLoading, error: letterError } = useNotaById(letterId);
+    const { data: fileUrl, isLoading: isFileLoading, error: fileError } = useDownloadNotaFile(letterId);
     
     useEffect(() => {
         return () => {
@@ -23,11 +23,11 @@ export function ViewLetterForm() {
     }, [fileUrl]);
 
     const handleEdit = () => {
-        router.push(`/surat/edit/${id}`);
+        router.push(`/nota/edit/${id}`);
     };
 
     const handleBack = () => {
-        router.push('/surat');
+        router.push('/nota');
     };
 
     const openDeleteModal = () => {
@@ -43,9 +43,9 @@ export function ViewLetterForm() {
             confirmProps: { color: 'red' },
             onCancel: () => console.log('Penghapusan dibatalkan'),
             onConfirm: async () => {
-                const isDeleted = await deleteLetter(letterId);
+                const isDeleted = await deleteNota(letterId);
                 if (isDeleted) {
-                    router.push('/surat');
+                    router.push('/nota');
                 } else {
                     console.error('Gagal menghapus surat');
                 }
