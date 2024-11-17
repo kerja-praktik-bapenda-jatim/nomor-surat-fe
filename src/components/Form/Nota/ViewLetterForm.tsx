@@ -81,7 +81,7 @@ export function ViewLetterForm() {
             </Group>
             <Box>
                 <Text component="h2" fw="bold" fz="lg">
-                    View Surat
+                    View Nota Dinas
                 </Text>
                 <TextInput value={letter?.number} label="Nomor Surat" readOnly />
                 <Space h="sm" />

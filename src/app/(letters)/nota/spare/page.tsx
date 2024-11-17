@@ -5,7 +5,7 @@ import { SpareLetterForm } from '@/components/Form/Nota/SpareLetterForm';
 
 export default function SpareNotaPage() {
     return (
-        <PageContainer title="Spare Surat">
+        <PageContainer title="Spare Nota Dinas">
             <SpareLetterForm />
             <SimpleTableSpareLetter/>
         </PageContainer>

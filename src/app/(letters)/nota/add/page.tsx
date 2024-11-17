@@ -4,7 +4,7 @@ import { PageContainer } from "@/components/PageContainer/PageContainer";
 
 export default function AddNotaPage() {
   return (
-    <PageContainer title="">
+    <PageContainer title="Nota Dinas">
       <CreateLetterForm />
     </PageContainer>
   );

@@ -1,6 +1,6 @@
 import {useQuery} from "@tanstack/react-query";
 import ky from "ky";
-import type {LetterResponse, Letters, SpareLetters, UpdateLetterResponse} from "./types";
+import type {Departments, LetterResponse, Letters, SpareLetters, UpdateLetterResponse} from "./types";
 import Cookies from "js-cookie";
 
 const token = Cookies.get("authToken")
@@ -105,6 +105,15 @@ export const deleteLetter = async (id: string) => {
     }
 };
 
+export const getDepartments = async () => {
+    const res = await ky.get(`http://localhost:5000/api/department`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    }).json<Departments[]>();
+    return res;
+};
+
 export const useLetters = () =>
 	useQuery<Letters[]>({
 		queryKey: ["Letters"],
@@ -130,3 +139,9 @@ export const useDownloadLetterFile = (id: string) =>
 		queryFn: () => downloadLetterFile(id),
 		enabled: !!id,
 	});
+
+export const useDepartments = () =>
+    useQuery<Departments[]>({
+        queryKey: ["Departments"],
+        queryFn: () => getDepartments(),
+    }); 

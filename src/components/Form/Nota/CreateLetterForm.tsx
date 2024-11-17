@@ -115,7 +115,7 @@ export function CreateLetterForm() {
         </Button>
         <Box component="form" onSubmit={form.onSubmit((values) => handleSubmit(values))}>
             <Text component="h2" fw="bold" fz="lg">
-                Buat Surat
+                Tambah Nota Dinas
             </Text>
             <DateInput
                 readOnly

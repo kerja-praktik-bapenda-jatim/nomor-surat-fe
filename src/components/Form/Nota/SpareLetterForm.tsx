@@ -76,7 +76,7 @@ export function SpareLetterForm() {
     return (
         <Paper withBorder shadow="md" p="md">
             <Text component="h2" fw="bold" fz="lg">
-                Tambah Spare Surat
+                Tambah Spare Nota Dinas
             </Text>
             <form onSubmit={form.onSubmit(handleSubmit)}>
                 <DateInput

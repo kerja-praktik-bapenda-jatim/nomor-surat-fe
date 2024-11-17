@@ -36,3 +36,8 @@ export interface SpareLetters{
   date: string | null;
   spareCounts: string;
 }
+
+export interface Departments{
+  id: string;
+  name: string;
+}

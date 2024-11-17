@@ -77,7 +77,7 @@ export function UpdateLetterForm() {
             </Button>
             <Box>
                 <Text component="h2" fw="bold" fz="lg">
-                    Update Surat
+                    Update Nota Dinas
                 </Text>
                 <TextInput
                     readOnly

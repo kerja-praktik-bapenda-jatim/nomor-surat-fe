@@ -4,14 +4,15 @@ import { Button, Paper, TextInput, Text, NativeSelect, Space } from '@mantine/co
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
-import { addSpareLetter } from '@/services/surat';
+import { addSpareLetter, useDepartments } from '@/services/surat';
 
 export function SpareLetterForm() {
+    const { data, isLoading } = useDepartments();
     const form = useForm({
         initialValues: {
             date: null,
             spareCounts: '',
-            departments: '',
+            departmentId: '',
         },
         validate: {
             date: (value) => value ? null : 'Tanggal harus dipilih',
@@ -19,7 +20,7 @@ export function SpareLetterForm() {
                 !Number.isNaN(Number(value)) && Number(value) > 0
                 ? null
                 : 'Jumlah Harus Lebih dari 0',
-            departments: (value) => value ? null : 'Bidang harus dipilih',
+            departmentId: (value) => value ? null : 'Bidang harus dipilih',
         },
     });
 
@@ -92,15 +93,10 @@ export function SpareLetterForm() {
                 />
                 <Space h="md" />
                 <NativeSelect
-                    {...form.getInputProps('departments')}
+                    {...form.getInputProps('departmentId')}
                     label="Bidang"
-                    data={[
-                        { value: '', label: '' },
-                        { value: 'A', label: 'Bidang A' },
-                        { value: 'B', label: 'Bidang B' },
-                        { value: 'C', label: 'Bidang C' },
-                    ]}
-                    disabled={loading}
+                    data={(data || []).map((dept) => ({ value: dept.id, label: dept.name }))}
+                    disabled={isLoading || (data && data.length === 0)}
                 />
                 <Space h="md" />
                 <TextInput
