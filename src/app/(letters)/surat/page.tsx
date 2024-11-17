@@ -14,6 +14,9 @@ export default function SuratPage() {
                     <Button onClick={() => router.push('/surat/add')}>
                         Buat Surat
                     </Button>
+                    <Button onClick={() => router.push('/surat/export')}>
+                        Export Surat
+                    </Button>
                 </Group>
                 <SimpleTableLetter />
             </Paper>
