@@ -35,3 +35,8 @@ export interface SpareNota{
   date: string | null;
   spareCounts: string;
 }
+
+export interface InputExport{
+  startDate: string;
+  endDate: string;
+}

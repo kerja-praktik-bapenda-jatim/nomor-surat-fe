@@ -71,7 +71,7 @@ export function ViewLetterForm() {
                     Kembali
                 </Button>
                 <Group>
-                    <Button color="blue" onClick={handleEdit} leftSection={<IconEdit />}>
+                    <Button color="yellow" onClick={handleEdit} leftSection={<IconEdit />}>
                         Edit
                     </Button>
                     <Button color="red" onClick={openDeleteModal} leftSection={<IconTrash />}>

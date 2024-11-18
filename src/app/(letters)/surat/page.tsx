@@ -2,6 +2,7 @@
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 import { SimpleTableLetter } from "@/components/Table/Surat/SimpleLetterTable";
 import { Button, Group, Paper } from "@mantine/core";
+import { IconFileExport, IconFilePlus } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
 export default function SuratPage() {
@@ -11,11 +12,11 @@ export default function SuratPage() {
         <PageContainer title="Surat Saya">
             <Paper withBorder radius="md" p="md">
                 <Group>
-                    <Button onClick={() => router.push('/surat/add')}>
+                    <Button onClick={() => router.push('/surat/add')} rightSection= {<IconFilePlus />} color="blue">
                         Buat Surat
                     </Button>
-                    <Button onClick={() => router.push('/surat/export')}>
-                        Export Surat
+                    <Button onClick={() => router.push('/surat/export')} rightSection= {<IconFileExport />}>
+                        Ekspor Surat
                     </Button>
                 </Group>
                 <SimpleTableLetter />

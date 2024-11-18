@@ -72,7 +72,7 @@ export function UpdateLetterForm() {
 
     return (
         <Paper withBorder shadow="md" p="md">
-            <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />}>
+            <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
                     Kembali
             </Button>
             <Box>

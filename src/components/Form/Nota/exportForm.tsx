@@ -1,25 +1,23 @@
 "use client"
 import { useState } from 'react';
-import { Button, Paper, TextInput, Text, Space } from '@mantine/core';
+import { Button, Paper, Text, Space } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
-import { addSpareNota } from '@/services/nota';
+import { exportNota } from '@/services/nota';
 import { useRouter } from 'next/navigation';
+import { IconArrowLeft } from '@tabler/icons-react';
 
-export function SpareLetterForm() {
+export function ExportNotaForm() {
     const router = useRouter();
     const form = useForm({
         initialValues: {
-            date: null,
-            spareCounts: '',
+            startDate: '',
+            endDate: '',
         },
         validate: {
-            date: (value) => value ? null : 'Tanggal harus dipilih',
-            spareCounts: (value) =>
-                !Number.isNaN(Number(value)) && Number(value) > 0
-                ? null
-                : 'Jumlah Harus Lebih dari 0',
+            startDate: (value) => value ? null : 'Tanggal mulai harus dipilih',
+            endDate: (value) => value ? null : 'Tanggal akhir harus dipilih',
         },
     });
 
@@ -28,13 +26,13 @@ export function SpareLetterForm() {
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
         try {
-            const response = await addSpareNota(values);
+            const response = await exportNota(values); // Fungsi untuk mengirim request ekspor
             modals.open({
-                title: 'Penambahan Spare Surat',
+                title: 'Ekspor Surat',
                 centered: true,
                 children: (
                     <>
-                        <Text size="sm">{response.message}</Text>,
+                        <Text size="sm">{response.message}</Text>
                         <Button
                             onClick={() => {
                                 modals.closeAll();
@@ -47,7 +45,7 @@ export function SpareLetterForm() {
                     </>
                 ),
             });
-        } catch (error:any) {
+        } catch (error: any) {
             modals.open({
                 title: 'Error',
                 centered: true,
@@ -57,7 +55,6 @@ export function SpareLetterForm() {
                         <Button
                             onClick={() => {
                                 modals.closeAll();
-                                handleBack();
                             }}
                             mt="md"
                         >
@@ -77,29 +74,31 @@ export function SpareLetterForm() {
 
     return (
         <Paper withBorder shadow="md" p="md">
+            <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
+                    Kembali
+            </Button>
             <Text component="h2" fw="bold" fz="lg">
-                Tambah Spare Nota Dinas
+                Ekspor Nota Dinas
             </Text>
             <form onSubmit={form.onSubmit(handleSubmit)}>
                 <DateInput
                     clearable
-                    valueFormat="DD-MMMM-YYYY"
-                    minDate={new Date(new Date().setDate(new Date().getDate() - 1))}
-                    maxDate={new Date()}
-                    {...form.getInputProps('date')}
-                    label="Tanggal"
-                    placeholder="Pilih tanggal"
+                    valueFormat="DD-MM-YYYY"
+                    {...form.getInputProps('startDate')}
+                    label="Tanggal Mulai"
+                    placeholder="Pilih tanggal mulai"
                 />
                 <Space h="md" />
-                <TextInput
-                    {...form.getInputProps('spareCounts')}
-                    label="Jumlah"
-                    placeholder="1-100"
-                    disabled={loading}
+                <DateInput
+                    clearable
+                    valueFormat="DD-MM-YYYY"
+                    {...form.getInputProps('endDate')}
+                    label="Tanggal Akhir"
+                    placeholder="Pilih tanggal akhir"
                 />
                 <Space h="md" />
                 <Button type="submit" mt="md" loading={loading}>
-                    Submit
+                    Ekspor
                 </Button>
             </form>
         </Paper>

@@ -14,7 +14,7 @@ export default function AuthLayout({ children }: Props) {
   return (
     <Box className={classes.wrapper}>
       <Title order={1} fw="bolder">
-        Mantine Admin
+        Nomor Surat
       </Title>
       {/*<Text c="dimmed" size="sm" mt={5}>*/}
       {/*  Don&apos;t have an account?{" "}*/}

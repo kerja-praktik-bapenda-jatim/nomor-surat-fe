@@ -41,3 +41,9 @@ export interface Departments{
   id: string;
   name: string;
 }
+
+export interface InputExport{
+  startDate: string;
+  endDate: string;
+  departmentId: string;
+}

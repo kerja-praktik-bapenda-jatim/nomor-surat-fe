@@ -59,23 +59,23 @@ export function LoginForm() {
 				value={password}
 				onChange={(e) => setPassword(e.target.value)}
 			/>
-			<Group mt="md" justify="space-between">
+			{/* <Group mt="md" justify="space-between">
 				<Checkbox label="Remember me"/>
 				<Anchor size="sm" href="#">
 					Forgot Password?
 				</Anchor>
-			</Group>
+			</Group> */}
 
 			{error && <Text color="red" size="sm" mt="sm">{error}</Text>}
 
-			<Center>
+			{/* <Center>
 				<Text c="dimmed" size="sm" mt={10}>
 					Don&apos;t have an account?{" "}
 					<Anchor size="sm" href="/register">
 						Sign Up
 					</Anchor>
 				</Text>
-			</Center>
+			</Center> */}
 			<Button fullWidth mt="xl" onClick={handleLogin}>
 				Sign In
 			</Button>

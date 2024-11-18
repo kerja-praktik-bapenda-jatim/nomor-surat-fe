@@ -4,9 +4,9 @@ import { Button, Paper, Text, NativeSelect, Space } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
-import { useDepartments } from '@/services/surat';
-import { exportLetters } from '@/services/export';
+import { useDepartments, exportLetters } from '@/services/surat';
 import { useRouter } from 'next/navigation';
+import { IconArrowLeft } from '@tabler/icons-react';
 
 export function ExportLetterForm() {
     const router = useRouter();
@@ -77,6 +77,9 @@ export function ExportLetterForm() {
 
     return (
         <Paper withBorder shadow="md" p="md">
+            <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
+                    Kembali
+            </Button>
             <Text component="h2" fw="bold" fz="lg">
                 Ekspor Surat
             </Text>
