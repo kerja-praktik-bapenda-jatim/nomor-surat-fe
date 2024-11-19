@@ -18,10 +18,12 @@ export const login = async (data: LoginRequest) => {
 
 		if (response.ok) {
 			const data = await response.json<LoginResponse>()
-			const {exp} = decodeToken(data.token);
+			const {exp, userName, departmentName} = decodeToken(data.token);
 			const expirationDate = new Date(exp * 1000);
 
 			Cookies.set("authToken", data.token, {expires: expirationDate});
+			localStorage.setItem("userName", userName);
+			localStorage.setItem("departmentName", departmentName);
 
 			return data;
 		} else {
@@ -68,6 +70,7 @@ export const useAuthRedirect = () => {
 			const decoded = decodeToken(token)
 			if (decoded.exp * 1000 < Date.now()) {
 				Cookies.remove("authToken")
+				localStorage.clear()
 				router.push('/login')
 			} else {
 				router.push('/surat')
@@ -75,3 +78,14 @@ export const useAuthRedirect = () => {
 		}
 	}, [router]);
 }
+
+export const getCurrentUser = () => {
+	if (typeof window === "undefined") {
+		return {userName: "Guest", departmentName: "Unknown Department"};
+	}
+
+	const userName = localStorage.getItem("userName") || "Unknown User";
+	const departmentName = localStorage.getItem("departmentName") || "Unknown Department";
+
+	return {userName, departmentName};
+};

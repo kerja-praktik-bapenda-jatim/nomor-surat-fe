@@ -20,6 +20,7 @@ export function AdminHeader({ burger }: Props) {
 
 	const handleLogout = () => {
 		Cookies.remove('authToken');
+		localStorage.clear();
 		router.push('/login');
 	};
 
