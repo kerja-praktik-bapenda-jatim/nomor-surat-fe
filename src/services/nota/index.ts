@@ -20,12 +20,12 @@ export const getSpareNota = async () => {
 	return getNota({reserved: "false"});
 };
 
-export const getNotaById = async (id: string): Promise<Nota> => {
+export const getNotaById = async (id: string): Promise<NotaResponse> => {
     const res = await ky.get(`${BASE_URL}/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    }).json<Nota>();
+    }).json<NotaResponse>();
     return res;
 };
 
@@ -144,7 +144,7 @@ export const useSpareNota = () =>
 	});
 
 export const useNotaById = (id: string) =>
-	useQuery<Nota>({
+	useQuery<NotaResponse>({
 		queryKey: ["Nota", id],
 		queryFn: () => getNotaById(id),
 		enabled: !!id,
