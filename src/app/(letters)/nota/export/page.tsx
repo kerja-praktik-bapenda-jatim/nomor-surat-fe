@@ -1,5 +1,5 @@
 "use client"; 
-import { ExportNotaForm } from "@/components/Form/Nota/exportForm";
+import { ExportNotaForm } from "@/components/Form/Nota/ExportForm";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 
 export default function AddSuratPage() {

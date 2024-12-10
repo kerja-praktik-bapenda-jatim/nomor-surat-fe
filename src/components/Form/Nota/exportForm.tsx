@@ -1,23 +1,37 @@
 "use client"
 import { useState } from 'react';
-import { Button, Paper, Text, Space } from '@mantine/core';
+import { Button, Paper, Text, Space, Select } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
 import { exportNota } from '@/services/nota';
 import { useRouter } from 'next/navigation';
 import { IconArrowLeft } from '@tabler/icons-react';
+import { useDepartments } from '@/services/data';
 
 export function ExportNotaForm() {
     const router = useRouter();
+    const {
+        data: departmentsData,
+        isLoading: isDepartmentsLoading,
+        error: departmentsError,
+    } = useDepartments();
+
+    const departmentOptions = departmentsData?.map((department) => ({
+        value: department.id,
+        label: `${department.id} - ${department.name}`,
+    })) || [];
+    
     const form = useForm({
         initialValues: {
             startDate: '',
             endDate: '',
+            departmentId: '',
         },
         validate: {
             startDate: (value) => value ? null : 'Tanggal mulai harus dipilih',
             endDate: (value) => value ? null : 'Tanggal akhir harus dipilih',
+            departmentId: (value) => value ? null : 'Bidang harus dipilih',
         },
     });
 
@@ -95,6 +109,19 @@ export function ExportNotaForm() {
                     {...form.getInputProps('endDate')}
                     label="Tanggal Akhir"
                     placeholder="Pilih tanggal akhir"
+                />
+                <Space h="md" />
+                <Select
+                {...form.getInputProps('departmentId')}
+                    label="Kode Bidang"
+                    placeholder={isDepartmentsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                    data={departmentOptions}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Kode Bidang tidak ditemukan..."
+                    checkIconPosition="right"
+                    disabled={isDepartmentsLoading || !!departmentsError}
+                    error={departmentsError ? "Gagal memuat data" : null}
                 />
                 <Space h="md" />
                 <Button type="submit" mt="md" loading={loading}>
