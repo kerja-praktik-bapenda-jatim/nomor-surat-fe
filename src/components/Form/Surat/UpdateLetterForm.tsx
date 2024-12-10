@@ -127,7 +127,7 @@ export function UpdateLetterForm() {
             onChange={(value) => handleSelectChange('classificationId', value)}
             clearable
             searchable
-            nothingFoundMessage="Kode Klasifikasi Surat tidak ditemukan..."
+            nothingFoundMessage="Kode Klasifikasi Surat ditemukan..."
             checkIconPosition="right"
             />
             <Space h="sm" />
