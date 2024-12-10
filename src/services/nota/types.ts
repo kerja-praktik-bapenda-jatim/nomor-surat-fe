@@ -39,6 +39,11 @@ export interface NotaResponse{
 export interface UpdateNotaResponse{
   subject: string;
   to: string;
+  attachmentCount: string;
+  departmentId: string;
+  classificationId: string;
+  levelId: string;
+  description: string;
   file: File | null;
 };
 
