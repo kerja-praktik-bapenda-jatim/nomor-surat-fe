@@ -1,6 +1,6 @@
 "use client"
 import { useState } from 'react';
-import { Button, Paper, Text, NativeSelect, Space } from '@mantine/core';
+import { Button, Paper, Text, Space, Select } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
@@ -11,7 +11,17 @@ import { useDepartments } from '@/services/data';
 
 export function ExportLetterForm() {
     const router = useRouter();
-    const { data, isLoading } = useDepartments();
+    const {
+        data: departmentsData,
+        isLoading: isDepartmentsLoading,
+        error: departmentsError,
+    } = useDepartments();
+
+    const departmentOptions = departmentsData?.map((department) => ({
+        value: department.id,
+        label: `${department.id} - ${department.name}`,
+    })) || [];
+
     const form = useForm({
         initialValues: {
             startDate: '',
@@ -101,12 +111,18 @@ export function ExportLetterForm() {
                     placeholder="Pilih tanggal akhir"
                 />
                 <Space h="md" />
-                <NativeSelect
-                    {...form.getInputProps('departmentId')}
-                    label="Bidang"
-                    data={(data || []).map((dept) => ({ value: dept.id, label: dept.name }))}
-                    disabled={isLoading || (data && data.length === 0)}
-                />
+                <Select
+                {...form.getInputProps('departmentId')}
+                label="Kode Bidang"
+                placeholder={isDepartmentsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                data={departmentOptions}
+                clearable
+                searchable
+                nothingFoundMessage="Kode Bidang tidak ditemukan..."
+                checkIconPosition="right"
+                disabled={isDepartmentsLoading || !!departmentsError}
+                error={departmentsError ? "Gagal memuat data" : null}
+            />
                 <Space h="md" />
                 <Button type="submit" mt="md" loading={loading}>
                     Ekspor

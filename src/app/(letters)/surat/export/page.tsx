@@ -1,5 +1,5 @@
 "use client"; 
-import { ExportLetterForm } from "@/components/Form/Surat/exportForm";
+import { ExportLetterForm } from "@/components/Form/Surat/ExportForm";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 
 export default function AddSuratPage() {
