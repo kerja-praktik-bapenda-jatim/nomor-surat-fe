@@ -16,9 +16,14 @@ export interface LetterResponse{
   id: string;
   date: string;
   reserved: string;
+  attachmentCount: string;
   userId: string;
+  departmentId: string;
   subject: string;
   to: string;
+  classificationId: string;
+  levelId: string;
+  description: string;
   filename: string;
   filePath: string;
   updatedAt: string;
@@ -35,11 +40,6 @@ export interface UpdateLetterResponse{
 export interface SpareLetters{
   date: string | null;
   spareCounts: string;
-}
-
-export interface Departments{
-  id: string;
-  name: string;
 }
 
 export interface InputExport{

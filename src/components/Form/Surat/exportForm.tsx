@@ -4,9 +4,10 @@ import { Button, Paper, Text, NativeSelect, Space } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
-import { useDepartments, exportLetters } from '@/services/surat';
+import { exportLetters } from '@/services/surat';
 import { useRouter } from 'next/navigation';
 import { IconArrowLeft } from '@tabler/icons-react';
+import { useDepartments } from '@/services/data';
 
 export function ExportLetterForm() {
     const router = useRouter();
