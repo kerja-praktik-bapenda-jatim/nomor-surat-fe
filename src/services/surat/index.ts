@@ -20,12 +20,12 @@ export const getSpareLetters = async () => {
 	return getLetters({reserved: "false"});
 };
 
-export const getLetterById = async (id: string): Promise<Letters> => {
+export const getLetterById = async (id: string): Promise<LetterResponse> => {
     const res = await ky.get(`${BASE_URL}/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    }).json<Letters>();
+    }).json<LetterResponse>();
     return res;
 };
 
@@ -145,7 +145,7 @@ export const useSpareLetters = () =>
 	});
 
 export const useLetterById = (id: string) =>
-	useQuery<Letters>({
+	useQuery<LetterResponse>({
 		queryKey: ["Letter", id],
 		queryFn: () => getLetterById(id),
 		enabled: !!id,
