@@ -15,14 +15,25 @@ export interface NotaResponse{
   id: string;
   date: string;
   reserved: string;
+  attachmentCount: string;
   userId: string;
+  departmentId: string;
   subject: string;
   to: string;
+  classificationId: string;
+  levelId: string;
+  description: string;
   filename: string;
   filePath: string;
   updatedAt: string;
   createdAt: string;
   number: string;
+  Level: {
+    name: string;
+  };
+  Classification: {
+    name: string;
+  };
 }
 
 export interface UpdateNotaResponse{
