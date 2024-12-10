@@ -71,16 +71,36 @@ export function UpdateLetterForm() {
 
     const handleSubmit = async () => {
         if (!letterId) return;
-
+    
+        try {
         const updateSuccess = await patchLetter(letterId, formData);
+        
+        // Modal untuk pembaruan berhasil
         if (updateSuccess) {
-        modals.open({
+            modals.open({
             title: 'Pembaharuan Berhasil',
             centered: true,
             children: (
-            <>
+                <>
                 <Text size="sm">Data surat berhasil diperbarui.</Text>
                 <Button onClick={() => { modals.closeAll(); handleBack(); }} mt="md">
+                    OK
+                </Button>
+                </>
+            ),
+            });
+        }
+        } catch (error: any) {
+        // Tangani error dari backend
+        const errorMessage = error.response?.data?.message || "Terjadi kesalahan saat memperbarui data.";
+    
+        modals.open({
+            title: 'Pembaharuan Gagal',
+            centered: true,
+            children: (
+            <>
+                <Text size="sm">{errorMessage}</Text>
+                <Button onClick={() => modals.closeAll()} mt="md">
                 OK
                 </Button>
             </>
@@ -88,6 +108,7 @@ export function UpdateLetterForm() {
         });
         }
     };
+    
 
     const handleBack = () => {
         router.push(`/surat/view/${letterId}`);
