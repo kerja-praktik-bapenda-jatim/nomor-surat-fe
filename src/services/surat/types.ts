@@ -29,11 +29,22 @@ export interface LetterResponse{
   updatedAt: string;
   createdAt: string;
   number: string;
+  Level: {
+    name: string;
+  };
+  Classification: {
+    name: string;
+  };
 }
 
 export interface UpdateLetterResponse{
   subject: string;
   to: string;
+  attachmentCount: string;
+  departmentId: string;
+  classificationId: string;
+  levelId: string;
+  description: string;
   file: File | null;
 };
 

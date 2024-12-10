@@ -11,7 +11,6 @@ import { modals } from '@mantine/modals';
 import { useClassifications, useDepartments, useLevels } from '@/services/data';
 
 export function CreateLetterForm() {
-    // Fetch data levels
     const {
         data: classificationsData,
         isLoading: isClassificationsLoading,
@@ -30,7 +29,6 @@ export function CreateLetterForm() {
         error: levelsError,
     } = useLevels();
 
-    // Transform data menjadi format yang sesuai
     const classificationOptions = classificationsData?.map((classification) => ({
         value: classification.id,
         label: `${classification.id} - ${classification.name}`,

@@ -76,6 +76,10 @@ export const patchLetter = async (id: string, formData: UpdateLetterResponse): P
         const formDataToSend = new FormData();
         formDataToSend.append('subject', formData.subject);
         formDataToSend.append('to', formData.to);
+        formDataToSend.append('classificationId', formData.classificationId);
+        formDataToSend.append('levelId', formData.levelId);
+        formDataToSend.append('attachmentCount',formData.attachmentCount)
+        formDataToSend.append('description', formData.description);
         if (formData.file) formDataToSend.append('file', formData.file);
 
         await ky.patch(`${BASE_URL}/${id}`, {
