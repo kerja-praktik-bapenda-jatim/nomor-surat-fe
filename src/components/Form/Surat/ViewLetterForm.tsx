@@ -89,7 +89,7 @@ export function ViewLetterForm() {
                 <TextInput value={letter?.date ? convertUTC(letter.date) : ''} label="Tanggal" readOnly />
                 <Space h="sm" />
                 
-                <TextInput value={`${letter?.classificationId} - ${letter?.Classification?.name}`} label="Kode Klasifikasi Surat" readOnly />
+                <TextInput value={`${letter?.classificationId || ''} - ${letter?.Classification?.name || ''}`} label="Kode Klasifikasi Surat" readOnly />
                 <Space h="sm" />
 
                 <TextInput value={letter?.departmentId} label="Kode Bidang" readOnly />
@@ -101,7 +101,7 @@ export function ViewLetterForm() {
                 <TextInput value={letter?.subject} label="Perihal" readOnly />
                 <Space h="sm" />
 
-                <TextInput value={letter?.Level.name} label="Sifat Surat" readOnly />
+                <TextInput value={letter?.Level?.name || ''} label="Sifat Surat" readOnly />
                 <Space h="sm" />
                 
                 <TextInput value={letter?.attachmentCount} label="Jumlah Lampiran" readOnly />
