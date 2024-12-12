@@ -44,7 +44,7 @@ export const SimpleTableSpareLetter = () => {
 				header: "Actions",
 				Cell: ({row}) => (
 					<ActionIcon
-						onClick={() => router.push(`/nota/edit/${row.original.id}`)}
+						onClick={() => router.push(`/nota/view/${row.original.id}`)}
 					>
 						<IconEye size={14}/>
 					</ActionIcon>

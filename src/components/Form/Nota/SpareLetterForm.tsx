@@ -1,18 +1,31 @@
 "use client"
 import { useState } from 'react';
-import { Button, Paper, TextInput, Text, Space } from '@mantine/core';
+import { Button, Paper, TextInput, Text, Space, Select } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
 import { addSpareNota } from '@/services/nota';
 import { useRouter } from 'next/navigation';
+import { useDepartments } from '@/services/data';
 
 export function SpareLetterForm() {
+    const {
+        data: departmentsData,
+        isLoading: isDepartmentsLoading,
+        error: departmentsError,
+    } = useDepartments();
+
+    const departmentOptions = departmentsData?.map((department) => ({
+        value: department.id,
+        label: `${department.id} - ${department.name}`,
+    })) || [];
+    
     const router = useRouter();
     const form = useForm({
         initialValues: {
             date: null,
             spareCounts: '',
+            departmentId: '',
         },
         validate: {
             date: (value) => value ? null : 'Tanggal harus dipilih',
@@ -20,6 +33,7 @@ export function SpareLetterForm() {
                 !Number.isNaN(Number(value)) && Number(value) > 0
                 ? null
                 : 'Jumlah Harus Lebih dari 0',
+            departmentId: (value) => value ? null : 'Bidang harus dipilih',
         },
     });
 
@@ -89,6 +103,19 @@ export function SpareLetterForm() {
                     {...form.getInputProps('date')}
                     label="Tanggal"
                     placeholder="Pilih tanggal"
+                />
+                <Space h="md" />
+                <Select
+                    {...form.getInputProps('departmentId')}
+                    label="Kode Bidang"
+                    placeholder={isDepartmentsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                    data={departmentOptions}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Kode Bidang tidak ditemukan..."
+                    checkIconPosition="right"
+                    disabled={isDepartmentsLoading || !!departmentsError}
+                    error={departmentsError ? "Gagal memuat data" : null}
                 />
                 <Space h="md" />
                 <TextInput
