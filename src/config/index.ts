@@ -12,10 +12,6 @@ export const navLinks: NavItem[] = [
 				link: "/surat",
 			},
 			{
-				label: "Tambah Surat Keluar", 
-				link: "/surat/add"
-			},
-			{
 				label: "Spare Surat Keluar", 
 				link: "/surat/spare"
 			},
@@ -29,10 +25,6 @@ export const navLinks: NavItem[] = [
 			{
 				label: "Nota Dinas Saya",
 				link: "/nota",
-			},
-			{
-				label: "Tambah Nota Dinas", 
-				link: "/nota/add"
 			},
 			{
 				label: "Spare Nota Dinas", 
