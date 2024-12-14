@@ -119,6 +119,7 @@ export const exportLetters = async (values: InputExport) => {
             startDate: values.startDate,
             endDate: values.endDate,
             departmentId: values.departmentId,
+            classificationId: values.classificationId,
         },
     });
 

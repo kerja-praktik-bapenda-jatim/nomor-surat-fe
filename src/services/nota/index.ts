@@ -118,6 +118,8 @@ export const exportNota = async (values: InputExport) => {
         searchParams: {
             startDate: values.startDate,
             endDate: values.endDate,
+            departmentId: values.departmentId,
+            classificationId: values.classificationId,
         },
     });
 

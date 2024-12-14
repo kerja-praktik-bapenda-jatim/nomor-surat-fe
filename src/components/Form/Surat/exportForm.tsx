@@ -7,7 +7,7 @@ import { modals } from '@mantine/modals';
 import { exportLetters } from '@/services/surat';
 import { useRouter } from 'next/navigation';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useDepartments } from '@/services/data';
+import { useClassifications, useDepartments } from '@/services/data';
 
 export function ExportLetterForm() {
     const router = useRouter();
@@ -17,9 +17,20 @@ export function ExportLetterForm() {
         error: departmentsError,
     } = useDepartments();
 
+    const {
+        data: classificationsData,
+        isLoading: isClassificationsLoading,
+        error: classificationsError,
+    } = useClassifications();
+
     const departmentOptions = departmentsData?.map((department) => ({
         value: department.id,
         label: `${department.id} - ${department.name}`,
+    })) || [];
+
+    const classificationOptions = classificationsData?.map((classification) => ({
+        value: classification.id,
+        label: `${classification.id} - ${classification.name}`,
     })) || [];
 
     const form = useForm({
@@ -27,11 +38,11 @@ export function ExportLetterForm() {
             startDate: '',
             endDate: '',
             departmentId: '',
+            classificationId: '',
         },
         validate: {
             startDate: (value) => value ? null : 'Tanggal mulai harus dipilih',
             endDate: (value) => value ? null : 'Tanggal akhir harus dipilih',
-            departmentId: (value) => value ? null : 'Bidang harus dipilih',
         },
     });
 
@@ -40,7 +51,7 @@ export function ExportLetterForm() {
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
         try {
-            const response = await exportLetters(values); // Fungsi untuk mengirim request ekspor
+            const response = await exportLetters(values);
             modals.open({
                 title: 'Ekspor Surat',
                 centered: true,
@@ -89,7 +100,7 @@ export function ExportLetterForm() {
     return (
         <Paper withBorder shadow="md" p="md">
             <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
-                    Kembali
+                Kembali
             </Button>
             <Text component="h2" fw="bold" fz="lg">
                 Ekspor Surat
@@ -112,17 +123,30 @@ export function ExportLetterForm() {
                 />
                 <Space h="md" />
                 <Select
-                {...form.getInputProps('departmentId')}
-                label="Kode Bidang"
-                placeholder={isDepartmentsLoading ? "Memuat data..." : "Pilih atau Cari"}
-                data={departmentOptions}
-                clearable
-                searchable
-                nothingFoundMessage="Kode Bidang tidak ditemukan..."
-                checkIconPosition="right"
-                disabled={isDepartmentsLoading || !!departmentsError}
-                error={departmentsError ? "Gagal memuat data" : null}
-            />
+                    {...form.getInputProps('classificationId')}
+                    label="Kode Klasifikasi Surat"
+                    placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                    data={classificationOptions}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Kode Klasifikasi tidak ditemukan..."
+                    checkIconPosition="right"
+                    disabled={isClassificationsLoading || !!classificationsError}
+                    error={classificationsError ? "Gagal memuat data" : null}
+                />
+                <Space h="md" />
+                <Select
+                    {...form.getInputProps('departmentId')}
+                    label="Kode Bidang"
+                    placeholder={isDepartmentsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                    data={departmentOptions}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Kode Bidang tidak ditemukan..."
+                    checkIconPosition="right"
+                    disabled={isDepartmentsLoading || !!departmentsError}
+                    error={departmentsError ? "Gagal memuat data" : null}
+                />
                 <Space h="md" />
                 <Button type="submit" mt="md" loading={loading}>
                     Ekspor
