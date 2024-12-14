@@ -62,6 +62,7 @@ export interface UpdateNotaResponse{
 export interface SpareNota{
   date: string | null;
   spareCounts: string;
+  departmentId: string;
 }
 
 export interface InputExport{

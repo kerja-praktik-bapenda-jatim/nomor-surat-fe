@@ -18,7 +18,7 @@ export function SpareLetterForm() {
         value: department.id,
         label: `${department.id} - ${department.name}`,
     })) || [];
-    
+
     const form = useForm({
         initialValues: {
             date: null,
@@ -31,7 +31,6 @@ export function SpareLetterForm() {
                 !Number.isNaN(Number(value)) && Number(value) > 0
                 ? null
                 : 'Jumlah Harus Lebih dari 0',
-            departmentId: (value) => value ? null : 'Bidang harus dipilih',
         },
     });
 

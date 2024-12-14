@@ -62,6 +62,7 @@ export interface UpdateLetterResponse{
 export interface SpareLetters{
   date: string | null;
   spareCounts: string;
+  departmentId: string;
 }
 
 export interface InputExport{
