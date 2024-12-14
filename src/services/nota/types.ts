@@ -6,8 +6,20 @@ export interface Nota {
   to: string;
   filename: string;
   reserved: string;
+  attachmentCount: string;
+  description: string;
+  departmentId: string;
+  lastReserved: string;
   createdAt: string;
   updatedAt: string;
+  classificationId: string;
+  levelId: string;
+  Level: {
+    name: string;
+  },
+  Classification: {
+    name: string;
+  }
   userId: string;
 }
 

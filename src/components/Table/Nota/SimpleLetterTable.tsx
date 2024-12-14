@@ -19,8 +19,12 @@ export const SimpleTableLetter = () => {
         header: "Nomor Surat",
       },
       {
-        accessorKey: "id",
-        header: "ID",
+        accessorKey: "classificationId",
+        header: "Kode Klasifikasi Arsip",
+      },
+      {
+        accessorKey: "departmentId",
+        header: "Kode Bidang",
       },
       {
         accessorKey: "date",
@@ -36,12 +40,16 @@ export const SimpleTableLetter = () => {
         header: "Kepada",
       },
       {
+        accessorKey: "Level.name",
+        header: "Sifat Surat",
+      },
+      {
         accessorKey: "filename",
         header: "File",
       },
       {
         accessorKey: "actions",
-        header: "Actions",
+        header: "Aksi",
         Cell: ({ row }) => (
           <ActionIcon
             onClick={() => router.push(`/nota/view/${row.original.id}`)}

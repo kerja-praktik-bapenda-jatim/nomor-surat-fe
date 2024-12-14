@@ -6,10 +6,21 @@ export interface Letters {
   to: string;
   filename: string;
   reserved: string;
+  attachmentCount: string;
+  description: string;
+  departmentId: string;
+  lastReserved: string;
   createdAt: string;
   updatedAt: string;
+  classificationId: string;
+  levelId: string;
+  Level: {
+    name: string;
+  },
+  Classification: {
+    name: string;
+  }
   userId: string;
-  department_id: string;
 }
 
 export interface LetterResponse{
