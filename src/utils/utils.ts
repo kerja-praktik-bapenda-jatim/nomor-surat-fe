@@ -33,3 +33,15 @@ export function convertUTC(utcTimestamp: string): string {
 export function getAuthToken() {
     return Cookies.get("authToken");
 }
+
+export function stringToBoolean(value:string) {
+    if (typeof value === 'string') {
+        const lowerValue = value.toLowerCase();
+        if (lowerValue === 'true') {
+            return true;
+        } else if (lowerValue === 'false') {
+            return false;
+        }
+    }
+    return false;
+}

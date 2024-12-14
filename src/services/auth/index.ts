@@ -3,6 +3,7 @@ import {LoginRequest, LoginResponse, RegisterRequest, RegisterResponse} from "@/
 import Cookies from "js-cookie";
 import {useRouter} from "next/navigation";
 import {useEffect} from "react";
+import { stringToBoolean } from "@/utils/utils";
 
 const BASE_URL = "http://localhost:5000/api/auth";
 
@@ -18,12 +19,13 @@ export const login = async (data: LoginRequest) => {
 
 		if (response.ok) {
 			const data = await response.json<LoginResponse>()
-			const {exp, userName, departmentName} = decodeToken(data.token);
+			const {exp, userName, departmentName, isAdmin} = decodeToken(data.token);
 			const expirationDate = new Date(exp * 1000);
 
 			Cookies.set("authToken", data.token, {expires: expirationDate});
 			localStorage.setItem("userName", userName);
 			localStorage.setItem("departmentName", departmentName);
+			localStorage.setItem("isAdmin", JSON.stringify(isAdmin));
 
 			return data;
 		} else {
@@ -81,11 +83,13 @@ export const useAuthRedirect = () => {
 
 export const getCurrentUser = () => {
 	if (typeof window === "undefined") {
-		return {userName: "Guest", departmentName: "Unknown Department"};
+		return {userName: "Guest", departmentName: "Unknown Department", isAdmin: false};
 	}
 
 	const userName = localStorage.getItem("userName") || "Unknown User";
 	const departmentName = localStorage.getItem("departmentName") || "Unknown Department";
+	const isAdminString = localStorage.getItem("isAdmin") ?? "false";
+	const isAdmin = stringToBoolean(isAdminString);
 
-	return {userName, departmentName};
+	return {userName, departmentName, isAdmin};
 };

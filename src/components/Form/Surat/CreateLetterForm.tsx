@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, FileInput, TextInput, Text, Space, Box, Paper, CopyButton, Tooltip, ActionIcon, Select, NumberInput } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
@@ -9,6 +9,7 @@ import { IconArrowLeft, IconCheck, IconCopy } from '@tabler/icons-react';
 import { postLetters } from '@/services/surat';
 import { modals } from '@mantine/modals';
 import { useClassifications, useDepartments, useLevels } from '@/services/data';
+import { getCurrentUser } from '@/services/auth';
 
 export function CreateLetterForm() {
     const {
@@ -44,6 +45,14 @@ export function CreateLetterForm() {
         label: level.name,
     })) || [];
 
+    const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
+        
+    useEffect(() => {
+        const user = getCurrentUser();
+        console.log("isAdmin", user.isAdmin)
+        setUser(user);
+    }, []);
+    
     const form = useForm({
         mode: 'uncontrolled',
         validate: {
@@ -212,7 +221,7 @@ export function CreateLetterForm() {
                 searchable
                 nothingFoundMessage="Kode Bidang tidak ditemukan..."
                 checkIconPosition="right"
-                disabled={isDepartmentsLoading || !!departmentsError}
+                disabled={isDepartmentsLoading || !!departmentsError || !user.isAdmin}
                 error={departmentsError ? "Gagal memuat data" : null}
             />
 
