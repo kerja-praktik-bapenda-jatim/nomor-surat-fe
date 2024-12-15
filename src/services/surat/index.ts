@@ -2,6 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import ky from "ky";
 import type {InputExport, LetterResponse, Letters, SpareLetters, UpdateLetterResponse} from "./types";
 import Cookies from "js-cookie";
+import { currentTimestamp } from "@/utils/utils";
 
 const token = Cookies.get("authToken")
 const BASE_URL = "http://localhost:5000/api/letter";
@@ -134,11 +135,11 @@ export const exportLetters = async (values: InputExport) => {
 
         // Mengonversi respons menjadi Blob untuk file
         const blob = await response.blob();
-
+        const filename = `Surat-Keluar-${currentTimestamp()}.xlsx`
         // Membuat link untuk mengunduh file
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
-        link.setAttribute('download', "Surat_Keluar.xlsx");
+        link.setAttribute('download', filename);
         document.body.appendChild(link);
         link.click(); // Memicu klik untuk mengunduh file
         document.body.removeChild(link);
