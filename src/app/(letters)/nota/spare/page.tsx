@@ -1,12 +1,12 @@
 "use client"
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 import { SimpleTableSpareLetter } from "@/components/Table/Nota/SimpleSpareLetterTable";
-import { SpareLetterForm } from '@/components/Form/Nota/SpareLetterForm';
+import { SpareNotaForm } from '@/components/Form/Nota/SpareNotaForm';
 
 export default function SpareNotaPage() {
     return (
         <PageContainer title="Spare Nota Dinas">
-            <SpareLetterForm />
+            <SpareNotaForm />
             <SimpleTableSpareLetter/>
         </PageContainer>
     );

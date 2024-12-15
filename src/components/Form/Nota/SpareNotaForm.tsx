@@ -8,7 +8,7 @@ import { addSpareNota } from '@/services/nota';
 import { useRouter } from 'next/navigation';
 import { useDepartments } from '@/services/data';
 
-export function SpareLetterForm() {
+export function SpareNotaForm() {
     const {
         data: departmentsData,
         isLoading: isDepartmentsLoading,

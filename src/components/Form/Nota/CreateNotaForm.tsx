@@ -11,7 +11,7 @@ import { modals } from '@mantine/modals';
 import { useClassifications, useDepartments, useLevels } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
 
-export function CreateLetterForm() {
+export function CreateNotaForm() {
     const {
         data: classificationsData,
         isLoading: isClassificationsLoading,
