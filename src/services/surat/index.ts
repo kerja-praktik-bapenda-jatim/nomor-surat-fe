@@ -110,31 +110,48 @@ export const deleteLetter = async (id: string) => {
 };
 
 export const exportLetters = async (values: InputExport) => {
-    // Kirim request ke API untuk ekspor data
-    const response = await ky.get(`${BASE_URL}/export`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        searchParams: {
-            startDate: values.startDate,
-            endDate: values.endDate,
-            departmentId: values.departmentId,
-            classificationId: values.classificationId,
-        },
-    });
+    const searchParams: Record<string, string> = {
+        startDate: values.startDate,
+        endDate: values.endDate,
+        recursive: 'true',
+    };
 
-    // Mengonversi respons menjadi Blob untuk file
-    const blob = await response.blob();
+    if (values.departmentId) {
+        searchParams.departmentId = values.departmentId;
+    }
 
-    // Membuat link untuk mengunduh file
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute('download', "Surat_Keluar.xlsx");
-    document.body.appendChild(link);
-    link.click(); // Memicu klik untuk mengunduh file
-    document.body.removeChild(link);
+    if (values.classificationId) {
+        searchParams.classificationId = values.classificationId;
+    }
 
-    return { message: 'File berhasil diunduh.' };
+    try {
+        const response = await ky.get(`${BASE_URL}/export`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            searchParams,
+        });
+
+        // Mengonversi respons menjadi Blob untuk file
+        const blob = await response.blob();
+
+        // Membuat link untuk mengunduh file
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', "Surat_Keluar.xlsx");
+        document.body.appendChild(link);
+        link.click(); // Memicu klik untuk mengunduh file
+        document.body.removeChild(link);
+
+        return { message: 'File berhasil diunduh.' };
+    } catch (error: any) {
+        if (error.response) {
+            const errorData = await error.response.json();
+            throw new Error(errorData.message || 'Terjadi kesalahan.');
+        } else {
+            throw new Error('Terjadi kesalahan jaringan.');
+        }
+    }
 };
 
 export const useLetters = () =>
