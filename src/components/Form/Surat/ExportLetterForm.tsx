@@ -44,12 +44,6 @@ export function ExportLetterForm() {
         validate: {
             startDate: (value) => value ? null : 'Tanggal mulai harus dipilih',
             endDate: (value) => value ? null : 'Tanggal akhir harus dipilih',
-            departmentId: (value) => {
-                if (user.isAdmin && !value) {
-                    return "Kode Bidang diperlukan";
-                }
-                return null;
-            },
         },
     });
 
