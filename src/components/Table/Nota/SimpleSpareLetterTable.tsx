@@ -19,8 +19,8 @@ export const SimpleTableSpareLetter = () => {
 				header: "Nomor Surat",
 			},
 			{
-				accessorKey: "id",
-				header: "ID",
+			accessorKey: "departmentId",
+			header: "Kode Bidang",
 			},
 			{
 				accessorKey: "date",
@@ -41,7 +41,7 @@ export const SimpleTableSpareLetter = () => {
 			},
 			{
 				accessorKey: "actions",
-				header: "Actions",
+				header: "Aksi",
 				Cell: ({row}) => (
 					<ActionIcon
 						onClick={() => router.push(`/nota/view/${row.original.id}`)}

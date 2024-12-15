@@ -19,8 +19,8 @@ export const SimpleTableSpareLetter = () => {
 				header: "Nomor Surat",
 			},
 			{
-				accessorKey: "id",
-				header: "ID",
+				accessorKey: "departmentId",
+				header: "Kode Bidang",
 			},
 			{
 				accessorKey: "date",
