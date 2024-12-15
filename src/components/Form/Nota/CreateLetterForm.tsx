@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, FileInput, TextInput, Text, Space, Box, Paper, CopyButton, Tooltip, ActionIcon, Select, NumberInput } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
@@ -9,6 +9,7 @@ import { IconArrowLeft, IconCheck, IconCopy } from '@tabler/icons-react';
 import { postNota } from '@/services/nota';
 import { modals } from '@mantine/modals';
 import { useClassifications, useDepartments, useLevels } from '@/services/data';
+import { getCurrentUser } from '@/services/auth';
 
 export function CreateLetterForm() {
     const {
@@ -44,12 +45,25 @@ export function CreateLetterForm() {
         label: level.name,
     })) || [];
 
+    const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
+            
+        useEffect(() => {
+            const user = getCurrentUser();
+            console.log("isAdmin", user.isAdmin)
+            setUser(user);
+        }, []);
+
     const form = useForm({
         mode: 'uncontrolled',
         validate: {
             date: (value) => (value ? null : 'Kolom tidak boleh kosong'),
             classificationId: (value) => (value ? null : 'Pilih kode klasifikasi'),
-            departmentId: (value) => (value ? null : 'Pilih kode bidang'),
+            departmentId: (value) => {
+                if (user.isAdmin && !value) {
+                    return "Kode Bidang diperlukan";
+                }
+                return null;
+            },
             to: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
             subject: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
             levelId: (value) => (value ? null : 'Pilih sifat surat'),
@@ -82,9 +96,9 @@ export function CreateLetterForm() {
             if (values.classificationId) {
                 formData.append('classificationId', values.classificationId);
             }
-            if (values.departmentId) {
-                formData.append('departmentId', values.departmentId);
-            }
+            
+            formData.append('departmentId', values.departmentId || "");
+            
             if (values.to) {
                 formData.append('to', values.to);
             }
@@ -212,7 +226,7 @@ export function CreateLetterForm() {
                 searchable
                 nothingFoundMessage="Kode Bidang tidak ditemukan..."
                 checkIconPosition="right"
-                disabled={isDepartmentsLoading || !!departmentsError}
+                disabled={isDepartmentsLoading || !!departmentsError || !user.isAdmin}
                 error={departmentsError ? "Gagal memuat data" : null}
             />
             <Space h="sm" />
