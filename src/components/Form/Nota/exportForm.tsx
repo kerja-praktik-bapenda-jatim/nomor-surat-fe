@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Paper, Text, Space, Select } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
@@ -8,6 +8,7 @@ import { exportNota } from '@/services/nota';
 import { useRouter } from 'next/navigation';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useClassifications, useDepartments } from '@/services/data';
+import { getCurrentUser } from '@/services/auth';
 
 export function ExportNotaForm() {
     const router = useRouter();
@@ -33,6 +34,14 @@ export function ExportNotaForm() {
         label: `${classification.id} - ${classification.name}`,
     })) || [];
 
+    const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
+            
+    useEffect(() => {
+        const user = getCurrentUser();
+        console.log("isAdmin", user.isAdmin)
+        setUser(user);
+    }, []);
+
     const form = useForm({
         initialValues: {
             startDate: '',
@@ -43,6 +52,12 @@ export function ExportNotaForm() {
         validate: {
             startDate: (value) => value ? null : 'Tanggal mulai harus dipilih',
             endDate: (value) => value ? null : 'Tanggal akhir harus dipilih',
+            departmentId: (value) => {
+                if (user.isAdmin && !value) {
+                    return "Kode Bidang diperlukan";
+                }
+                return null;
+            },
         },
     });
 
@@ -144,7 +159,7 @@ export function ExportNotaForm() {
                     searchable
                     nothingFoundMessage="Kode Bidang tidak ditemukan..."
                     checkIconPosition="right"
-                    disabled={isDepartmentsLoading || !!departmentsError}
+                    disabled={isDepartmentsLoading || !!departmentsError || !user.isAdmin}
                     error={departmentsError ? "Gagal memuat data" : null}
                 />
                 <Space h="md" />

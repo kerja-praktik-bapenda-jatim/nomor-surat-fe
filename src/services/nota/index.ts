@@ -2,6 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import ky from "ky";
 import type {NotaResponse, Nota, SpareNota, UpdateNotaResponse, InputExport} from "./types";
 import Cookies from "js-cookie";
+import { currentTimestamp } from "@/utils/utils";
 
 const token = Cookies.get("authToken")
 const BASE_URL = "http://localhost:5000/api/nota";
@@ -110,31 +111,48 @@ export const deleteNota = async (id: string) => {
 };
 
 export const exportNota = async (values: InputExport) => {
-    // Kirim request ke API untuk ekspor data
-    const response = await ky.get(`${BASE_URL}/export`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        searchParams: {
-            startDate: values.startDate,
-            endDate: values.endDate,
-            departmentId: values.departmentId,
-            classificationId: values.classificationId,
-        },
-    });
+    const searchParams: Record<string, string> = {
+        startDate: values.startDate,
+        endDate: values.endDate,
+        recursive: 'true',
+    };
 
-    // Mengonversi respons menjadi Blob untuk file
-    const blob = await response.blob();
+    if (values.departmentId) {
+        searchParams.departmentId = values.departmentId;
+    }
 
-    // Membuat link untuk mengunduh file
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute('download', 'Nota_Dinas.xlsx');
-    document.body.appendChild(link);
-    link.click(); // Memicu klik untuk mengunduh file
-    document.body.removeChild(link);
+    if (values.classificationId) {
+        searchParams.classificationId = values.classificationId;
+    }
 
-    return { message: 'File berhasil diunduh.' };
+    try {
+        const response = await ky.get(`${BASE_URL}/export`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            searchParams,
+        });
+
+        // Mengonversi respons menjadi Blob untuk file
+        const blob = await response.blob();
+        const filename = `Surat-Keluar-${currentTimestamp()}.xlsx`
+        // Membuat link untuk mengunduh file
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        return { message: `${filename} berhasil diunduh.` };
+    } catch (error: any) {
+        if (error.response) {
+            const errorData = await error.response.json();
+            throw new Error(errorData.message || 'Terjadi kesalahan.');
+        } else {
+            throw new Error('Terjadi kesalahan jaringan.');
+        }
+    }
 };
 
 export const useNota = () =>
