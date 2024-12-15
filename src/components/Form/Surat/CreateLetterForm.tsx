@@ -58,7 +58,12 @@ export function CreateLetterForm() {
         validate: {
             date: (value) => (value ? null : 'Pilih tanggal'),
             classificationId: (value) => (value ? null : 'Pilih kode klasifikasi'),
-            departmentId: (value) => (value ? null : 'Pilih kode bidang'),
+            departmentId: (value) => {
+                if (user.isAdmin && !value) {
+                    return "Kode Bidang diperlukan";
+                }
+                return null;
+            },
             to: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
             subject: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
             levelId: (value) => (value ? null : 'Pilih sifat surat'),
@@ -69,12 +74,12 @@ export function CreateLetterForm() {
         initialValues: {
             date: new Date(),
             classificationId: '',
-            departmentId: "",
+            departmentId: '',
             to: '',
             subject: '',
-            levelId: "",
+            levelId: '',
             attachmentCount: 0,
-            description: "",
+            description: '',
             file: null,
         },
     });
@@ -91,9 +96,7 @@ export function CreateLetterForm() {
             if (values.classificationId) {
                 formData.append('classificationId', values.classificationId);
             }
-            if (values.departmentId) {
-                formData.append('departmentId', values.departmentId);
-            }
+            formData.append('departmentId', values.departmentId  || "");
             if (values.to) {
                 formData.append('to', values.to);
             }
@@ -211,6 +214,7 @@ export function CreateLetterForm() {
                 disabled={isClassificationsLoading || !!classificationsError}
                 error={classificationsError ? "Gagal memuat data" : null}
             />
+            <Space h="sm" />
 
             <Select
                 {...form.getInputProps('departmentId')}
@@ -224,6 +228,7 @@ export function CreateLetterForm() {
                 disabled={isDepartmentsLoading || !!departmentsError || !user.isAdmin}
                 error={departmentsError ? "Gagal memuat data" : null}
             />
+            <Space h="sm" />
 
             <TextInput
                 {...form.getInputProps('to')}
@@ -251,6 +256,7 @@ export function CreateLetterForm() {
                 disabled={isLevelsLoading || !!levelsError}
                 error={levelsError ? "Gagal memuat data" : null}
             />
+            <Space h="sm" />
 
             <NumberInput
                 {...form.getInputProps('attachmentCount')}
