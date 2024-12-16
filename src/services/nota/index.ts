@@ -135,7 +135,7 @@ export const exportNota = async (values: InputExport) => {
 
         // Mengonversi respons menjadi Blob untuk file
         const blob = await response.blob();
-        const filename = `Surat-Keluar-${currentTimestamp()}.xlsx`
+        const filename = `Nota-Dinas-${currentTimestamp()}.xlsx`
         // Membuat link untuk mengunduh file
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
