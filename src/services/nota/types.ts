@@ -76,6 +76,12 @@ export interface UpdateNotaResponse{
   classificationId: string;
   levelId: string;
   description: string;
+  accessId: string;
+  documentIndexName: string;
+  activeRetentionPeriodId: string;
+  inactiveRetentionPeriodId: string;
+  jraDescriptionId: string;
+  storageLocationId: string;
   file: File | null;
 };
 

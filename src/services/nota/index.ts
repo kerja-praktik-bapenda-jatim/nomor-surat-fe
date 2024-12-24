@@ -81,6 +81,12 @@ export const patchNota = async (id: string, formData: UpdateNotaResponse): Promi
         formDataToSend.append('levelId', formData.levelId);
         formDataToSend.append('attachmentCount',formData.attachmentCount)
         formDataToSend.append('description', formData.description);
+        formDataToSend.append('accessId', formData.accessId);
+        formDataToSend.append('documentIndexName', formData.documentIndexName);
+        formDataToSend.append('activeRetentionPeriodId', formData.activeRetentionPeriodId);
+        formDataToSend.append('inactiveRetentionPeriodId', formData.inactiveRetentionPeriodId);
+        formDataToSend.append('jraDescriptionId', formData.jraDescriptionId);
+        formDataToSend.append('storageLocationId', formData.storageLocationId);
         if (formData.file) formDataToSend.append('file', formData.file);
 
         await ky.patch(`${BASE_URL}/${id}`, {

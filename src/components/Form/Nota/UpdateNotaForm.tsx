@@ -7,7 +7,7 @@ import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { patchNota, useNotaById } from '@/services/nota';
 import { UpdateNotaResponse } from '@/services/nota/types';
-import { useClassifications, useDepartments, useLevels } from '@/services/data';
+import { useAccess, useActiveRetentionPeriods, useClassifications, useDepartments, useInactiveRetentionPeriods, useJRADescriptions, useLevels, useStorageLocations } from '@/services/data';
 
 export function UpdateLetterForm() {
     const { id } = useParams();
@@ -17,19 +17,52 @@ export function UpdateLetterForm() {
     const { data: classificationsData } = useClassifications();
     const { data: departmentsData } = useDepartments();
     const { data: levelsData } = useLevels();
+    const { data: accessData } = useAccess();
+    const { data: activeRetentionPeriodsData } = useActiveRetentionPeriods();
+    const { data: inactiveRetentionPeriodsData } = useInactiveRetentionPeriods();
+    const { data: jraDescriptionsData } = useJRADescriptions();
+    const { data: storageLocationsData } = useStorageLocations(); 
 
-    const classificationOptions = classificationsData?.map(({ id, name }) => ({
-        value: id, label: `${id} - ${name}`
+    const classificationOptions = classificationsData?.map((classification) => ({
+        value: classification.id,
+        label: `${classification.id} - ${classification.name}`,
     })) || [];
 
-    const departmentOptions = departmentsData?.map(({ id, name }) => ({
-        value: id, label: `${id} - ${name}`
+    const departmentOptions = departmentsData?.map((department) => ({
+        value: department.id,
+        label: `${department.id} - ${department.name}`,
     })) || [];
 
-    const levelOptions = levelsData?.map(({ id, name }) => ({
-        value: id, label: name
+    const levelOptions = levelsData?.map((level) => ({
+        value: level.id,
+        label: level.name,
     })) || [];
-    
+
+    const accessOptions = accessData?.map((access) => ({
+        value: access.id.toString(),
+        label: access.name,
+    })) || [];
+
+    const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({ 
+        value: activeRetentionPeriod.id.toString(), 
+        label: activeRetentionPeriod.name, 
+    })) || [];
+
+    const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod ) => ({ 
+        value: inactiveRetentionPeriod.id.toString(), 
+        label: inactiveRetentionPeriod.name, 
+    })) || [];
+
+    const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({ 
+        value: jraDescription.id.toString(), 
+        label: jraDescription.name,
+    })) || [];
+
+    const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({ 
+        value: storageLocation.id.toString(), 
+        label: storageLocation.name,
+    })) || [];
+
     const { data: letter, isLoading: isLetterLoading, error: letterError } = useNotaById(letterId);
     const [formData, setFormData] = useState<UpdateNotaResponse>({
         subject: '',
@@ -39,6 +72,12 @@ export function UpdateLetterForm() {
         levelId: '',
         attachmentCount: '',
         description: '',
+        accessId: '',
+        documentIndexName: '',
+        activeRetentionPeriodId: '',
+        inactiveRetentionPeriodId: '',
+        jraDescriptionId: '',
+        storageLocationId: '',
         file: null,
     });
 
@@ -52,6 +91,12 @@ export function UpdateLetterForm() {
                 levelId: letter.levelId || '',
                 attachmentCount: letter.attachmentCount || '',
                 description: letter.description || '',
+                accessId: letter.accessId || '',
+                documentIndexName: letter.documentIndexName || '',
+                activeRetentionPeriodId: letter.activeRetentionPeriodId || '',
+                inactiveRetentionPeriodId: letter.inactiveRetentionPeriodId || '',
+                jraDescriptionId: letter.jraDescriptionId || '',
+                storageLocationId: letter.storageLocationId || '',
                 file: null,
             });
         }
@@ -217,7 +262,80 @@ export function UpdateLetterForm() {
                     onChange={handleChange}
                 />
                 <Space h="sm" />
-            
+
+                <Select
+                    name="accessId"
+                    label="Hak Akses"
+                    data={accessOptions}
+                    value={formData.accessId}
+                    onChange={(value) => handleSelectChange('accessId', value)}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Hak Akses tidak ditemukan..."
+                    checkIconPosition="right"
+                />
+                <Space h="sm" />
+
+                <TextInput
+                    name="documentIndexName"
+                    value={formData.documentIndexName}
+                    label="Index Nama Berkas"
+                    onChange={handleChange}
+                />
+                <Space h="sm" />
+
+                <Select
+                    name="activeRetentionPeriodId"
+                    label="Jangka Simpan Waktu Aktif "
+                    data={activeRetentionPeriodOptions}
+                    value={formData.activeRetentionPeriodId}
+                    onChange={(value) => handleSelectChange('activeRetentionPeriodId', value)}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Data tidak ditemukan..."
+                    checkIconPosition="right"
+                />
+                <Space h="sm" />
+
+                <Select
+                    name="inactiveRetentionPeriodId"
+                    label="Jangka Simpan Waktu Inaktif"
+                    data={inactiveRetentionPeriodOptions}
+                    value={formData.inactiveRetentionPeriodId}
+                    onChange={(value) => handleSelectChange('inactiveRetentionPeriodId', value)}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Data tidak ditemukan..."
+                    checkIconPosition="right"
+                />
+                <Space h="sm" />
+
+                <Select
+                    name="jraDescriptionId"
+                    label="Keterangan di JRA"
+                    data={jraDescriptionOptions}
+                    value={formData.jraDescriptionId}
+                    onChange={(value) => handleSelectChange('jraDescriptionId', value)}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Keterangan tidak ditemukan..."
+                    checkIconPosition="right"
+                />
+                <Space h="sm" />
+
+                <Select
+                    name="storageLocationId"
+                    label="Lokasi Simpan"
+                    data={storageLocationOptions}
+                    value={formData.storageLocationId}
+                    onChange={(value) => handleSelectChange('storageLocationId', value)}
+                    clearable
+                    searchable
+                    nothingFoundMessage="Lokasi Simpan tidak ditemukan..."
+                    checkIconPosition="right"
+                />
+                <Space h="sm" />
+
                 <FileInput
                     clearable
                     label="File"
