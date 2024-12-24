@@ -36,14 +36,34 @@ export interface NotaResponse{
   levelId: string;
   description: string;
   filename: string;
-  filePath: string;
   updatedAt: string;
   createdAt: string;
   number: string;
+  documentIndexName: string;
+  activeRetentionPeriodId: string;
+  inactiveRetentionPeriodId: string;
+  jraDescriptionId: string;
+  storageLocationId: string;
+  accessId: string;
   Level: {
     name: string;
   };
   Classification: {
+    name: string;
+  };
+  StorageLocation: {
+    name: string;
+  };
+  JraDescription: {
+    name: string;
+  };
+  ActiveRetentionPeriod: {
+    name: string;
+  };
+  InactiveRetentionPeriod: {
+    name: string;
+  };
+  Access: {
     name: string;
   };
 }

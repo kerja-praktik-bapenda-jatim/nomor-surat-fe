@@ -109,7 +109,24 @@ export function ViewLetterForm() {
 
                 <TextInput value={letter?.description} label="Deskripsi" readOnly />
                 <Space h="sm" />
+                <TextInput value={letter?.Access.name} label="Hak Akses" readOnly />
+                <Space h="sm" />
+
+                <TextInput value={letter?.documentIndexName} label="Index Nama Berkas" readOnly />
+                <Space h="sm" />
+
+                <TextInput value={letter?.ActiveRetentionPeriod.name} label="Jangka Simpan Waktu Aktif" readOnly />
+                <Space h="sm" />
+
+                <TextInput value={letter?.InactiveRetentionPeriod.name} label="Jangka Simpan Waktu Inaktif" readOnly />
+                <Space h="sm" />
                 
+                <TextInput value={letter?.JraDescription.name} label="Keterangan di JRA" readOnly />
+                <Space h="sm" />
+                
+                <TextInput value={letter?.StorageLocation.name} label="Lokasi Simpan" readOnly />
+                <Space h="sm" />
+
                 <TextInput value={letter?.filename} label="File" readOnly />
                 <Space h="sm" />
                 
