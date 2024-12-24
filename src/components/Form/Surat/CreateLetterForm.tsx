@@ -348,7 +348,7 @@ export function CreateLetterForm() {
 
             <Select
                 {...form.getInputProps('inactiveRetentionPeriodId')}
-                label="Jangka Simpan Waktu Inktif"
+                label="Jangka Simpan Waktu Inaktif"
                 placeholder={isInactiveRetentionPeriodsLoading ? "Memuat data..." : "Pilih atau Cari"}
                 data={inactiveRetentionPeriodOptions}
                 clearable
@@ -367,7 +367,7 @@ export function CreateLetterForm() {
                 data={jraDescriptionOptions}
                 clearable
                 searchable
-                nothingFoundMessage="Ketarangan tidak ditemukan..."
+                nothingFoundMessage="Keterangan tidak ditemukan..."
                 checkIconPosition="right"
                 disabled={isJRADescriptionsLoading || !!jraDescriptionsError}
                 error={jraDescriptionsError ? "Gagal memuat data" : null}
