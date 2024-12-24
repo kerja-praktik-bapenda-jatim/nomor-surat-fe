@@ -1,14 +1,9 @@
-export interface Levels{
+export interface BaseString{
     id: string;
     name: string;
 }
 
-export interface Departments{
-    id: string;
-    name: string;
-}
-
-export interface Classifications{
-    id: string;
+export interface BaseInteger{
+    id: number;
     name: string;
 }

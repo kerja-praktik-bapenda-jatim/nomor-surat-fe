@@ -8,27 +8,18 @@ import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconCheck, IconCopy } from '@tabler/icons-react';
 import { postLetters } from '@/services/surat';
 import { modals } from '@mantine/modals';
-import { useClassifications, useDepartments, useLevels } from '@/services/data';
+import { useAccess, useActiveRetentionPeriods, useClassifications, useDepartments, useInactiveRetentionPeriods, useJRADescriptions, useLevels, useStorageLocations, } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
 
 export function CreateLetterForm() {
-    const {
-        data: classificationsData,
-        isLoading: isClassificationsLoading,
-        error: classificationsError,
-    } = useClassifications();
-
-    const {
-        data: departmentsData,
-        isLoading: isDepartmentsLoading,
-        error: departmentsError,
-    } = useDepartments();
-
-    const {
-        data: levelsData,
-        isLoading: isLevelsLoading,
-        error: levelsError,
-    } = useLevels();
+    const { data: classificationsData, isLoading: isClassificationsLoading, error: classificationsError } = useClassifications();
+    const { data: departmentsData, isLoading: isDepartmentsLoading, error: departmentsError } = useDepartments();
+    const { data: levelsData, isLoading: isLevelsLoading, error: levelsError } = useLevels();
+    const { data: accessData, isLoading: isAccessLoading, error: accessError } = useAccess();
+    const { data: activeRetentionPeriodsData, isLoading: isActiveRetentionPeriodsLoading, error: activeRetentionPeriodsError } = useActiveRetentionPeriods();
+    const { data: inactiveRetentionPeriodsData, isLoading: isInactiveRetentionPeriodsLoading, error: inactiveRetentionPeriodsError } = useInactiveRetentionPeriods();
+    const { data: jraDescriptionsData, isLoading: isJRADescriptionsLoading, error: jraDescriptionsError } = useJRADescriptions();
+    const { data: storageLocationsData, isLoading: isStorageLocationsLoading, error: storageLocationsError } = useStorageLocations();    
 
     const classificationOptions = classificationsData?.map((classification) => ({
         value: classification.id,
@@ -43,6 +34,31 @@ export function CreateLetterForm() {
     const levelOptions = levelsData?.map((level) => ({
         value: level.id,
         label: level.name,
+    })) || [];
+
+    const accessOptions = accessData?.map((access) => ({
+        value: access.id.toString(),
+        label: access.name,
+    })) || [];
+
+    const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({ 
+        value: activeRetentionPeriod.id.toString(), 
+        label: activeRetentionPeriod.name, 
+    })) || [];
+
+    const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod ) => ({ 
+        value: inactiveRetentionPeriod.id.toString(), 
+        label: inactiveRetentionPeriod.name, 
+    })) || [];
+
+    const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({ 
+        value: jraDescription.id.toString(), 
+        label: jraDescription.name,
+    })) || [];
+
+    const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({ 
+        value: storageLocation.id.toString(), 
+        label: storageLocation.name,
     })) || [];
 
     const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
@@ -80,6 +96,12 @@ export function CreateLetterForm() {
             levelId: '',
             attachmentCount: 0,
             description: '',
+            accessId: '',
+            documentIndexName: '',
+            activeRetentionPeriodId: '',
+            inactiveRetentionPeriodId: '',
+            jraDescriptionId: '',
+            storageLocationId: '',
             file: null,
         },
     });
@@ -96,7 +118,9 @@ export function CreateLetterForm() {
             if (values.classificationId) {
                 formData.append('classificationId', values.classificationId);
             }
+
             formData.append('departmentId', values.departmentId  || "");
+
             if (values.to) {
                 formData.append('to', values.to);
             }
@@ -115,6 +139,13 @@ export function CreateLetterForm() {
             if (values.file) {
                 formData.append('file', values.file);
             }
+
+            formData.append('accessId', values.accessId  || "");
+            formData.append('documentIndexName', values.documentIndexName  || "");
+            formData.append('activeRetentionPeriodId', values.activeRetentionPeriodId  || "");
+            formData.append('inactiveRetentionPeriodId', values.inactiveRetentionPeriodId  || "");
+            formData.append('jraDescriptionId', values.jraDescriptionId  || "");
+            formData.append('storageLocationId', values.storageLocationId  || "");
 
             const response = await postLetters(formData);
             modals.open({
@@ -279,7 +310,84 @@ export function CreateLetterForm() {
                 placeholder="Pilih file"
             />
             <Space h="sm" />
-                
+
+            <Select
+                {...form.getInputProps('accessId')}
+                label="Hak Akses"
+                placeholder={isAccessLoading ? "Memuat data..." : "Pilih atau Cari"}
+                data={accessOptions}
+                clearable
+                searchable
+                nothingFoundMessage="Hak Akses tidak ditemukan..."
+                checkIconPosition="right"
+                disabled={isAccessLoading || !!accessError}
+                error={accessError ? "Gagal memuat data" : null}
+            />
+            <Space h="sm" />
+
+            <TextInput
+                {...form.getInputProps('documentIndexName')}
+                label="Index Nama Berkas"
+                placeholder="Index Nama Berkas"
+            />
+            <Space h="sm" />
+            
+            <Select
+                {...form.getInputProps('activeRetentionPeriodId')}
+                label="Jangka Simpan Waktu Aktif"
+                placeholder={isActiveRetentionPeriodsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                data={activeRetentionPeriodOptions}
+                clearable
+                searchable
+                nothingFoundMessage="Data tidak ditemukan..."
+                checkIconPosition="right"
+                disabled={isActiveRetentionPeriodsLoading || !!activeRetentionPeriodsError}
+                error={activeRetentionPeriodsError ? "Gagal memuat data" : null}
+            />
+            <Space h="sm" />
+
+            <Select
+                {...form.getInputProps('inactiveRetentionPeriodId')}
+                label="Jangka Simpan Waktu Inktif"
+                placeholder={isInactiveRetentionPeriodsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                data={inactiveRetentionPeriodOptions}
+                clearable
+                searchable
+                nothingFoundMessage="Data tidak ditemukan..."
+                checkIconPosition="right"
+                disabled={isInactiveRetentionPeriodsLoading || !!inactiveRetentionPeriodsError}
+                error={inactiveRetentionPeriodsError ? "Gagal memuat data" : null}
+            />
+            <Space h="sm" />
+
+            <Select
+                {...form.getInputProps('jraDescriptionId')}
+                label="Keterangan di JRA"
+                placeholder={isJRADescriptionsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                data={jraDescriptionOptions}
+                clearable
+                searchable
+                nothingFoundMessage="Ketarangan tidak ditemukan..."
+                checkIconPosition="right"
+                disabled={isJRADescriptionsLoading || !!jraDescriptionsError}
+                error={jraDescriptionsError ? "Gagal memuat data" : null}
+            />
+            <Space h="sm" />
+
+            <Select
+                {...form.getInputProps('storageLocationId')}
+                label="Lokasi Simpan"
+                placeholder={isStorageLocationsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                data={storageLocationOptions}
+                clearable
+                searchable
+                nothingFoundMessage="Lokasi simpan tidak ditemukan..."
+                checkIconPosition="right"
+                disabled={isStorageLocationsLoading || !!storageLocationsError}
+                error={storageLocationsError ? "Gagal memuat data" : null}
+            />
+            <Space h="sm" />
+
             <Button type="submit" loading={loading}>
                 Submit
             </Button>
