@@ -37,27 +37,27 @@ export function UpdateLetterForm() {
     })) || [];
 
     const accessOptions = accessData?.map((access) => ({
-        value: access.id.toString(),
+        value: access.id,
         label: access.name,
     })) || [];
 
     const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({ 
-        value: activeRetentionPeriod.id.toString(), 
+        value: activeRetentionPeriod.id, 
         label: activeRetentionPeriod.name, 
     })) || [];
 
     const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod ) => ({ 
-        value: inactiveRetentionPeriod.id.toString(), 
+        value: inactiveRetentionPeriod.id, 
         label: inactiveRetentionPeriod.name, 
     })) || [];
 
     const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({ 
-        value: jraDescription.id.toString(), 
+        value: jraDescription.id, 
         label: jraDescription.name,
     })) || [];
 
     const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({ 
-        value: storageLocation.id.toString(), 
+        value: storageLocation.id, 
         label: storageLocation.name,
     })) || [];
 
@@ -119,8 +119,7 @@ export function UpdateLetterForm() {
     
         try {
         const updateSuccess = await patchLetter(letterId, formData);
-        
-        // Modal untuk pembaruan berhasil
+
         if (updateSuccess) {
             modals.open({
             title: 'Pembaharuan Berhasil',
@@ -136,9 +135,8 @@ export function UpdateLetterForm() {
             });
         }
         } catch (error: any) {
-        // Tangani error dari backend
         const errorMessage = error.response?.data?.message || "Terjadi kesalahan saat memperbarui data.";
-    
+        
         modals.open({
             title: 'Pembaharuan Gagal',
             centered: true,
@@ -174,169 +172,169 @@ export function UpdateLetterForm() {
         </Button>
         <Box>
             <Text component="h2" fw="bold" fz="lg">
-            Update Surat
+                Update Surat
             </Text>
 
             <TextInput
-            readOnly
-            name="number"
-            value={letter?.number || ''}
-            label="Nomor Surat"
+                readOnly
+                name="number"
+                value={letter?.number || ''}
+                label="Nomor Surat"
             />
             <Space h="sm" />
 
             <Select
-            name="classificationId"
-            label="Kode Klasifikasi Surat"
-            data={classificationOptions}
-            value={formData.classificationId}
-            onChange={(value) => handleSelectChange('classificationId', value)}
-            clearable
-            searchable
-            nothingFoundMessage="Kode Klasifikasi Surat ditemukan..."
-            checkIconPosition="right"
+                name="classificationId"
+                label="Kode Klasifikasi Surat"
+                data={classificationOptions}
+                value={formData.classificationId}
+                onChange={(value) => handleSelectChange('classificationId', value)}
+                clearable
+                searchable
+                nothingFoundMessage="Kode Klasifikasi Surat ditemukan..."
+                checkIconPosition="right"
             />
             <Space h="sm" />
 
             <Select
-            readOnly
-            name="departmentId"
-            label="Kode Bidang"
-            data={departmentOptions}
-            value={formData.departmentId}
-            onChange={(value) => handleSelectChange('departmentId', value)}
-            clearable
-            searchable
-            nothingFoundMessage="Kode Bidang tidak ditemukan..."
-            checkIconPosition="right"
+                readOnly
+                name="departmentId"
+                label="Kode Bidang"
+                data={departmentOptions}
+                value={formData.departmentId}
+                onChange={(value) => handleSelectChange('departmentId', value)}
+                clearable
+                searchable
+                nothingFoundMessage="Kode Bidang tidak ditemukan..."
+                checkIconPosition="right"
             />
             <Space h="sm" />
 
             <TextInput
-            name="to"
-            value={formData.to}
-            label="Kepada"
-            onChange={handleChange}
+                name="to"
+                value={formData.to}
+                label="Kepada"
+                onChange={handleChange}
             />
             <Space h="sm" />
 
             <TextInput
-            name="subject"
-            value={formData.subject}
-            label="Perihal"
-            onChange={handleChange}
+                name="subject"
+                value={formData.subject}
+                label="Perihal"
+                onChange={handleChange}
             />
             <Space h="sm" />
 
             <Select
-            name="levelId"
-            label="Sifat Surat"
-            data={levelOptions}
-            value={formData.levelId}
-            onChange={(value) => handleSelectChange('levelId', value)}
-            clearable
-            searchable
-            nothingFoundMessage="Sifat Surat tidak ditemukan..."
-            checkIconPosition="right"
+                name="levelId"
+                label="Sifat Surat"
+                data={levelOptions}
+                value={formData.levelId}
+                onChange={(value) => handleSelectChange('levelId', value)}
+                clearable
+                searchable
+                nothingFoundMessage="Sifat Surat tidak ditemukan..."
+                checkIconPosition="right"
             />
             <Space h="sm" />
 
             <NumberInput
-            name="attachmentCount"
-            label="Jumlah Lampiran"
-            value={formData.attachmentCount}
-            onChange={(value) => handleSelectChange('attachmentCount', value || 0)}
+                name="attachmentCount"
+                label="Jumlah Lampiran"
+                value={formData.attachmentCount}
+                onChange={(value) => handleSelectChange('attachmentCount', value || 0)}
             />
             <Space h="sm" />
 
             <TextInput
-            name="description"
-            value={formData.description}
-            label="Keterangan"
-            onChange={handleChange}
+                name="description"
+                value={formData.description}
+                label="Keterangan"
+                onChange={handleChange}
             />
             <Space h="sm" />
 
             <Select
-            name="accessId"
-            label="Hak Akses"
-            data={accessOptions}
-            value={formData.accessId}
-            onChange={(value) => handleSelectChange('accessId', value)}
-            clearable
-            searchable
-            nothingFoundMessage="Hak Akses tidak ditemukan..."
-            checkIconPosition="right"
+                name="accessId"
+                label="Hak Akses"
+                data={accessOptions}
+                value={formData.accessId}
+                onChange={(value) => handleSelectChange('accessId', value)}
+                clearable
+                searchable
+                nothingFoundMessage="Hak Akses tidak ditemukan..."
+                checkIconPosition="right"
             />
             <Space h="sm" />
 
             <TextInput
-            name="documentIndexName"
-            value={formData.documentIndexName}
-            label="Index Nama Berkas"
-            onChange={handleChange}
+                name="documentIndexName"
+                value={formData.documentIndexName}
+                label="Index Nama Berkas"
+                onChange={handleChange}
             />
             <Space h="sm" />
 
             <Select
-            name="activeRetentionPeriodId"
-            label="Jangka Simpan Waktu Aktif "
-            data={activeRetentionPeriodOptions}
-            value={formData.activeRetentionPeriodId}
-            onChange={(value) => handleSelectChange('activeRetentionPeriodId', value)}
-            clearable
-            searchable
-            nothingFoundMessage="Data tidak ditemukan..."
-            checkIconPosition="right"
+                name="activeRetentionPeriodId"
+                label="Jangka Simpan Waktu Aktif "
+                data={activeRetentionPeriodOptions}
+                value={formData.activeRetentionPeriodId}
+                onChange={(value) => handleSelectChange('activeRetentionPeriodId', value)}
+                clearable
+                searchable
+                nothingFoundMessage="Data tidak ditemukan..."
+                checkIconPosition="right"
             />
             <Space h="sm" />
 
             <Select
-            name="inactiveRetentionPeriodId"
-            label="Jangka Simpan Waktu Inaktif"
-            data={inactiveRetentionPeriodOptions}
-            value={formData.inactiveRetentionPeriodId}
-            onChange={(value) => handleSelectChange('inactiveRetentionPeriodId', value)}
-            clearable
-            searchable
-            nothingFoundMessage="Data tidak ditemukan..."
-            checkIconPosition="right"
+                name="inactiveRetentionPeriodId"
+                label="Jangka Simpan Waktu Inaktif"
+                data={inactiveRetentionPeriodOptions}
+                value={formData.inactiveRetentionPeriodId}
+                onChange={(value) => handleSelectChange('inactiveRetentionPeriodId', value)}
+                clearable
+                searchable
+                nothingFoundMessage="Data tidak ditemukan..."
+                checkIconPosition="right"
             />
             <Space h="sm" />
 
             <Select
-            name="jraDescriptionId"
-            label="Keterangan di JRA"
-            data={jraDescriptionOptions}
-            value={formData.jraDescriptionId}
-            onChange={(value) => handleSelectChange('jraDescriptionId', value)}
-            clearable
-            searchable
-            nothingFoundMessage="Keterangan tidak ditemukan..."
-            checkIconPosition="right"
+                name="jraDescriptionId"
+                label="Keterangan di JRA"
+                data={jraDescriptionOptions}
+                value={formData.jraDescriptionId}
+                onChange={(value) => handleSelectChange('jraDescriptionId', value)}
+                clearable
+                searchable
+                nothingFoundMessage="Keterangan tidak ditemukan..."
+                checkIconPosition="right"
             />
             <Space h="sm" />
 
             <Select
-            name="storageLocationId"
-            label="Lokasi Simpan"
-            data={storageLocationOptions}
-            value={formData.storageLocationId}
-            onChange={(value) => handleSelectChange('storageLocationId', value)}
-            clearable
-            searchable
-            nothingFoundMessage="Lokasi Simpan tidak ditemukan..."
-            checkIconPosition="right"
+                name="storageLocationId"
+                label="Lokasi Simpan"
+                data={storageLocationOptions}
+                value={formData.storageLocationId}
+                onChange={(value) => handleSelectChange('storageLocationId', value)}
+                clearable
+                searchable
+                nothingFoundMessage="Lokasi Simpan tidak ditemukan..."
+                checkIconPosition="right"
             />
             <Space h="sm" />
 
             <FileInput
-            clearable
-            label="File"
-            placeholder="Pilih file"
-            description={letter?.filename ? `File saat ini: ${letter.filename}` : null}
-            value={formData.file}
-            onChange={handleFileChange}
+                clearable
+                label="File"
+                placeholder="Pilih file"
+                description={letter?.filename ? `File saat ini: ${letter.filename}` : null}
+                value={formData.file}
+                onChange={handleFileChange}
             />
             <Space h="sm" />
 

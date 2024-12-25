@@ -37,27 +37,27 @@ export function CreateLetterForm() {
     })) || [];
 
     const accessOptions = accessData?.map((access) => ({
-        value: access.id.toString(),
+        value: access.id,
         label: access.name,
     })) || [];
 
     const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({ 
-        value: activeRetentionPeriod.id.toString(), 
+        value: activeRetentionPeriod.id, 
         label: activeRetentionPeriod.name, 
     })) || [];
 
     const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod ) => ({ 
-        value: inactiveRetentionPeriod.id.toString(), 
+        value: inactiveRetentionPeriod.id, 
         label: inactiveRetentionPeriod.name, 
     })) || [];
 
     const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({ 
-        value: jraDescription.id.toString(), 
+        value: jraDescription.id, 
         label: jraDescription.name,
     })) || [];
 
     const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({ 
-        value: storageLocation.id.toString(), 
+        value: storageLocation.id, 
         label: storageLocation.name,
     })) || [];
 
@@ -65,7 +65,6 @@ export function CreateLetterForm() {
         
     useEffect(() => {
         const user = getCurrentUser();
-        console.log("isAdmin", user.isAdmin)
         setUser(user);
     }, []);
     
