@@ -1,7 +1,7 @@
 import {useQuery} from "@tanstack/react-query";
 import ky from "ky";
 import Cookies from "js-cookie";
-import type {BaseInteger, BaseString, } from "./types";
+import type {BaseString} from "./types";
 
 const token = Cookies.get("authToken")
 const BASE_URL = "http://localhost:5000/api";
@@ -27,31 +27,31 @@ export const getClassifications = async () => {
 
 export const getAccess = async () => {
     const res = await ky.get(`${BASE_URL}/access`, {
-    }).json<BaseInteger[]>();
+    }).json<BaseString[]>();
     return res;
 };
 
 export const getActiveRetentionPeriod = async () => {
     const res = await ky.get(`${BASE_URL}/retention?active=1`, {
-    }).json<BaseInteger[]>();
+    }).json<BaseString[]>();
     return res;
 };
 
 export const getInactiveRetentionPeriod = async () => {
     const res = await ky.get(`${BASE_URL}/retention?active=0`, {
-    }).json<BaseInteger[]>();
+    }).json<BaseString[]>();
     return res;
 };
 
 export const getJRADescription = async () => {
     const res = await ky.get(`${BASE_URL}/jra`, {
-    }).json<BaseInteger[]>();
+    }).json<BaseString[]>();
     return res;
 };
 
 export const getStorageLocation = async () => {
     const res = await ky.get(`${BASE_URL}/storage`, {
-    }).json<BaseInteger[]>();
+    }).json<BaseString[]>();
     return res;
 };
 
@@ -74,31 +74,31 @@ export const useClassifications = () =>
     });
 
 export const useAccess = () =>
-    useQuery<BaseInteger[]>({
+    useQuery<BaseString[]>({
         queryKey: ["Access"],
         queryFn: () => getAccess(),
     });
 
 export const useActiveRetentionPeriods = () =>
-    useQuery<BaseInteger[]>({
+    useQuery<BaseString[]>({
         queryKey: ["ActiveRetentionPeriod"],
         queryFn: () => getActiveRetentionPeriod(),
     });
 
 export const useInactiveRetentionPeriods = () =>
-    useQuery<BaseInteger[]>({
+    useQuery<BaseString[]>({
         queryKey: ["InactiveRetentionPeriod"],
         queryFn: () => getInactiveRetentionPeriod(),
     });
 
 export const useJRADescriptions = () =>
-    useQuery<BaseInteger[]>({
+    useQuery<BaseString[]>({
         queryKey: ["JRADescription"],
         queryFn: () => getJRADescription(),
     });
 
 export const useStorageLocations = () =>
-    useQuery<BaseInteger[]>({
+    useQuery<BaseString[]>({
         queryKey: ["StorageLocation"],
         queryFn: () => getStorageLocation(),
     });
