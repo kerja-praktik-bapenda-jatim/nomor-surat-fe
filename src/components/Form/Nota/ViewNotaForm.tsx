@@ -101,7 +101,7 @@ export function ViewLetterForm() {
                 <TextInput value={letter?.subject} label="Perihal" readOnly />
                 <Space h="sm" />
 
-                <TextInput value={letter?.Level?.name || ''} label="Sifat Surat" readOnly />
+                <TextInput value={letter?.Level?.name} label="Sifat Surat" readOnly />
                 <Space h="sm" />
                 
                 <TextInput value={letter?.attachmentCount} label="Jumlah Lampiran" readOnly />
@@ -109,22 +109,22 @@ export function ViewLetterForm() {
 
                 <TextInput value={letter?.description} label="Deskripsi" readOnly />
                 <Space h="sm" />
-                <TextInput value={letter?.Access.name} label="Hak Akses" readOnly />
+                <TextInput value={letter?.Access?.name} label="Hak Akses" readOnly />
                 <Space h="sm" />
 
                 <TextInput value={letter?.documentIndexName} label="Index Nama Berkas" readOnly />
                 <Space h="sm" />
 
-                <TextInput value={letter?.ActiveRetentionPeriod.name} label="Jangka Simpan Waktu Aktif" readOnly />
+                <TextInput value={letter?.ActiveRetentionPeriod?.name} label="Jangka Simpan Waktu Aktif" readOnly />
                 <Space h="sm" />
 
-                <TextInput value={letter?.InactiveRetentionPeriod.name} label="Jangka Simpan Waktu Inaktif" readOnly />
+                <TextInput value={letter?.InactiveRetentionPeriod?.name} label="Jangka Simpan Waktu Inaktif" readOnly />
                 <Space h="sm" />
                 
-                <TextInput value={letter?.JraDescription.name} label="Keterangan di JRA" readOnly />
+                <TextInput value={letter?.JraDescription?.name} label="Keterangan di JRA" readOnly />
                 <Space h="sm" />
                 
-                <TextInput value={letter?.StorageLocation.name} label="Lokasi Simpan" readOnly />
+                <TextInput value={letter?.StorageLocation?.name} label="Lokasi Simpan" readOnly />
                 <Space h="sm" />
 
                 <TextInput value={letter?.filename} label="File" readOnly />
