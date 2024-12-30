@@ -10,16 +10,39 @@ export interface Nota {
   description: string;
   departmentId: string;
   lastReserved: string;
+  documentIndexName: string;
   createdAt: string;
   updatedAt: string;
   classificationId: string;
   levelId: string;
+  updateUserId: string;
   Level: {
     name: string;
-  },
+  };
   Classification: {
     name: string;
-  }
+  };
+  StorageLocation: {
+    name: string;
+  };
+  JraDescription: {
+    name: string;
+  };
+  ActiveRetentionPeriod: {
+    name: string;
+  };
+  InactiveRetentionPeriod: {
+    name: string;
+  };
+  Access: {
+    name: string;
+  };
+  CreateUser: {
+    username: string;
+  };
+  UpdateUser: {
+    username: string;
+  };
   userId: string;
 }
 

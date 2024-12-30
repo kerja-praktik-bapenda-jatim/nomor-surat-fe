@@ -1,7 +1,7 @@
 {
-  "name": "mantine-admin",
+  "name": "nomor-surat",
   "version": "1.0.0",
-  "author": "Joshua Lee <jotyy318@gmail.com>",
+  "author": "Aurelio & Wildan",
   "description": "A Modern Admin Dashboard made with Mantine/React/NextJS!",
   "lint-staged": {
     ".": [

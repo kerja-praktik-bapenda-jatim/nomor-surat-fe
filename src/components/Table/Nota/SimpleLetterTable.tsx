@@ -19,12 +19,9 @@ export const SimpleTableLetter = () => {
         header: "Nomor Surat",
       },
       {
-        accessorKey: "classificationId",
-        header: "Kode Klasifikasi Arsip",
-      },
-      {
-        accessorKey: "departmentId",
-        header: "Kode Bidang",
+        accessorKey: "name",
+        header: "Pembuat",
+        accessorFn: (row) => `${row.departmentId} / ${row.UpdateUser.username}`,
       },
       {
         accessorKey: "date",
