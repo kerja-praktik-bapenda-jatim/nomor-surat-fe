@@ -5,7 +5,8 @@ import Cookies from "js-cookie";
 import { currentTimestamp } from "@/utils/utils";
 
 const token = Cookies.get("authToken")
-const BASE_URL = "http://localhost:5000/api/letter";
+const BASE_URL = `${process.env.API_BASE_URL as string}letter`;
+
 
 export const getLetters = async (params?: Record<string, string>) => {
 	const res = await ky.get(`${BASE_URL}`, {
@@ -198,7 +199,7 @@ export const useLetterById = (id: string) =>
 		enabled: !!id,
 	});
 
-export const useDownloadLetterFile = (id: string) => 
+export const useDownloadLetterFile = (id: string) =>
 	useQuery<string | null>({
 		queryKey: ["LetterFile", id],
 		queryFn: () => downloadLetterFile(id),

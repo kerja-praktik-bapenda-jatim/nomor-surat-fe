@@ -5,7 +5,8 @@ import Cookies from "js-cookie";
 import { currentTimestamp } from "@/utils/utils";
 
 const token = Cookies.get("authToken")
-const BASE_URL = "http://localhost:5000/api/nota";
+const BASE_URL = `${process.env.API_BASE_URL as string}nota`;
+
 
 export const getNota = async (params?: Record<string, string>) => {
 	const res = await ky.get(`${BASE_URL}`, {
@@ -198,7 +199,7 @@ export const useNotaById = (id: string) =>
 		enabled: !!id,
 	});
 
-export const useDownloadNotaFile = (id: string) => 
+export const useDownloadNotaFile = (id: string) =>
 	useQuery<string | null>({
 		queryKey: ["NotaFile", id],
 		queryFn: () => downloadNotaFile(id),
