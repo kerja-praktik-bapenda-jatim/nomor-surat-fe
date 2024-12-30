@@ -88,19 +88,19 @@ export function CreateNotaForm() {
         },
         initialValues: {
             date: new Date(),
-            classificationId: '',
-            departmentId: '',
+            classificationId: null,
+            departmentId: null,
             to: '',
             subject: '',
-            levelId: '',
+            levelId: null,
             attachmentCount: 0,
             description: '',
-            accessId: '',
+            accessId: null,
             documentIndexName: '',
-            activeRetentionPeriodId: '',
-            inactiveRetentionPeriodId: '',
-            jraDescriptionId: '',
-            storageLocationId: '',
+            activeRetentionPeriodId: null,
+            inactiveRetentionPeriodId: null,
+            jraDescriptionId: null,
+            storageLocationId: null,
             file: null,
         },
     });
@@ -117,9 +117,9 @@ export function CreateNotaForm() {
             if (values.classificationId) {
                 formData.append('classificationId', values.classificationId);
             }
-            
-            formData.append('departmentId', values.departmentId || "");
-            
+            if (values.departmentId) {
+                formData.append('departmentId', values.departmentId || "");
+            }
             if (values.to) {
                 formData.append('to', values.to);
             }
@@ -138,13 +138,24 @@ export function CreateNotaForm() {
             if (values.file) {
                 formData.append('file', values.file);
             }
-
-            formData.append('accessId', values.accessId  || "");
-            formData.append('documentIndexName', values.documentIndexName  || "");
-            formData.append('activeRetentionPeriodId', values.activeRetentionPeriodId  || "");
-            formData.append('inactiveRetentionPeriodId', values.inactiveRetentionPeriodId  || "");
-            formData.append('jraDescriptionId', values.jraDescriptionId  || "");
-            formData.append('storageLocationId', values.storageLocationId  || "");
+            if (values.accessId) {
+                formData.append('accessId', values.accessId);
+            }
+            if (values.documentIndexName) {
+                formData.append('documentIndexName', values.documentIndexName);
+            }
+            if (values.activeRetentionPeriodId) {
+                formData.append('activeRetentionPeriodId', values.activeRetentionPeriodId);
+            }
+            if (values.inactiveRetentionPeriodId) {
+                formData.append('inactiveRetentionPeriodId', values.inactiveRetentionPeriodId);
+            }
+            if (values.jraDescriptionId) {
+                formData.append('jraDescriptionId', values.jraDescriptionId);
+            }
+            if (values.storageLocationId) {
+                formData.append('storageLocationId', values.storageLocationId);
+            }
 
             const response = await postNota(formData);
             modals.open({
@@ -228,6 +239,7 @@ export function CreateNotaForm() {
                 minDate={new Date()}
                 readOnly
                 clearable
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -238,6 +250,7 @@ export function CreateNotaForm() {
                 data={classificationOptions}
                 clearable
                 searchable
+                withAsterisk
                 nothingFoundMessage="Kode Klasifikasi tidak ditemukan..."
                 checkIconPosition="right"
                 disabled={isClassificationsLoading || !!classificationsError}
@@ -252,6 +265,7 @@ export function CreateNotaForm() {
                 data={departmentOptions}
                 clearable
                 searchable
+                withAsterisk
                 nothingFoundMessage="Kode Bidang tidak ditemukan..."
                 checkIconPosition="right"
                 disabled={isDepartmentsLoading || !!departmentsError || !user.isAdmin}
@@ -263,6 +277,7 @@ export function CreateNotaForm() {
                 {...form.getInputProps('to')}
                 label="Kepada"
                 placeholder="Kepada"
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -270,6 +285,7 @@ export function CreateNotaForm() {
                 {...form.getInputProps('subject')}
                 label="Perihal"
                 placeholder="Perihal"
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -280,6 +296,7 @@ export function CreateNotaForm() {
                 data={levelOptions}
                 clearable
                 searchable
+                withAsterisk
                 nothingFoundMessage="Sifat Surat tidak ditemukan..."
                 checkIconPosition="right"
                 disabled={isLevelsLoading || !!levelsError}
@@ -291,6 +308,7 @@ export function CreateNotaForm() {
                 {...form.getInputProps('attachmentCount')}
                 label="Jumlah Lampiran"
                 placeholder="Jumlah Lampiran"
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -298,6 +316,7 @@ export function CreateNotaForm() {
                 {...form.getInputProps('description')}
                 label="Keterangan"
                 placeholder="Keterangan"
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -306,6 +325,7 @@ export function CreateNotaForm() {
                 label="Upload File"
                 placeholder="Pilih file"
                 clearable
+                withAsterisk
             />
             <Space h="sm" />
 

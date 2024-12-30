@@ -88,19 +88,19 @@ export function CreateLetterForm() {
         },
         initialValues: {
             date: new Date(),
-            classificationId: '',
-            departmentId: '',
+            classificationId: null,
+            departmentId: null,
             to: '',
             subject: '',
-            levelId: '',
+            levelId: null,
             attachmentCount: 0,
             description: '',
-            accessId: '',
+            accessId: null,
             documentIndexName: '',
-            activeRetentionPeriodId: '',
-            inactiveRetentionPeriodId: '',
-            jraDescriptionId: '',
-            storageLocationId: '',
+            activeRetentionPeriodId: null,
+            inactiveRetentionPeriodId: null,
+            jraDescriptionId: null,
+            storageLocationId: null,
             file: null,
         },
     });
@@ -117,9 +117,9 @@ export function CreateLetterForm() {
             if (values.classificationId) {
                 formData.append('classificationId', values.classificationId);
             }
-
-            formData.append('departmentId', values.departmentId  || "");
-
+            if (values.departmentId) {
+                formData.append('departmentId', values.departmentId);
+            }
             if (values.to) {
                 formData.append('to', values.to);
             }
@@ -138,13 +138,24 @@ export function CreateLetterForm() {
             if (values.file) {
                 formData.append('file', values.file);
             }
-
-            formData.append('accessId', values.accessId  || "");
-            formData.append('documentIndexName', values.documentIndexName  || "");
-            formData.append('activeRetentionPeriodId', values.activeRetentionPeriodId  || "");
-            formData.append('inactiveRetentionPeriodId', values.inactiveRetentionPeriodId  || "");
-            formData.append('jraDescriptionId', values.jraDescriptionId  || "");
-            formData.append('storageLocationId', values.storageLocationId  || "");
+            if (values.accessId) {
+                formData.append('accessId', values.accessId);
+            }
+            if (values.documentIndexName) {
+                formData.append('documentIndexName', values.documentIndexName);
+            }
+            if (values.activeRetentionPeriodId) {
+                formData.append('activeRetentionPeriodId', values.activeRetentionPeriodId);
+            }
+            if (values.inactiveRetentionPeriodId) {
+                formData.append('inactiveRetentionPeriodId', values.inactiveRetentionPeriodId);
+            }
+            if (values.jraDescriptionId) {
+                formData.append('jraDescriptionId', values.jraDescriptionId);
+            }
+            if (values.storageLocationId) {
+                formData.append('storageLocationId', values.storageLocationId);
+            }
 
             const response = await postLetters(formData);
             modals.open({
@@ -229,6 +240,7 @@ export function CreateLetterForm() {
                 minDate={new Date()}
                 readOnly
                 clearable
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -239,6 +251,7 @@ export function CreateLetterForm() {
                 data={classificationOptions}
                 clearable
                 searchable
+                withAsterisk
                 nothingFoundMessage="Kode Klasifikasi tidak ditemukan..."
                 checkIconPosition="right"
                 disabled={isClassificationsLoading || !!classificationsError}
@@ -253,6 +266,7 @@ export function CreateLetterForm() {
                 data={departmentOptions}
                 clearable
                 searchable
+                withAsterisk
                 nothingFoundMessage="Kode Bidang tidak ditemukan..."
                 checkIconPosition="right"
                 disabled={isDepartmentsLoading || !!departmentsError || !user.isAdmin}
@@ -264,6 +278,7 @@ export function CreateLetterForm() {
                 {...form.getInputProps('to')}
                 label="Kepada"
                 placeholder="Kepada"
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -271,6 +286,7 @@ export function CreateLetterForm() {
                 {...form.getInputProps('subject')}
                 label="Perihal"
                 placeholder="Perihal"
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -281,6 +297,7 @@ export function CreateLetterForm() {
                 data={levelOptions}
                 clearable
                 searchable
+                withAsterisk
                 nothingFoundMessage="Sifat Surat tidak ditemukan..."
                 checkIconPosition="right"
                 disabled={isLevelsLoading || !!levelsError}
@@ -292,6 +309,7 @@ export function CreateLetterForm() {
                 {...form.getInputProps('attachmentCount')}
                 label="Jumlah Lampiran"
                 placeholder="Jumlah Lampiran"
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -299,6 +317,7 @@ export function CreateLetterForm() {
                 {...form.getInputProps('description')}
                 label="Keterangan"
                 placeholder="Keterangan"
+                withAsterisk
             />
             <Space h="sm" />
 
@@ -307,6 +326,7 @@ export function CreateLetterForm() {
                 {...form.getInputProps('file')}
                 label="Upload File"
                 placeholder="Pilih file"
+                withAsterisk
             />
             <Space h="sm" />
 
