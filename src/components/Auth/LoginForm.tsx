@@ -25,6 +25,7 @@ export function LoginForm() {
 
 	const handleLogin = async () => {
 		try {
+			setLoading(true)
 			await login({username, password});
 
 			// On success, redirect to the dashboard
