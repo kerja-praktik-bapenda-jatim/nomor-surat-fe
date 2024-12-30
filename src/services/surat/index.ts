@@ -17,6 +17,10 @@ export const getLetters = async (params?: Record<string, string>) => {
 	return res;
 };
 
+export const getAllLetters = async () => {
+	return getLetters({reserved: "true"});
+};
+
 export const getSpareLetters = async () => {
 	return getLetters({reserved: "false"});
 };
@@ -164,7 +168,7 @@ export const exportLetters = async (values: InputExport) => {
 export const useLetters = () =>
 	useQuery<Letters[]>({
 		queryKey: ["Letters"],
-		queryFn: () => getLetters(),
+		queryFn: () => getAllLetters(),
 	});
 
 export const useSpareLetters = () =>

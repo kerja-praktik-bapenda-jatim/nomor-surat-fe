@@ -17,6 +17,10 @@ export const getNota = async (params?: Record<string, string>) => {
 	return res;
 };
 
+export const getAllNota = async () => {
+	return getNota({reserved: "true"});
+};
+
 export const getSpareNota = async () => {
 	return getNota({reserved: "false"});
 };
@@ -164,7 +168,7 @@ export const exportNota = async (values: InputExport) => {
 export const useNota = () =>
 	useQuery<Nota[]>({
 		queryKey: ["Nota"],
-		queryFn: () => getNota(),
+		queryFn: () => getAllNota(),
 	});
 
 export const useSpareNota = () =>
