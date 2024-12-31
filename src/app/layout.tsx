@@ -16,26 +16,18 @@ import { AppProvider } from "./provider";
 
 export const metadata = {
   metadataBase: new URL("https://mantine-admin.vercel.app/"),
-  title: { default: "Mantine Admin", template: "%s | Mantine Admin" },
-  description: "A Modern Dashboard with Next.js.",
-  keywords: [
-    "Next.js",
-    "Mantine",
-    "Admin",
-    "Template",
-    "Admin Template",
-    "Admin Dashboard",
-    "Admin Panel",
-    "Admin UI",
-  ],
+  title: { default: "Nomor Surat", template: "%s | Nomor Surat" },
+  description: "Website Penomoran Surat BAPENDA JATIM",
+  keywords: [],
   authors: [
     {
-      name: "jotyy",
-      url: "https://jotyy.vercel.app",
+      name: "Jawahirul Wildan",
+      url: "jawahirulwildan@gmail.com",
+    },    {
+      name: "Aurelio Killian",
+      url: "aurelioklv@gmail.com",
     },
   ],
-  creator: "jotyy",
-  manifest: "https://mantine-admin.vercel.app/site.webmanifest",
 };
 
 export default function RootLayout({
