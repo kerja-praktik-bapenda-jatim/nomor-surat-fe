@@ -7,49 +7,49 @@ const token = Cookies.get("authToken")
 const BASE_URL = process.env.API_BASE_URL as string;
 
 export const getLevels = async () => {
-    const res = await ky.get(`${BASE_URL}/level`, {
+    const res = await ky.get(`${BASE_URL}level`, {
     }).json<BaseString[]>();
     return res;
 };
 
 export const getDepartments = async () => {
-    const res = await ky.get(`${BASE_URL}/department`, {
+    const res = await ky.get(`${BASE_URL}department`, {
     }).json<BaseString[]>();
     return res;
 };
 
 export const getClassifications = async () => {
-    const res = await ky.get(`${BASE_URL}/classification`, {
+    const res = await ky.get(`${BASE_URL}classification`, {
     }).json<BaseString[]>();
     return res;
 };
 
 export const getAccess = async () => {
-    const res = await ky.get(`${BASE_URL}/access`, {
+    const res = await ky.get(`${BASE_URL}access`, {
     }).json<BaseString[]>();
     return res;
 };
 
 export const getActiveRetentionPeriod = async () => {
-    const res = await ky.get(`${BASE_URL}/retention?active=1`, {
+    const res = await ky.get(`${BASE_URL}retention?active=1`, {
     }).json<BaseString[]>();
     return res;
 };
 
 export const getInactiveRetentionPeriod = async () => {
-    const res = await ky.get(`${BASE_URL}/retention?active=0`, {
+    const res = await ky.get(`${BASE_URL}retention?active=0`, {
     }).json<BaseString[]>();
     return res;
 };
 
 export const getJRADescription = async () => {
-    const res = await ky.get(`${BASE_URL}/jra`, {
+    const res = await ky.get(`${BASE_URL}jra`, {
     }).json<BaseString[]>();
     return res;
 };
 
 export const getStorageLocation = async () => {
-    const res = await ky.get(`${BASE_URL}/storage`, {
+    const res = await ky.get(`${BASE_URL}storage`, {
     }).json<BaseString[]>();
     return res;
 };
