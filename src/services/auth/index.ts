@@ -32,11 +32,7 @@ export const login = async (data: LoginRequest) => {
 			throw new Error(response.statusText);
 		}
 	} catch (err: any) {
-		if (err.response) {
-			const errorData = await err.response.json();
-			throw new Error(errorData?.message || "Login failed. Please try again.");
-		}
-		throw new Error("An error occurred while logging in.");
+		throw err;
 	}
 }
 
