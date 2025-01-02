@@ -8,6 +8,7 @@ import { IconArrowLeft } from '@tabler/icons-react';
 import { patchNota, useNotaById } from '@/services/nota';
 import { UpdateNotaResponse } from '@/services/nota/types';
 import { useAccess, useActiveRetentionPeriods, useClassifications, useDepartments, useInactiveRetentionPeriods, useJRADescriptions, useLevels, useStorageLocations } from '@/services/data';
+import {getCurrentUser} from "@/services/auth";
 
 export function UpdateLetterForm() {
     const { id } = useParams();
@@ -21,7 +22,7 @@ export function UpdateLetterForm() {
     const { data: activeRetentionPeriodsData } = useActiveRetentionPeriods();
     const { data: inactiveRetentionPeriodsData } = useInactiveRetentionPeriods();
     const { data: jraDescriptionsData } = useJRADescriptions();
-    const { data: storageLocationsData } = useStorageLocations(); 
+    const { data: storageLocationsData } = useStorageLocations();
 
     const classificationOptions = classificationsData?.map((classification) => ({
         value: classification.id,
@@ -43,23 +44,23 @@ export function UpdateLetterForm() {
         label: access.name,
     })) || [];
 
-    const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({ 
-        value: activeRetentionPeriod.id, 
-        label: activeRetentionPeriod.name, 
+    const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({
+        value: activeRetentionPeriod.id,
+        label: activeRetentionPeriod.name,
     })) || [];
 
-    const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod ) => ({ 
-        value: inactiveRetentionPeriod.id, 
-        label: inactiveRetentionPeriod.name, 
+    const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod ) => ({
+        value: inactiveRetentionPeriod.id,
+        label: inactiveRetentionPeriod.name,
     })) || [];
 
-    const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({ 
-        value: jraDescription.id, 
+    const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({
+        value: jraDescription.id,
         label: jraDescription.name,
     })) || [];
 
-    const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({ 
-        value: storageLocation.id, 
+    const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({
+        value: storageLocation.id,
         label: storageLocation.name,
     })) || [];
 
@@ -80,6 +81,14 @@ export function UpdateLetterForm() {
         storageLocationId: '',
         file: null,
     });
+
+		const [loading, setLoading] = useState(false);
+		const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
+
+		useEffect(() => {
+				const user = getCurrentUser();
+				setUser(user);
+		}, []);
 
     useEffect(() => {
         if (letter) {
@@ -117,6 +126,8 @@ export function UpdateLetterForm() {
 
     const handleSubmit = async () => {
         if (!id) return;
+				setLoading(true)
+
         try {
             const updateSuccess = await patchNota(letterId, formData);
             if (updateSuccess) {
@@ -134,7 +145,10 @@ export function UpdateLetterForm() {
                 });
             }
         } catch (error: any) {
-        const errorMessage = error.response?.data?.message || "Terjadi kesalahan saat memperbarui data.";
+        let errorMessage = error.response?.data?.message || "Terjadi kesalahan saat memperbarui data.";
+				if(error instanceof Error) {
+						errorMessage = error.message
+				}
 
         modals.open({
             title: 'Pembaharuan Gagal',
@@ -149,6 +163,7 @@ export function UpdateLetterForm() {
             ),
         });
         }
+				setLoading(false)
     };
 
     const handleBack = () => {
@@ -189,7 +204,7 @@ export function UpdateLetterForm() {
                     onChange={handleChange}
                 />
                 <Space h="sm" />
-                
+
                 <Select
                     name="classificationId"
                     label="Kode Klasifikasi Surat"
@@ -200,17 +215,18 @@ export function UpdateLetterForm() {
                     searchable
                     nothingFoundMessage="Kode Klasifikasi Surat ditemukan..."
                     checkIconPosition="right"
+										withAsterisk
                 />
                 <Space h="sm" />
 
                 <Select
-                    readOnly
                     name="departmentId"
                     label="Kode Bidang"
                     data={departmentOptions}
                     value={formData.departmentId}
                     onChange={(value) => handleSelectChange('departmentId', value)}
                     clearable
+										disabled={!user.isAdmin}
                     searchable
                     nothingFoundMessage="Kode Bidang tidak ditemukan..."
                     checkIconPosition="right"
@@ -222,6 +238,7 @@ export function UpdateLetterForm() {
                     value={formData.to}
                     label="Kepada"
                     onChange={handleChange}
+										withAsterisk
                 />
                 <Space h="sm" />
 
@@ -230,6 +247,7 @@ export function UpdateLetterForm() {
                     value={formData.subject}
                     label="Perihal"
                     onChange={handleChange}
+										withAsterisk
                 />
                 <Space h="sm" />
 
@@ -243,6 +261,7 @@ export function UpdateLetterForm() {
                     searchable
                     nothingFoundMessage="Sifat Surat tidak ditemukan..."
                     checkIconPosition="right"
+										withAsterisk
                 />
                 <Space h="sm" />
 
@@ -251,6 +270,7 @@ export function UpdateLetterForm() {
                     label="Jumlah Lampiran"
                     value={formData.attachmentCount}
                     onChange={(value) => handleSelectChange('attachmentCount', value || 0)}
+										withAsterisk
                 />
                 <Space h="sm" />
 
@@ -345,7 +365,7 @@ export function UpdateLetterForm() {
                 />
                 <Space h="sm" />
 
-                <Button onClick={handleSubmit}>
+                <Button onClick={handleSubmit} loading={loading}>
                     Update Surat
                 </Button>
             </Box>

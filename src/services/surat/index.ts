@@ -80,7 +80,18 @@ export const addSpareLetter = async (payload: SpareLetters): Promise<{ message: 
 export const patchLetter = async (id: string, formData: UpdateLetterResponse): Promise<boolean> => {
     try {
         const formDataToSend = new FormData();
-        formDataToSend.append('subject', formData.subject);
+				if (
+						!formData.subject ||
+						!formData.to ||
+						!formData.classificationId ||
+						!formData.levelId ||
+						!formData.attachmentCount ||
+						!formData.description
+				) {
+						throw new Error('Harap isi kolom wajib pada form');
+				}
+
+				formDataToSend.append('subject', formData.subject);
         formDataToSend.append('to', formData.to);
         formDataToSend.append('classificationId', formData.classificationId);
         formDataToSend.append('levelId', formData.levelId);
@@ -117,7 +128,7 @@ export const patchLetter = async (id: string, formData: UpdateLetterResponse): P
         return true;
     } catch (error) {
         console.error("Gagal memperbarui surat:", error);
-        return false;
+				throw error;
     }
 };
 

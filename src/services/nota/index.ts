@@ -80,6 +80,17 @@ export const addSpareNota = async (payload: SpareNota): Promise<{ message: strin
 export const patchNota = async (id: string, formData: UpdateNotaResponse): Promise<boolean> => {
     try {
         const formDataToSend = new FormData();
+				if (
+						!formData.subject ||
+						!formData.to ||
+						!formData.classificationId ||
+						!formData.levelId ||
+						!formData.attachmentCount ||
+						!formData.description
+				) {
+						throw new Error('Harap isi kolom wajib pada form');
+				}
+
         formDataToSend.append('subject', formData.subject);
         formDataToSend.append('to', formData.to);
         formDataToSend.append('classificationId', formData.classificationId);
@@ -131,7 +142,7 @@ export const deleteNota = async (id: string) => {
         return true;
     } catch (error) {
         console.error('Gagal menghapus surat:', error);
-        return false;
+				throw error;
     }
 };
 
