@@ -118,6 +118,9 @@ export const patchLetter = async (id: string, formData: UpdateLetterResponse): P
         if (formData.file) {
             formDataToSend.append('file', formData.file);
         }
+				if(formData.departmentId) {
+					formDataToSend.append('departmentId', formData.departmentId);
+				}
 
         await ky.patch(`${BASE_URL}/${id}`, {
             headers: {

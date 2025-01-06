@@ -118,6 +118,9 @@ export const patchNota = async (id: string, formData: UpdateNotaResponse): Promi
         if (formData.file) {
             formDataToSend.append('file', formData.file);
         }
+				if(formData.departmentId) {
+					formDataToSend.append('departmentId', formData.departmentId);
+				}
 
         await ky.patch(`${BASE_URL}/${id}`, {
             headers: {
