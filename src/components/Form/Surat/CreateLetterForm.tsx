@@ -19,7 +19,7 @@ export function CreateLetterForm() {
     const { data: activeRetentionPeriodsData, isLoading: isActiveRetentionPeriodsLoading, error: activeRetentionPeriodsError } = useActiveRetentionPeriods();
     const { data: inactiveRetentionPeriodsData, isLoading: isInactiveRetentionPeriodsLoading, error: inactiveRetentionPeriodsError } = useInactiveRetentionPeriods();
     const { data: jraDescriptionsData, isLoading: isJRADescriptionsLoading, error: jraDescriptionsError } = useJRADescriptions();
-    const { data: storageLocationsData, isLoading: isStorageLocationsLoading, error: storageLocationsError } = useStorageLocations();    
+    const { data: storageLocationsData, isLoading: isStorageLocationsLoading, error: storageLocationsError } = useStorageLocations();
 
     const classificationOptions = classificationsData?.map((classification) => ({
         value: classification.id,
@@ -41,33 +41,33 @@ export function CreateLetterForm() {
         label: access.name,
     })) || [];
 
-    const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({ 
-        value: activeRetentionPeriod.id, 
-        label: activeRetentionPeriod.name, 
+    const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({
+        value: activeRetentionPeriod.id,
+        label: activeRetentionPeriod.name,
     })) || [];
 
-    const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod ) => ({ 
-        value: inactiveRetentionPeriod.id, 
-        label: inactiveRetentionPeriod.name, 
+    const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod ) => ({
+        value: inactiveRetentionPeriod.id,
+        label: inactiveRetentionPeriod.name,
     })) || [];
 
-    const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({ 
-        value: jraDescription.id, 
+    const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({
+        value: jraDescription.id,
         label: jraDescription.name,
     })) || [];
 
-    const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({ 
-        value: storageLocation.id, 
+    const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({
+        value: storageLocation.id,
         label: storageLocation.name,
     })) || [];
 
     const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
-        
+
     useEffect(() => {
         const user = getCurrentUser();
         setUser(user);
     }, []);
-    
+
     const form = useForm({
         mode: 'uncontrolled',
         validate: {
@@ -107,6 +107,21 @@ export function CreateLetterForm() {
 
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+
+		const handleConfirmSubmit = (values: typeof form.values) => {
+				modals.openConfirmModal({
+					title: 'Konfirmasi Pembuatan Nomor Surat',
+					centered: true,
+					children: (
+						<Text size="sm">
+							Apakah Anda yakin isian sudah benar?
+						</Text>
+					),
+					labels: { confirm: 'Buat', cancel: 'Batal' },
+					onConfirm: () => handleSubmit(values),
+				});
+		};
+
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
 
@@ -164,7 +179,7 @@ export function CreateLetterForm() {
                 children: (
                     <>
                         <Text size="sm">
-                            <strong>Nomor Surat:</strong> {response.number} 
+                            <strong>Nomor Surat:</strong> {response.number}
                             <CopyButton value={response.number} timeout={2000}>
                                 {({ copied, copy }) => (
                                     <Tooltip label={copied ? 'Disalin' : 'Salin'} withArrow position="right">
@@ -228,7 +243,7 @@ export function CreateLetterForm() {
         <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
             Kembali
         </Button>
-        <Box component="form" onSubmit={form.onSubmit((values) => handleSubmit(values))}>
+        <Box component="form" onSubmit={form.onSubmit((values) => handleConfirmSubmit(values))}>
             <Text component="h2" fw="bold" fz="lg">
                 Buat Surat
             </Text>
@@ -324,7 +339,7 @@ export function CreateLetterForm() {
             <FileInput
                 clearable
                 {...form.getInputProps('file')}
-                label="Upload File"
+                label="Upload File (Format .pdf, maks 2MB)"
                 placeholder="Pilih file"
                 withAsterisk
             />
@@ -350,7 +365,7 @@ export function CreateLetterForm() {
                 placeholder="Index Nama Berkas"
             />
             <Space h="sm" />
-            
+
             <Select
                 {...form.getInputProps('activeRetentionPeriodId')}
                 label="Jangka Simpan Waktu Aktif"
@@ -413,6 +428,6 @@ export function CreateLetterForm() {
         </Box>
     </Paper>
     </>
-        
+
     );
 }
