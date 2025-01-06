@@ -50,7 +50,7 @@ export interface NotaResponse{
   id: string;
   date: string;
   reserved: string;
-  attachmentCount: string;
+  attachmentCount: number;
   userId: string;
   departmentId: string;
   subject: string;
@@ -94,7 +94,7 @@ export interface NotaResponse{
 export interface UpdateNotaResponse{
   subject: string;
   to: string;
-  attachmentCount: string;
+  attachmentCount: number;
   departmentId: string;
   classificationId: string;
   levelId: string;

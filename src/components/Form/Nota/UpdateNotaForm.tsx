@@ -71,7 +71,7 @@ export function UpdateLetterForm() {
         classificationId: '',
         departmentId: '',
         levelId: '',
-        attachmentCount: '',
+        attachmentCount: 0,
         description: '',
         accessId: '',
         documentIndexName: '',
@@ -98,7 +98,7 @@ export function UpdateLetterForm() {
                 classificationId: letter.classificationId || '',
                 departmentId: letter.departmentId || '',
                 levelId: letter.levelId || '',
-                attachmentCount: letter.attachmentCount || '',
+                attachmentCount: letter.attachmentCount || 0,
                 description: letter.description || '',
                 accessId: letter.accessId || '',
                 documentIndexName: letter.documentIndexName || '',
@@ -279,6 +279,7 @@ export function UpdateLetterForm() {
                     value={formData.description}
                     label="Keterangan"
                     onChange={handleChange}
+										withAsterisk
                 />
                 <Space h="sm" />
 

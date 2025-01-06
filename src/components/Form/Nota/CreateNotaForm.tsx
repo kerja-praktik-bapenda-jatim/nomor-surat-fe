@@ -82,8 +82,8 @@ export function CreateNotaForm() {
             to: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
             subject: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
             levelId: (value) => (value ? null : 'Pilih sifat surat'),
-            attachmentCount: (value) => (value > 0 ? null : 'Jumlah lampiran harus lebih dari 0'),
-            description: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
+            attachmentCount: (value) => (value >= 0 ? null : 'Jumlah lampiran harus lebih dari 0'),
+            description: hasLength({ min: 1 }, 'Kolom tidak boleh kosong'),
             file: (value) => (value ? null : 'Kolom tidak boleh kosong'),
         },
         initialValues: {

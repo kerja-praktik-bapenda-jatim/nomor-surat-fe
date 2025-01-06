@@ -80,23 +80,25 @@ export const addSpareLetter = async (payload: SpareLetters): Promise<{ message: 
 export const patchLetter = async (id: string, formData: UpdateLetterResponse): Promise<boolean> => {
     try {
         const formDataToSend = new FormData();
-				if (
-						!formData.subject ||
-						!formData.to ||
-						!formData.classificationId ||
-						!formData.levelId ||
-						!formData.attachmentCount ||
-						!formData.description
-				) {
-						throw new Error('Harap isi kolom wajib pada form');
-				}
+        if (
+                !formData.subject ||
+                !formData.to ||
+                !formData.classificationId ||
+                !formData.levelId ||
+                formData.attachmentCount < 0 ||
+                !formData.description ||
+                !formData.departmentId
+        ) {
+                throw new Error('Harap isi kolom wajib pada form');
+        }
 
-				formDataToSend.append('subject', formData.subject);
+		formDataToSend.append('subject', formData.subject);
         formDataToSend.append('to', formData.to);
         formDataToSend.append('classificationId', formData.classificationId);
         formDataToSend.append('levelId', formData.levelId);
-        formDataToSend.append('attachmentCount',formData.attachmentCount)
+        formDataToSend.append('attachmentCount', `${formData.attachmentCount}`);
         formDataToSend.append('description', formData.description);
+        formDataToSend.append('departmentId', formData.departmentId);
         if (formData.accessId) {
             formDataToSend.append('accessId', formData.accessId);
         }
@@ -118,9 +120,6 @@ export const patchLetter = async (id: string, formData: UpdateLetterResponse): P
         if (formData.file) {
             formDataToSend.append('file', formData.file);
         }
-				if(formData.departmentId) {
-					formDataToSend.append('departmentId', formData.departmentId);
-				}
 
         await ky.patch(`${BASE_URL}/${id}`, {
             headers: {
