@@ -97,7 +97,14 @@ export function SpareNotaForm() {
                 <DateInput
                     clearable
                     valueFormat="DD-MMMM-YYYY"
-                    minDate={new Date(new Date().setDate(new Date().getDate() - 1))}
+                    minDate={(() => {
+                        const today = new Date();
+                        const dayOfWeek = today.getDay();
+                        if (dayOfWeek === 1) {
+                            return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 3); // Jumat sebelumnya
+                        }
+                        return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+                    })()}
                     maxDate={new Date()}
                     {...form.getInputProps('date')}
                     label="Tanggal"
