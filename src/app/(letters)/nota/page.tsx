@@ -1,6 +1,6 @@
 "use client";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
-import { SimpleTableLetter } from "@/components/Table/Nota/SimpleLetterTable";
+import { SimpleTableNota } from "@/components/Table/Nota/SimpleNotaTable";
 import { Button, Group, Paper } from "@mantine/core";
 import { IconFileExport, IconFilePlus } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ export default function NotaPage() {
                         Export Nota Dinas
                     </Button>
                 </Group>
-                <SimpleTableLetter />
+                <SimpleTableNota />
             </Paper>
         </PageContainer>
     );

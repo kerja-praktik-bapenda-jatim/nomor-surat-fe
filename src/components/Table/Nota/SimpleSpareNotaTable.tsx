@@ -8,7 +8,7 @@ import {ActionIcon} from "@mantine/core";
 import {IconEye} from "@tabler/icons-react";
 
 
-export const SimpleTableSpareLetter = () => {
+export const SimpleTableSpareNota = () => {
 	const {data} = useSpareNota();
 	const router = useRouter();
 	//should be memoized or stable
@@ -28,16 +28,9 @@ export const SimpleTableSpareLetter = () => {
 				accessorFn: (row) => convertUTC(row.date),
 			},
 			{
-				accessorKey: "subject",
-				header: "Perihal",
-			},
-			{
-				accessorKey: "to",
-				header: "Kepada",
-			},
-			{
-				accessorKey: "filename",
-				header: "File",
+				accessorKey: "reserved",
+				header: "Status",
+				accessorFn: (row) => (row.reserved ? "Tidak Tersedia" : "Tersedia"),
 			},
 			{
 				accessorKey: "actions",

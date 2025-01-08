@@ -8,7 +8,7 @@ import { ActionIcon } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
 
 
-export const SimpleTableLetter = () => {
+export const SimpleTableNota = () => {
   const { data } = useNota();
   const router = useRouter();
   //should be memoized or stable

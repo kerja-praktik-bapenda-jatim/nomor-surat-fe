@@ -5,7 +5,7 @@ export interface Letters {
   subject: string;
   to: string;
   filename: string;
-  reserved: string;
+  reserved: boolean;
   attachmentCount: string;
   description: string;
   departmentId: string;

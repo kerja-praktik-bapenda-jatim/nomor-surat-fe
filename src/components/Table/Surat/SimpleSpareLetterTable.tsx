@@ -28,20 +28,13 @@ export const SimpleTableSpareLetter = () => {
 				accessorFn: (row) => convertUTC(row.date),
 			},
 			{
-				accessorKey: "subject",
-				header: "Perihal",
-			},
-			{
-				accessorKey: "to",
-				header: "Kepada",
-			},
-			{
-				accessorKey: "filename",
-				header: "File",
+				accessorKey: "reserved",
+				header: "Status",
+				accessorFn: (row) => (row.reserved ? "Tidak Tersedia" : "Tersedia"),
 			},
 			{
 				accessorKey: "actions",
-				header: "Actions",
+				header: "Aksi",
 				Cell: ({row}) => (
 					<ActionIcon
 						onClick={() => router.push(`/surat/view/${row.original.id}`)}
