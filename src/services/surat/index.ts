@@ -19,7 +19,7 @@ export const getLetters = async (params?: Record<string, string>) => {
 };
 
 export const getAllLetters = async () => {
-	return getLetters({reserved: "true"});
+	return getLetters({reserved: "true", order: "desc"});
 };
 
 export const getSpareLetters = async () => {

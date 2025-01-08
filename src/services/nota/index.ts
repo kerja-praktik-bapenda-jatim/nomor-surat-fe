@@ -19,7 +19,7 @@ export const getNota = async (params?: Record<string, string>) => {
 };
 
 export const getAllNota = async () => {
-	return getNota({reserved: "true"});
+	return getNota({reserved: "true", order: "desc"});
 };
 
 export const getSpareNota = async () => {
