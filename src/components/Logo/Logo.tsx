@@ -15,10 +15,10 @@ export const Logo: React.FC<Props> = () => {
         style={{ textDecoration: "none" }}
         className={classes.heading}
       >
-        <Text fw="bolder" size="xl">
-          Nomor
-          <Text component="span" fw="normal" className={classes.subheading}>
-            Surat
+        <Text fw={700} size="xl">
+          SINORAT
+          <Text component="span" fw={100} size="xs" className={classes.subheading}>
+            Sistem Informasi Surat
           </Text>
         </Text>
       </Link>

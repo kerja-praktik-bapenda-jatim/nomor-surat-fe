@@ -1,6 +1,6 @@
 "use client"
 
-import {Box, Title} from "@mantine/core";
+import {Box, Title, Text, Image} from "@mantine/core";
 import classes from "./layout.module.css";
 import {useAuthRedirect} from "@/services/auth";
 
@@ -13,8 +13,17 @@ export default function AuthLayout({ children }: Props) {
 
   return (
     <Box className={classes.wrapper}>
-      <Title order={1} fw="bolder">
-        Nomor Surat
+      <Image
+        h={170}
+        w="auto"
+        fit="contain"
+        src="/bg.png"
+      />
+      <Title order={1} fw={700} ta="center" mt={25}>
+        SINORAT
+          <Text fw={100} size="sm">
+            Sistem Informasi Surat Bapenda Jatim
+          </Text>
       </Title>
       {/*<Text c="dimmed" size="sm" mt={5}>*/}
       {/*  Don&apos;t have an account?{" "}*/}

@@ -16,8 +16,8 @@ import { AppProvider } from "./provider";
 
 export const metadata = {
   metadataBase: new URL("https://mantine-admin.vercel.app/"),
-  title: { default: "Nomor Surat", template: "%s | Nomor Surat" },
-  description: "Website Penomoran Surat BAPENDA JATIM",
+  title: { default: "SINORAT", template: "%s | SINORAT" },
+  description: "Sistem Informasi Surat BAPENDA JATIM",
   keywords: [],
   authors: [
     {
