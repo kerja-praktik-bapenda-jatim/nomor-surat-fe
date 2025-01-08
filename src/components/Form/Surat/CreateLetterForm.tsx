@@ -368,7 +368,7 @@ export function CreateLetterForm() {
 
             <Select
                 {...form.getInputProps('activeRetentionPeriodId')}
-                label="Jangka Simpan Waktu Aktif"
+                label="Jangka Waktu Simpan Aktif"
                 placeholder={isActiveRetentionPeriodsLoading ? "Memuat data..." : "Pilih atau Cari"}
                 data={activeRetentionPeriodOptions}
                 clearable
@@ -382,7 +382,7 @@ export function CreateLetterForm() {
 
             <Select
                 {...form.getInputProps('inactiveRetentionPeriodId')}
-                label="Jangka Simpan Waktu Inaktif"
+                label="Jangka Waktu Simpan Inaktif"
                 placeholder={isInactiveRetentionPeriodsLoading ? "Memuat data..." : "Pilih atau Cari"}
                 data={inactiveRetentionPeriodOptions}
                 clearable

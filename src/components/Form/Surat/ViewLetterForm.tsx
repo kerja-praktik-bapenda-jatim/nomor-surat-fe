@@ -116,10 +116,10 @@ export function ViewLetterForm() {
                 <TextInput value={letter?.documentIndexName} label="Index Nama Berkas" readOnly />
                 <Space h="sm" />
 
-                <TextInput value={letter?.ActiveRetentionPeriod?.name} label="Jangka Simpan Waktu Aktif" readOnly />
+                <TextInput value={letter?.ActiveRetentionPeriod?.name} label="Jangka Waktu Simpan Aktif" readOnly />
                 <Space h="sm" />
 
-                <TextInput value={letter?.InactiveRetentionPeriod?.name} label="Jangka Simpan Waktu Inaktif" readOnly />
+                <TextInput value={letter?.InactiveRetentionPeriod?.name} label="Jangka Waktu Simpan Inaktif" readOnly />
                 <Space h="sm" />
                 
                 <TextInput value={letter?.JraDescription?.name} label="Keterangan di JRA" readOnly />

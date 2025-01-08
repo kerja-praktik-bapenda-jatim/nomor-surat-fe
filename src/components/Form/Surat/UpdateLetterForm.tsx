@@ -297,7 +297,7 @@ export function UpdateLetterForm() {
 
             <Select
                 name="activeRetentionPeriodId"
-                label="Jangka Simpan Waktu Aktif "
+                label="Jangka Waktu Simpan Aktif"
                 data={activeRetentionPeriodOptions}
                 value={formData.activeRetentionPeriodId}
                 onChange={(value) => handleSelectChange('activeRetentionPeriodId', value)}
@@ -310,7 +310,7 @@ export function UpdateLetterForm() {
 
             <Select
                 name="inactiveRetentionPeriodId"
-                label="Jangka Simpan Waktu Inaktif"
+                label="Jangka Waktu Simpan Inaktif"
                 data={inactiveRetentionPeriodOptions}
                 value={formData.inactiveRetentionPeriodId}
                 onChange={(value) => handleSelectChange('inactiveRetentionPeriodId', value)}
