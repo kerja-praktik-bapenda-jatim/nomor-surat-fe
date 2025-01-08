@@ -20,8 +20,8 @@ export const SimpleTableLetter = () => {
       },
       {
         accessorKey: "name",
-        header: "Pembuat",
-        accessorFn: (row) => `${row.departmentId} / ${row.UpdateUser.username}`,
+        header: "Kode Bidang",
+        accessorFn: (row) => `${row.departmentId} / ${row.CreateUser.username}`,
       },
       {
         accessorKey: "date",
@@ -29,20 +29,21 @@ export const SimpleTableLetter = () => {
         accessorFn: (row) => convertUTC(row.date),
       },
       {
-        accessorKey: "subject",
-        header: "Perihal",
+        accessorKey: "update",
+        header: "Update",
+        accessorFn: (row) => `${convertUTC(row.updatedAt)} oleh ${row.UpdateUser.username}`,
       },
       {
         accessorKey: "to",
         header: "Kepada",
       },
       {
-        accessorKey: "Level.name",
-        header: "Sifat Surat",
+        accessorKey: "subject",
+        header: "Perihal",
       },
       {
-        accessorKey: "filename",
-        header: "File",
+        accessorKey: "Level.name",
+        header: "Sifat Surat",
       },
       {
         accessorKey: "actions",
