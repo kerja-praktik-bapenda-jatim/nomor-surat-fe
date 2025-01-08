@@ -86,8 +86,7 @@ export const patchLetter = async (id: string, formData: UpdateLetterResponse): P
                 !formData.classificationId ||
                 !formData.levelId ||
                 formData.attachmentCount < 0 ||
-                !formData.description ||
-                !formData.departmentId
+                !formData.description
         ) {
                 throw new Error('Harap isi kolom wajib pada form');
         }
@@ -98,7 +97,9 @@ export const patchLetter = async (id: string, formData: UpdateLetterResponse): P
         formDataToSend.append('levelId', formData.levelId);
         formDataToSend.append('attachmentCount', `${formData.attachmentCount}`);
         formDataToSend.append('description', formData.description);
-        formDataToSend.append('departmentId', formData.departmentId);
+        if(formData.departmentId) {
+            formDataToSend.append('departmentId', formData.departmentId);
+        }
         if (formData.accessId) {
             formDataToSend.append('accessId', formData.accessId);
         }
