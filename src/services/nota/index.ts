@@ -3,15 +3,15 @@ import ky from "ky";
 import type {NotaResponse, Nota, SpareNota, UpdateNotaResponse, InputExport} from "./types";
 import Cookies from "js-cookie";
 import { currentTimestamp } from "@/utils/utils";
+import {getTokenFromCookies} from "@/services/auth";
 
-const token = Cookies.get("authToken")
 const BASE_URL = `${process.env.API_BASE_URL as string}nota`;
 
 
 export const getNota = async (params?: Record<string, string>) => {
 	const res = await ky.get(`${BASE_URL}`, {
 		headers: {
-			Authorization: `Bearer ${token}`,
+			Authorization: `Bearer ${getTokenFromCookies()}`,
 		},
 		searchParams: params
 	}).json<Nota[]>();
@@ -29,7 +29,7 @@ export const getSpareNota = async () => {
 export const getNotaById = async (id: string): Promise<NotaResponse> => {
     const res = await ky.get(`${BASE_URL}/${id}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${getTokenFromCookies()}`,
         },
     }).json<NotaResponse>();
     return res;
@@ -38,7 +38,7 @@ export const getNotaById = async (id: string): Promise<NotaResponse> => {
 export const downloadNotaFile = async (id: string): Promise<string | null> => {
     const res = await ky.get(`${BASE_URL}/download/${id}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${getTokenFromCookies()}`,
         },
     });
 
@@ -54,7 +54,7 @@ export const downloadNotaFile = async (id: string): Promise<string | null> => {
 export const postNota = async (formData: FormData): Promise<NotaResponse> => {
     const res = await ky.post(`${BASE_URL}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${getTokenFromCookies()}`,
         },
         body: formData,
     }).json<NotaResponse>();
@@ -67,7 +67,7 @@ export const addSpareNota = async (payload: SpareNota): Promise<{ message: strin
             json: payload,
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${getTokenFromCookies()}`,
             },
         }).json();
         return response as { message: string };
@@ -124,7 +124,7 @@ export const patchNota = async (id: string, formData: UpdateNotaResponse): Promi
 
         await ky.patch(`${BASE_URL}/${id}`, {
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${getTokenFromCookies()}`,
             },
             body: formDataToSend,
         });
@@ -139,7 +139,7 @@ export const deleteNota = async (id: string) => {
     try {
         await ky.delete(`${BASE_URL}/${id}`, {
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${getTokenFromCookies()}`,
             },
         });
         return true;
@@ -167,7 +167,7 @@ export const exportNota = async (values: InputExport) => {
     try {
         const response = await ky.get(`${BASE_URL}/export`, {
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${getTokenFromCookies()}`,
             },
             searchParams,
         });

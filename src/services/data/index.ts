@@ -3,7 +3,6 @@ import ky from "ky";
 import Cookies from "js-cookie";
 import type {BaseString} from "./types";
 
-const token = Cookies.get("authToken")
 const BASE_URL = process.env.API_BASE_URL as string;
 
 export const getLevels = async () => {

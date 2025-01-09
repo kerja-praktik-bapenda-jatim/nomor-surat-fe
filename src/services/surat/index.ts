@@ -5,7 +5,6 @@ import Cookies from "js-cookie";
 import { currentTimestamp } from "@/utils/utils";
 import {getTokenFromCookies} from "@/services/auth";
 
-const token = Cookies.get("authToken")
 const BASE_URL = `${process.env.API_BASE_URL as string}letter`;
 
 
@@ -30,7 +29,7 @@ export const getSpareLetters = async () => {
 export const getLetterById = async (id: string): Promise<LetterResponse> => {
     const res = await ky.get(`${BASE_URL}/${id}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${getTokenFromCookies()}`,
         },
     }).json<LetterResponse>();
     return res;
@@ -39,7 +38,7 @@ export const getLetterById = async (id: string): Promise<LetterResponse> => {
 export const downloadLetterFile = async (id: string): Promise<string | null> => {
     const res = await ky.get(`${BASE_URL}/download/${id}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${getTokenFromCookies()}`,
         },
     });
 
@@ -68,7 +67,7 @@ export const addSpareLetter = async (payload: SpareLetters): Promise<{ message: 
             json: payload,
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${getTokenFromCookies()}`,
             },
         }).json();
         return response as { message: string };
@@ -125,7 +124,7 @@ export const patchLetter = async (id: string, formData: UpdateLetterResponse): P
 
         await ky.patch(`${BASE_URL}/${id}`, {
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${getTokenFromCookies()}`,
             },
             body: formDataToSend,
         });
@@ -140,7 +139,7 @@ export const deleteLetter = async (id: string) => {
     try {
         await ky.delete(`${BASE_URL}/${id}`, {
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${getTokenFromCookies()}`,
             },
         });
         return true;
@@ -168,7 +167,7 @@ export const exportLetters = async (values: InputExport) => {
     try {
         const response = await ky.get(`${BASE_URL}/export`, {
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${getTokenFromCookies()}`,
             },
             searchParams,
         });
