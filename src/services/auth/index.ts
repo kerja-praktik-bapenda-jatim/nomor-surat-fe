@@ -11,7 +11,11 @@ const decodeToken = (token: string) => {
 	const payloadBase64 = token.split(".")[1];
 	const payloadJson = atob(payloadBase64);
 	return JSON.parse(payloadJson);
-};
+}
+
+export const getTokenFromCookies = () => {
+	return Cookies.get("authToken")
+}
 
 export const login = async (data: LoginRequest) => {
 	try {

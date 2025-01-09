@@ -3,6 +3,7 @@ import ky from "ky";
 import type {InputExport, LetterResponse, Letters, SpareLetters, UpdateLetterResponse} from "./types";
 import Cookies from "js-cookie";
 import { currentTimestamp } from "@/utils/utils";
+import {getTokenFromCookies} from "@/services/auth";
 
 const token = Cookies.get("authToken")
 const BASE_URL = `${process.env.API_BASE_URL as string}letter`;
@@ -11,7 +12,7 @@ const BASE_URL = `${process.env.API_BASE_URL as string}letter`;
 export const getLetters = async (params?: Record<string, string>) => {
 	const res = await ky.get(`${BASE_URL}`, {
 		headers: {
-			Authorization: `Bearer ${token}`,
+			Authorization: `Bearer ${getTokenFromCookies()}`,
 		},
 		searchParams: params
 	}).json<Letters[]>();
@@ -54,7 +55,7 @@ export const downloadLetterFile = async (id: string): Promise<string | null> => 
 export const postLetters = async (formData: FormData): Promise<LetterResponse> => {
     const res = await ky.post(`${BASE_URL}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${getTokenFromCookies()}`,
         },
         body: formData,
     }).json<LetterResponse>();
