@@ -74,9 +74,7 @@ export const useAuthRedirect = () => {
 				Cookies.remove("authToken")
 				localStorage.clear()
 				router.push('/login')
-			} else {
-				router.push('/surat')
-			}
+			} 
 		}
 	}, [router]);
 }
