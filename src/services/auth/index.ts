@@ -32,11 +32,9 @@ export const login = async (data: LoginRequest) => {
 			localStorage.setItem("isAdmin", JSON.stringify(isAdmin));
 
 			return data;
-		} else {
-			throw new Error(response.statusText);
 		}
 	} catch (err: any) {
-		throw err;
+		throw err.response ? await err.response.json() : { message: 'Login gagal. Harap coba lagi' };
 	}
 }
 

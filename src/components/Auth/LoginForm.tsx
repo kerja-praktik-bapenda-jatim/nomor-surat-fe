@@ -30,13 +30,9 @@ export function LoginForm() {
 
 			// On success, redirect to the dashboard
 			router.push("/surat");
-		} catch (err) {
-			// Set the error message if an error occurs
-			if (err instanceof Error) {
-				setError(err.message); // Get the error message from the service
-			} else {
-				setError("Login failed. Please try again.");
-			}
+		} catch (err: any) {
+			// Set the error message
+			setError(err.message);
 		} finally {
 			setLoading(false);
 		}
@@ -67,7 +63,7 @@ export function LoginForm() {
 				</Anchor>
 			</Group> */}
 
-			{error && <Text color="red" size="sm" mt="sm">{error}</Text>}
+			{error && <Text c="red" size="sm" mt="sm">{error}</Text>}
 
 			{/* <Center>
 				<Text c="dimmed" size="sm" mt={10}>
