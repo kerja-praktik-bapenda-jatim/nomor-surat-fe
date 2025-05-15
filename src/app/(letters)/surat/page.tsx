@@ -9,7 +9,7 @@ export default function SuratPage() {
     const router = useRouter();
 
     return (
-        <PageContainer title="Surat Saya">
+        <PageContainer title="Surat Keluar Saya">
             <Paper withBorder radius="md" p="md">
                 <Group>
                     <Button onClick={() => router.push('/surat/add')} rightSection= {<IconFilePlus />} color="blue">

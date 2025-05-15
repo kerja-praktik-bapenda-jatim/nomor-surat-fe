@@ -56,7 +56,7 @@ export const LetterForm = () => {
           error={errors.date?.message}
           onChange={(value) => setValue("date", value!)} // setValue untuk menyimpan data tanggal
         />
-        
+
         <Space h="sm" />
 
         {/* Input untuk penerima */}
