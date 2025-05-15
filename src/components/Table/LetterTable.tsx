@@ -53,7 +53,7 @@ export function LetterTable() {
   });
   return (
     <Paper withBorder radius="md" p="md" mt="lg">
-      {/* <Title order={5}>Surat Saya</Title> */}
+      {/* <Title order={5}>Surat Keluar Saya</Title> */}
       <Space h="md" />
       <MantineReactTable table={table} />
     </Paper>
