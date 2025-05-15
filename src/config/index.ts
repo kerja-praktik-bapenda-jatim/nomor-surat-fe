@@ -3,7 +3,22 @@ import type {NavItem} from "@/types/nav-item";
 
 export const navLinks: NavItem[] = [
 	{
-		label: "Surat Keluar", 
+		label: "Surat Masuk",
+		icon: IconMailUp,
+		initiallyOpened: true,
+		links: [
+			{
+				label: "Entri Surat Masuk",
+				link: "/suratin",
+			},
+			{
+				label: "Disposisi Surat Masuk",
+				link: "/suratin/dispo"
+			},
+		],
+	},
+	{
+		label: "Surat Keluar",
 		icon: IconMailUp,
 		initiallyOpened: true,
 		links: [
@@ -12,13 +27,13 @@ export const navLinks: NavItem[] = [
 				link: "/surat",
 			},
 			{
-				label: "Spare Surat Keluar", 
+				label: "Spare Surat Keluar",
 				link: "/surat/spare"
 			},
 		],
 	},
 	{
-		label: "Nota Dinas", 
+		label: "Nota Dinas",
 		icon: IconMail,
 		initiallyOpened: true,
 		links: [
@@ -27,10 +42,16 @@ export const navLinks: NavItem[] = [
 				link: "/nota",
 			},
 			{
-				label: "Spare Nota Dinas", 
+				label: "Spare Nota Dinas",
 				link: "/nota/spare"
 			},
 		],
 	},
-	
+	{
+		label: "Agenda",
+		icon: IconMailUp,
+		initiallyOpened: true,
+		link: "/agenda",
+	},
+
 ];
