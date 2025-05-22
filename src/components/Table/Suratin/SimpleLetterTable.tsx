@@ -29,11 +29,11 @@ export const SimpleTableLetter = () => {
         header: "Tanggal Surat",
         accessorFn: (row) => convertUTC(row.tglSurat),
       },
-      {
-        accessorKey: "suratDari",
-        header: "Surat Dari",
-        accessorFn: (row) => `${row.suratDari} / ${row.CreateUser?.username || "Unknown"}`,
-      },
+			{
+				accessorKey: "suratDari",
+				header: "Surat Dari",
+				accessorFn: (row) => row.suratDari, 
+			},
       {
         accessorKey: "perihal",
         header: "Perihal",
