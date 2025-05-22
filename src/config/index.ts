@@ -1,10 +1,10 @@
-import {IconMail, IconMailUp} from "@tabler/icons-react";
+import {IconMail, IconMailDown, IconMailUp, IconSpeakerphone} from "@tabler/icons-react";
 import type {NavItem} from "@/types/nav-item";
 
 export const navLinks: NavItem[] = [
 	{
 		label: "Surat Masuk",
-		icon: IconMailUp,
+		icon: IconMailDown,
 		initiallyOpened: true,
 		links: [
 			{
@@ -34,7 +34,7 @@ export const navLinks: NavItem[] = [
 	},
 	{
 		label: "Nota Dinas",
-		icon: IconMail,
+		icon: IconSpeakerphone,
 		initiallyOpened: true,
 		links: [
 			{
