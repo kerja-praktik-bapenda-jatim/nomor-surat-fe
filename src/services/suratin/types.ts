@@ -9,11 +9,13 @@ export interface Letters {
   langsungKe: boolean;
   ditujukanKe: string;
   agenda: boolean;
-  upload: string | null; // BLOB converted to base64 string or file path
+  upload: string | null;
   classificationId: string;
   letterTypeId: string;
   createdAt: string;
   updatedAt: string;
+  userId: string;
+  updateUserId: string;
 
   // Relations
   Classification: {
@@ -35,12 +37,10 @@ export interface Letters {
     catatan: string;
     letterIn_id: string;
   };
-
-  // Optional fields for backward compatibility
-  CreateUser?: {
+  CreateUser: {
     username: string;
   };
-  UpdateUser?: {
+  UpdateUser: {
     username: string;
   };
 }
@@ -61,6 +61,7 @@ export interface LetterResponse {
   letterTypeId: string;
   createdAt: string;
   updatedAt: string;
+  userId: string;
 
   // Relations
   Classification: {

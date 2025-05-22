@@ -1,17 +1,15 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { Button, FileInput, TextInput, Text, Space, Box, Paper, CopyButton, Tooltip, ActionIcon, Select, NumberInput, Grid, Checkbox, Group, Image } from '@mantine/core';
-import styles from './CreateLetterForm.module.css';
 import { hasLength, useForm } from '@mantine/form';
-import { DateInput } from '@mantine/dates';
+import { DateInput, TimeInput } from '@mantine/dates';
 import { useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
-import { IconArrowLeft, IconCheck, IconCopy, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconCheck, IconCopy } from '@tabler/icons-react';
 import { postLetters } from '@/services/suratin';
 import { modals } from '@mantine/modals';
 import { useClassifications } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
-import { TimeInput } from '@mantine/dates';
 
 interface FormValues {
     noSurat: string;
@@ -39,12 +37,11 @@ interface FormValues {
 export function CreateLetterForm() {
     const { data: classificationsData, isLoading: isClassificationsLoading, error: classificationsError } = useClassifications();
 
-    const classificationOptions = classificationsData?.map((classification: any) => ({
+    const classificationOptions = classificationsData?.map((classification) => ({
         value: classification.id,
         label: `${classification.id} - ${classification.name}`,
     })) || [];
 
-    // Sementara gunakan data static untuk letter types sampai backend siap
     const letterTypeOptions = [
         { value: '1', label: 'Surat Biasa' },
         { value: '2', label: 'Surat Penting' },
@@ -132,7 +129,6 @@ export function CreateLetterForm() {
 
     const handleFileChange = (file: File | null) => {
         if (file) {
-            // Check file type
             const isImage = file.type.match('image.*');
             const isPDF = file.type.match('application/pdf');
 
@@ -183,10 +179,16 @@ export function CreateLetterForm() {
             formData.append('langsungKe', values.langsungKe.toString());
             formData.append('ditujukanKe', values.ditujukanKe);
             formData.append('agenda', values.agenda.toString());
-            formData.append('classificationId', values.classificationId || '');
-            formData.append('letterTypeId', values.letterTypeId || '');
 
-            if (values.file) formData.append('file', values.file);
+            if (values.classificationId) {
+                formData.append('classificationId', values.classificationId);
+            }
+            if (values.letterTypeId) {
+                formData.append('letterTypeId', values.letterTypeId);
+            }
+            if (values.file) {
+                formData.append('file', values.file);
+            }
 
             // Agenda fields (hanya jika agenda = true)
             if (agenda) {
@@ -196,10 +198,13 @@ export function CreateLetterForm() {
                 formData.append('jamSelesai', values.jamSelesai);
                 formData.append('tempat', values.tempat);
                 formData.append('acara', values.acara);
-                if (values.catatan) formData.append('catatan', values.catatan);
+                if (values.catatan) {
+                    formData.append('catatan', values.catatan);
+                }
             }
 
             const response = await postLetters(formData);
+
             modals.open({
                 title: 'Surat berhasil dibuat',
                 centered: true,

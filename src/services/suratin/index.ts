@@ -1,42 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import ky from "ky";
-import type {
-  InputExport,
-  LetterResponse,
-  Letters,
-  UpdateLetterResponse,
-  AgendaResponse,
-} from "./types";
+import type {InputExport, LetterResponse, Letters, UpdateLetterResponse, AgendaResponse} from "./types";
+import { currentTimestamp } from "@/utils/utils";
 import { getTokenFromCookies } from "@/services/auth";
 
 const BASE_URL = `${process.env.API_BASE_URL as string}letterin`;
 const BASE_URL_AGENDA = `${process.env.API_BASE_URL as string}agenda`;
-
-const mapLetterResponseToLetters = (data: LetterResponse[]): Letters[] => {
-  return data.map((item) => ({
-    id: item.id,
-    noAgenda: item.noAgenda,
-    noSurat: item.noSurat,
-    suratDari: item.suratDari,
-    perihal: item.perihal,
-    tglSurat: item.tglSurat,
-    diterimaTgl: item.diterimaTgl,
-    langsungKe: item.langsungKe,
-    ditujukanKe: item.ditujukanKe,
-    agenda: item.agenda,
-    upload: item.upload,
-    classificationId: item.classificationId,
-    letterTypeId: item.letterTypeId,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    Classification: item.Classification,
-    LetterType: item.LetterType,
-    Agenda: item.Agenda,
-    // Add default values for backward compatibility
-    CreateUser: { username: "Unknown" },
-    UpdateUser: { username: "Unknown" },
-  }));
-};
 
 export const getLetters = async (params?: Record<string, string>) => {
   const res = await ky
@@ -46,16 +15,15 @@ export const getLetters = async (params?: Record<string, string>) => {
       },
       searchParams: params,
     })
-    .json<LetterResponse[]>();
+    .json<Letters[]>();
   return res;
 };
 
-export const getAll = async (): Promise<Letters[]> => {
-  const letterResponses = await getLetters({ order: "desc" });
-  return mapLetterResponseToLetters(letterResponses);
+export const getAllLetters = async () => {
+  return getLetters({ order: "desc" });
 };
 
-export const getLetterById = async (id: string): Promise<Letters> => {
+export const getLetterById = async (id: string): Promise<LetterResponse> => {
   const res = await ky
     .get(`${BASE_URL}/${id}`, {
       headers: {
@@ -63,7 +31,7 @@ export const getLetterById = async (id: string): Promise<Letters> => {
       },
     })
     .json<LetterResponse>();
-  return mapLetterResponseToLetters([res])[0];
+  return res;
 };
 
 export const downloadLetterFile = async (id: string): Promise<string | null> => {
@@ -82,17 +50,40 @@ export const downloadLetterFile = async (id: string): Promise<string | null> => 
   }
 };
 
-export const postLetters = async (formData: FormData): Promise<Letters> => {
-  const res = await ky
-    .post(`${BASE_URL}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-      body: formData,
-    })
-    .json<LetterResponse>();
-  return mapLetterResponseToLetters([res])[0];
+export const postLetters = async (formData: FormData): Promise<LetterResponse> => {
+		const res = await ky.post(`${BASE_URL}`, {
+				headers: {
+						Authorization: `Bearer ${getTokenFromCookies()}`,
+				},
+				body: formData,
+		}).json<LetterResponse>();
+		return res;
 };
+
+// export const postLetters = async (data: any): Promise<LetterResponse> => {
+//   if (data instanceof FormData) {
+//     const res = await ky
+//       .post(`${BASE_URL}`, {
+//         headers: {
+//           Authorization: `Bearer ${getTokenFromCookies()}`,
+//         },
+//         body: data,
+//       })
+//       .json<LetterResponse>();
+//     return res;
+//   }
+
+//   const res = await ky
+//     .post(`${BASE_URL}`, {
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${getTokenFromCookies()}`,
+//       },
+//       json: data,
+//     })
+//     .json<LetterResponse>();
+//   return res;
+// };
 
 export const patchLetter = async (
   id: string,
@@ -100,6 +91,13 @@ export const patchLetter = async (
 ): Promise<boolean> => {
   try {
     const formDataToSend = new FormData();
+
+    // Validasi field wajib
+    if (!formData.noSurat || !formData.suratDari || !formData.perihal ||
+        !formData.tglSurat || !formData.diterimaTgl || !formData.ditujukanKe ||
+        !formData.classificationId || !formData.letterTypeId) {
+      throw new Error('Harap isi kolom wajib pada form');
+    }
 
     // Letter fields
     formDataToSend.append("noSurat", formData.noSurat);
@@ -177,7 +175,7 @@ export const exportLetters = async (values: InputExport) => {
     });
 
     const blob = await response.blob();
-    const filename = `Surat-Masuk-${new Date().toISOString()}.xlsx`;
+    const filename = `Surat-Masuk-${currentTimestamp()}.xlsx`;
     const link = document.createElement("a");
     link.href = window.URL.createObjectURL(blob);
     link.setAttribute("download", filename);
@@ -238,11 +236,11 @@ export const deleteAgenda = async (id: string) => {
 export const useLetters = () =>
   useQuery<Letters[]>({
     queryKey: ["Letters"],
-    queryFn: () => getAll(),
+    queryFn: () => getAllLetters(),
   });
 
 export const useLetterById = (id: string) =>
-  useQuery<Letters>({
+  useQuery<LetterResponse>({
     queryKey: ["Letter", id],
     queryFn: () => getLetterById(id),
     enabled: !!id,
