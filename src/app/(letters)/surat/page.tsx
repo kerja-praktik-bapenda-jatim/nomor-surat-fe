@@ -13,10 +13,10 @@ export default function SuratPage() {
             <Paper withBorder radius="md" p="md">
                 <Group>
                     <Button onClick={() => router.push('/surat/add')} rightSection= {<IconFilePlus />} color="blue">
-                        Buat Surat
+                        Buat Surat Keluar
                     </Button>
                     <Button onClick={() => router.push('/surat/export')} rightSection= {<IconFileExport />}>
-                        Ekspor Surat
+                        Ekspor Surat Keluar
                     </Button>
                 </Group>
                 <SimpleTableLetter />
