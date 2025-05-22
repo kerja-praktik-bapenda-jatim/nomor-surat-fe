@@ -34,7 +34,7 @@ export const navLinks: NavItem[] = [
 	},
 	{
 		label: "Nota Dinas",
-		icon: IconSpeakerphone,
+		icon: IconMail,
 		initiallyOpened: true,
 		links: [
 			{
@@ -49,7 +49,7 @@ export const navLinks: NavItem[] = [
 	},
 	{
 		label: "Agenda",
-		icon: IconMailUp,
+		icon: IconSpeakerphone,
 		initiallyOpened: true,
 		link: "/agenda",
 	},
