@@ -1,176 +1,135 @@
 export interface Letters {
   id: string;
-  date: string;
-  number: string;
-  subject: string;
-  to: string;
-  from: string;
-  place: string;
-  event: string;
-  filename: string;
-  reserved: boolean;
-  attachmentCount: number;
-  description: string;
-  departmentId: string;
-  lastReserved: string;
-  documentIndexName: string;
+  noAgenda: number;
+  noSurat: string;
+  suratDari: string;
+  perihal: string;
+  tglSurat: string;
+  diterimaTgl: string;
+  langsungKe: boolean;
+  ditujukanKe: string;
+  agenda: boolean;
+  upload: string | null; // BLOB converted to base64 string or file path
+  classificationId: string;
+  letterTypeId: string;
   createdAt: string;
   updatedAt: string;
-  classificationId: string;
-  levelId: string;
-  updateUserId: string;
-  startDate: string;
-  endDate: string;
-  letterNumber: string;
-  agendaNumber: string;
-  letterDate: string;
-  receivedDate: string;
-  startTime: string;
-  endTime: string;
-  addToAgenda: boolean;
-  directTo: boolean;
-  targetDepartment: string | null;
-  activeRetentionPeriodId: string;
-  inactiveRetentionPeriodId: string;
-  jraDescriptionId: string;
-  storageLocationId: string;
-  accessId: string;
-  Level: {
-    name: string;
-  };
+
+  // Relations
   Classification: {
+    id: string;
     name: string;
   };
-  StorageLocation: {
+  LetterType: {
+    id: string;
     name: string;
   };
-  JraDescription: {
-    name: string;
+  Agenda?: {
+    id: string;
+    tglMulai: string;
+    tglSelesai: string;
+    jamMulai: string;
+    jamSelesai: string;
+    tempat: string;
+    acara: string;
+    catatan: string;
+    letterIn_id: string;
   };
-  ActiveRetentionPeriod: {
-    name: string;
-  };
-  InactiveRetentionPeriod: {
-    name: string;
-  };
-  Access: {
-    name: string;
-  };
-  Department: {
-    name: string;
-  };
-  CreateUser: {
+
+  // Optional fields for backward compatibility
+  CreateUser?: {
     username: string;
   };
-  UpdateUser: {
+  UpdateUser?: {
     username: string;
   };
-  userId: string;
 }
 
 export interface LetterResponse {
   id: string;
-  date: string;
-  reserved: string;
-  attachmentCount: number;
-  userId: string;
-  departmentId: string;
-  subject: string;
-  to: string;
-  from: string; 
-  place: string; 
-  event: string; 
+  noAgenda: number;
+  noSurat: string;
+  suratDari: string;
+  perihal: string;
+  tglSurat: string;
+  diterimaTgl: string;
+  langsungKe: boolean;
+  ditujukanKe: string;
+  agenda: boolean;
+  upload: string | null;
   classificationId: string;
-  levelId: string;
-  description: string;
-  filename: string;
-  updatedAt: string;
+  letterTypeId: string;
   createdAt: string;
-  number: string;
-  letterNumber: string; 
-  agendaNumber: string; 
-  documentIndexName: string;
-  activeRetentionPeriodId: string;
-  inactiveRetentionPeriodId: string;
-  jraDescriptionId: string;
-  storageLocationId: string;
-  accessId: string;
-  startDate: string; 
-  endDate: string; 
-  letterDate: string; 
-  receivedDate: string; 
-  startTime: string; 
-  endTime: string; 
-  addToAgenda: boolean; 
-  directTo: boolean; 
-  targetDepartment: string | null; 
-  Level: {
-    name: string;
-  };
+  updatedAt: string;
+
+  // Relations
   Classification: {
+    id: string;
     name: string;
   };
-  StorageLocation: {
+  LetterType: {
+    id: string;
     name: string;
   };
-  JraDescription: {
-    name: string;
-  };
-  ActiveRetentionPeriod: {
-    name: string;
-  };
-  InactiveRetentionPeriod: {
-    name: string;
-  };
-  Access: {
-    name: string;
-  };
-  Department: {
-    name: string;
+  Agenda?: {
+    id: string;
+    tglMulai: string;
+    tglSelesai: string;
+    jamMulai: string;
+    jamSelesai: string;
+    tempat: string;
+    acara: string;
+    catatan: string;
+    letterIn_id: string;
   };
 }
 
 export interface UpdateLetterResponse {
-  subject: string;
-  to: string;
-  from: string; 
-  place: string; 
-  event: string; 
-  attachmentCount: number;
-  departmentId: string;
+  noSurat: string;
+  suratDari: string;
+  perihal: string;
+  tglSurat: string;
+  diterimaTgl: string;
+  langsungKe: boolean;
+  ditujukanKe: string;
+  agenda: boolean;
   classificationId: string;
-  levelId: string;
-  description: string;
-  accessId: string;
-  documentIndexName: string;
-  activeRetentionPeriodId: string;
-  inactiveRetentionPeriodId: string;
-  jraDescriptionId: string;
-  storageLocationId: string;
-  letterNumber: string; 
-  agendaNumber: string; 
-  startDate: string; 
-  endDate: string; 
-  letterDate: string; 
-  receivedDate: string; 
-  startTime: string; 
-  endTime: string; 
-  addToAgenda: boolean; 
-  directTo: boolean; 
-  targetDepartment: string | null; 
+  letterTypeId: string;
   file: File | null;
-  archiveFile: File | null; 
-};
 
-export interface SpareLetters {
-  date: string | null;
-  spareCounts: string;
-  departmentId: string;
+  // Agenda fields (optional, only if agenda is true)
+  tglMulai?: string;
+  tglSelesai?: string;
+  jamMulai?: string;
+  jamSelesai?: string;
+  tempat?: string;
+  acara?: string;
+  catatan?: string;
 }
 
 export interface InputExport {
   startDate: string;
   endDate: string;
-  departmentId: string;
-  classificationId: string;
+  classificationId?: string;
+  letterTypeId?: string;
+}
+
+export interface AgendaResponse {
+  id: string;
+  tglMulai: string;
+  tglSelesai: string;
+  jamMulai: string;
+  jamSelesai: string;
+  tempat: string;
+  acara: string;
+  catatan: string;
+  letterIn_id: string;
+  createdAt: string;
+  updatedAt: string;
+  LetterIn: {
+    id: string;
+    noSurat: string;
+    perihal: string;
+    suratDari: string;
+  };
 }
