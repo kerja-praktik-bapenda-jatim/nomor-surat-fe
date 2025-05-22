@@ -9,54 +9,51 @@ import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconCheck, IconCopy, IconX } from '@tabler/icons-react';
 import { postLetters } from '@/services/suratin';
 import { modals } from '@mantine/modals';
-import { useAccess, useActiveRetentionPeriods, useClassifications, useDepartments, useInactiveRetentionPeriods, useJRADescriptions, useLevels, useStorageLocations } from '@/services/data';
+import { useClassifications } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
 import { TimeInput } from '@mantine/dates';
 
 interface FormValues {
-    startDate: Date;
-    endDate: Date;
+    noSurat: string;
+    suratDari: string;
+    perihal: string;
+    tglSurat: Date;
+    diterimaTgl: Date;
+    langsungKe: boolean;
+    ditujukanKe: string;
+    agenda: boolean;
     classificationId: string | null;
-    departmentId: string | null;
-    place: string;
-    from: string;
-    event: string;
-    subject: string;
-    levelId: string | null;
-    letterNumber: string;
-    agendaNumber: string;
-    letterDate: Date;
-    receivedDate: Date;
-    startTime: string;
-    endTime: string;
+    letterTypeId: string | null;
     file: File | null;
-    archiveFile: File | null;
-    addToAgenda: boolean;
-    directTo: boolean;
-    targetDepartment: string | null;
+
+    // Agenda fields (conditional)
+    tglMulai: Date;
+    tglSelesai: Date;
+    jamMulai: string;
+    jamSelesai: string;
+    tempat: string;
+    acara: string;
+    catatan: string;
 }
 
 export function CreateLetterForm() {
     const { data: classificationsData, isLoading: isClassificationsLoading, error: classificationsError } = useClassifications();
-    const { data: departmentsData, isLoading: isDepartmentsLoading, error: departmentsError } = useDepartments();
-    const { data: levelsData, isLoading: isLevelsLoading, error: levelsError } = useLevels();
-    const { data: accessData, isLoading: isAccessLoading, error: accessError } = useAccess();
-    const { data: activeRetentionPeriodsData, isLoading: isActiveRetentionPeriodsLoading, error: activeRetentionPeriodsError } = useActiveRetentionPeriods();
-    const { data: inactiveRetentionPeriodsData, isLoading: isInactiveRetentionPeriodsLoading, error: inactiveRetentionPeriodsError } = useInactiveRetentionPeriods();
-    const { data: jraDescriptionsData, isLoading: isJRADescriptionsLoading, error: jraDescriptionsError } = useJRADescriptions();
-    const { data: storageLocationsData, isLoading: isStorageLocationsLoading, error: storageLocationsError } = useStorageLocations();
 
-    const classificationOptions = classificationsData?.map((classification) => ({
+    const classificationOptions = classificationsData?.map((classification: any) => ({
         value: classification.id,
         label: `${classification.id} - ${classification.name}`,
     })) || [];
 
-    const departmentOptions = departmentsData?.map((department) => ({
-        value: department.id,
-        label: `${department.id} - ${department.name}`,
-    })) || [];
+    // Sementara gunakan data static untuk letter types sampai backend siap
+    const letterTypeOptions = [
+        { value: '1', label: 'Surat Biasa' },
+        { value: '2', label: 'Surat Penting' },
+        { value: '3', label: 'Surat Rahasia' },
+        { value: '4', label: 'Surat Segera' },
+        { value: '5', label: 'Undangan' },
+    ];
 
-    const fivedepartmentOptions = [
+    const departmentOptions = [
         { value: 'SEKRETARIAT', label: 'SEKRETARIAT' },
         { value: 'BIDANG PERENCANAAN DAN PENGEMBANGAN', label: 'BIDANG PERENCANAAN DAN PENGEMBANGAN' },
         { value: 'BIDANG PAJAK DAERAH', label: 'BIDANG PAJAK DAERAH' },
@@ -64,257 +61,98 @@ export function CreateLetterForm() {
         { value: 'BIDANG PENGENDALIAN DAN PEMBINAAN', label: 'BIDANG PENGENDALIAN DAN PEMBINAAN' }
     ];
 
-    const levelOptions = levelsData?.map((level) => ({
-        value: level.id,
-        label: level.name,
-    })) || [];
-
-    const accessOptions = accessData?.map((access) => ({
-        value: access.id,
-        label: access.name,
-    })) || [];
-
-    const activeRetentionPeriodOptions = activeRetentionPeriodsData?.map((activeRetentionPeriod) => ({
-        value: activeRetentionPeriod.id,
-        label: activeRetentionPeriod.name,
-    })) || [];
-
-    const inactiveRetentionPeriodOptions = inactiveRetentionPeriodsData?.map((inactiveRetentionPeriod) => ({
-        value: inactiveRetentionPeriod.id,
-        label: inactiveRetentionPeriod.name,
-    })) || [];
-
-    const jraDescriptionOptions = jraDescriptionsData?.map((jraDescription) => ({
-        value: jraDescription.id,
-        label: jraDescription.name,
-    })) || [];
-
-    const storageLocationOptions = storageLocationsData?.map((storageLocation) => ({
-        value: storageLocation.id,
-        label: storageLocation.name,
-    })) || [];
-
     const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
-    const [addToAgenda, setAddToAgenda] = useState(false);
-    const [directTo, setDirectTo] = useState(false);
+    const [agenda, setAgenda] = useState(false);
+    const [langsungKe, setLangsungKe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    const [agendaNumber, setAgendaNumber] = useState(1);
-    const [filePreview, setFilePreview] = useState<string | null>(null);
-    const [showFileReview, setShowFileReview] = useState(false);
+    const [noAgenda, setNoAgenda] = useState(1);
     const router = useRouter();
 
     useEffect(() => {
         const user = getCurrentUser();
         setUser(user);
-        fetchLatestAgendaNumber(currentYear);
+        fetchLatestNoAgenda(currentYear);
     }, []);
 
-    const fetchLatestAgendaNumber = async (year: number) => {
+    const fetchLatestNoAgenda = async (year: number) => {
         try {
             const nextNumber = Math.floor(Math.random() * 100) + 1;
-            setAgendaNumber(nextNumber);
-            form.setFieldValue('agendaNumber', `${year}/${nextNumber.toString().padStart(4, '0')}`);
+            setNoAgenda(nextNumber);
         } catch (error) {
             console.error('Failed to fetch latest agenda number:', error);
-            setAgendaNumber(1);
-            form.setFieldValue('agendaNumber', `${year}/0001`);
+            setNoAgenda(1);
         }
     };
-
-    const handleYearChange = (value: string | null) => {
-        if (value) {
-            const newYear = parseInt(value);
-            setCurrentYear(newYear);
-            fetchLatestAgendaNumber(newYear);
-        }
-    };
-
-    const resetAgendaNumber = () => {
-        setAgendaNumber(1);
-        form.setFieldValue('agendaNumber', `${currentYear}/0001`);
-    };
-
-    const yearOptions = Array.from({ length: 11 }, (_, i) => {
-        const year = new Date().getFullYear() - 5 + i;
-        return { value: year.toString(), label: year.toString() };
-    });
-
-    const handleFileChange = (file: File | null) => {
-			if (file) {
-					// First update the form value
-					form.setValues({ ...form.values, file });
-
-					// Check file type
-					const isImage = file.type.match('image.*');
-					const isPDF = file.type.match('application/pdf');
-
-					if (!isImage && !isPDF) {
-							modals.open({
-									title: 'Format Tidak Didukung',
-									children: <Text size="sm">Hanya file gambar (JPG/PNG/GIF/BMP) dan PDF yang didukung</Text>,
-									withCloseButton: true
-							});
-							return;
-					}
-
-					// Handle preview differently for PDF vs images
-					if (isPDF) {
-							// For PDF, we'll use object URL for iframe
-							const pdfUrl = URL.createObjectURL(file);
-							setFilePreview(pdfUrl);
-							setShowFileReview(true);
-					} else {
-							// For images, use FileReader
-							const reader = new FileReader();
-							reader.onload = (e) => {
-									if (e.target?.result) {
-											setFilePreview(e.target.result as string);
-											setShowFileReview(true);
-									}
-							};
-							reader.onerror = () => {
-									modals.open({
-											title: 'Error',
-											children: <Text size="sm">Gagal membaca file</Text>,
-											withCloseButton: true
-									});
-							};
-							reader.readAsDataURL(file);
-					}
-			} else {
-					// Clean up object URL if it was a PDF
-					if (form.values.file?.type.match('application/pdf') && filePreview) {
-							URL.revokeObjectURL(filePreview);
-					}
-					form.setValues({ ...form.values, file: null });
-					setFilePreview(null);
-					setShowFileReview(false);
-			}
-	};
 
     const form = useForm<FormValues>({
         mode: 'uncontrolled',
         validate: {
-            startDate: (value) => (addToAgenda && !value ? 'Pilih tanggal awal' : null),
-            endDate: (value) => (addToAgenda && !value ? 'Pilih tanggal akhir' : null),
-            classificationId: (value) => (value ? null : 'Pilih kode klasifikasi'),
-            departmentId: (value) => {
-                if (user.isAdmin && !value) {
-                    return "Kode Bidang diperlukan";
-                }
-                return null;
-            },
-            place: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
-            from: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
-            event: (value) => (addToAgenda && !value ? 'Kolom tidak boleh kosong' : null),
-            subject: hasLength({ min: 3 }, 'Kolom tidak boleh kosong'),
-            levelId: (value) => (value ? null : 'Pilih sifat surat'),
-            letterNumber: hasLength({ min: 1 }, 'Kolom tidak boleh kosong'),
-            agendaNumber: hasLength({ min: 1 }, 'Kolom tidak boleh kosong'),
-            letterDate: (value) => (value ? null : 'Pilih tanggal surat'),
-            receivedDate: (value) => (value ? null : 'Pilih tanggal diterima'),
-            startTime: (value) => (addToAgenda && !value ? 'Pilih jam awal' : null),
-            endTime: (value) => (addToAgenda && !value ? 'Pilih jam akhir' : null),
-            file: (value) => (value ? null : 'Kolom tidak boleh kosong'),
-            targetDepartment: (value) => (directTo && !value ? 'Pilih tujuan bidang' : null),
+            noSurat: hasLength({ min: 1 }, 'Nomor surat tidak boleh kosong'),
+            suratDari: hasLength({ min: 3 }, 'Surat dari tidak boleh kosong'),
+            perihal: hasLength({ min: 3 }, 'Perihal tidak boleh kosong'),
+            tglSurat: (value) => (value ? null : 'Pilih tanggal surat'),
+            diterimaTgl: (value) => (value ? null : 'Pilih tanggal diterima'),
+            ditujukanKe: (value) => (langsungKe && !value ? 'Tujuan tidak boleh kosong' : null),
+            classificationId: (value) => (value ? null : 'Pilih klasifikasi'),
+            letterTypeId: (value) => (value ? null : 'Pilih jenis surat'),
+            file: (value) => (value ? null : 'File tidak boleh kosong'),
+
+            // Agenda validations
+            tglMulai: (value) => (agenda && !value ? 'Pilih tanggal mulai' : null),
+            tglSelesai: (value) => (agenda && !value ? 'Pilih tanggal selesai' : null),
+            jamMulai: (value) => (agenda && !value ? 'Pilih jam mulai' : null),
+            jamSelesai: (value) => (agenda && !value ? 'Pilih jam selesai' : null),
+            tempat: (value) => (agenda && !value ? 'Tempat tidak boleh kosong' : null),
+            acara: (value) => (agenda && !value ? 'Acara tidak boleh kosong' : null),
         },
         initialValues: {
-            startDate: new Date(),
-            endDate: new Date(),
+            noSurat: '',
+            suratDari: '',
+            perihal: '',
+            tglSurat: new Date(),
+            diterimaTgl: new Date(),
+            langsungKe: false,
+            ditujukanKe: '',
+            agenda: false,
             classificationId: null,
-            departmentId: null,
-            place: '',
-            from: '',
-            event: '',
-            subject: '',
-            levelId: null,
-            letterNumber: '',
-            agendaNumber: '',
-            letterDate: new Date(),
-            receivedDate: new Date(),
-            startTime: '',
-            endTime: '',
+            letterTypeId: null,
             file: null,
-            archiveFile: null,
-            addToAgenda: false,
-            directTo: false,
-            targetDepartment: null,
+
+            // Agenda fields
+            tglMulai: new Date(),
+            tglSelesai: new Date(),
+            jamMulai: '',
+            jamSelesai: '',
+            tempat: '',
+            acara: '',
+            catatan: '',
         },
     });
 
-		const FileReviewModal = () => {
-			const file = form.values.file;
-			const isPDF = file?.type.match('application/pdf');
+    const handleFileChange = (file: File | null) => {
+        if (file) {
+            // Check file type
+            const isImage = file.type.match('image.*');
+            const isPDF = file.type.match('application/pdf');
 
-			return (
-					<Paper p="md" withBorder>
-							<Group justify="space-between" mb="md">
-									<Text fw="bold">Review File</Text>
-									<ActionIcon variant="subtle" onClick={() => setShowFileReview(false)}>
-											<IconX size={16} />
-									</ActionIcon>
-							</Group>
+            if (!isImage && !isPDF) {
+                modals.open({
+                    title: 'Format Tidak Didukung',
+                    children: <Text size="sm">Hanya file gambar (JPG/PNG/GIF/BMP) dan PDF yang didukung</Text>,
+                    withCloseButton: true
+                });
+                form.setFieldValue('file', null);
+                return;
+            }
 
-							{filePreview && (
-								<Box style={{ maxHeight: '500px', overflow: 'auto' }}>
-									{filePreview.endsWith('.pdf') ? (
-                                        <iframe
-                                            src={filePreview}
-                                            className="pdfPreview"
-                                            title="PDF Preview"
-                                        />
-									) : (
-										<Image
-											src={filePreview}
-											alt="File preview"
-											fit="contain"
-											style={{ maxWidth: '100%', maxHeight: '400px' }}
-										/>
-									)}
-								</Box>
-							)}
-
-
-							<Group justify="flex-end" mt="md">
-									<Button
-											variant="outline"
-											onClick={() => {
-													// Clean up object URL if it was a PDF
-													if (isPDF && filePreview) {
-															URL.revokeObjectURL(filePreview);
-													}
-													form.setValues({ ...form.values, file: null });
-													setFilePreview(null);
-													setShowFileReview(false);
-											}}
-									>
-											Ganti File
-									</Button>
-									<Button onClick={() => setShowFileReview(false)}>
-											Konfirmasi
-									</Button>
-							</Group>
-					</Paper>
-			);
-	};
+            form.setFieldValue('file', file);
+        } else {
+            form.setFieldValue('file', null);
+        }
+    };
 
     const handleConfirmSubmit = (values: typeof form.values) => {
-        if (showFileReview && !values.file) {
-            modals.open({
-                title: 'File Belum Direview',
-                centered: true,
-                children: (
-                    <Text size="sm">
-                        Silakan review file terlebih dahulu sebelum submit.
-                    </Text>
-                ),
-                withCloseButton: true,
-                closeButtonProps: { children: 'OK' }
-            });
-            return;
-        }
-
         modals.openConfirmModal({
             title: 'Konfirmasi Entri Surat Masuk',
             centered: true,
@@ -334,54 +172,31 @@ export function CreateLetterForm() {
 
         try {
             const formData = new FormData();
-            if (addToAgenda) {
-                formData.append('startDate', values.startDate.toISOString());
-                formData.append('endDate', values.endDate.toISOString());
-                if (values.startTime) formData.append('startTime', values.startTime);
-                if (values.endTime) formData.append('endTime', values.endTime);
-                if (values.event) formData.append('event', values.event);
-            }
 
-            if (values.classificationId) {
-                formData.append('classificationId', values.classificationId);
-            }
-            if (values.departmentId) {
-                formData.append('departmentId', values.departmentId);
-            }
-            if (values.place) {
-                formData.append('place', values.place);
-            }
-            if (values.from) {
-                formData.append('from', values.from);
-            }
-            if (values.subject) {
-                formData.append('subject', values.subject);
-            }
-            if (values.levelId) {
-                formData.append('levelId', values.levelId);
-            }
-            if (values.letterNumber) {
-                formData.append('letterNumber', values.letterNumber);
-            }
-            if (values.agendaNumber) {
-                formData.append('agendaNumber', values.agendaNumber);
-            }
-            if (values.letterDate) {
-                formData.append('letterDate', values.letterDate.toISOString());
-            }
-            if (values.receivedDate) {
-                formData.append('receivedDate', values.receivedDate.toISOString());
-            }
-            if (values.file) {
-                formData.append('file', values.file);
-            }
-            if (values.archiveFile) {
-                formData.append('archiveFile', values.archiveFile);
-            }
-            formData.append('addToAgenda', values.addToAgenda.toString());
-            formData.append('directTo', values.directTo.toString());
-            if (values.targetDepartment) {
-                formData.append('targetDepartment', values.targetDepartment);
+            // Letter fields sesuai dengan model backend
+            formData.append('noAgenda', noAgenda.toString());
+            formData.append('noSurat', values.noSurat);
+            formData.append('suratDari', values.suratDari);
+            formData.append('perihal', values.perihal);
+            formData.append('tglSurat', values.tglSurat.toISOString());
+            formData.append('diterimaTgl', values.diterimaTgl.toISOString());
+            formData.append('langsungKe', values.langsungKe.toString());
+            formData.append('ditujukanKe', values.ditujukanKe);
+            formData.append('agenda', values.agenda.toString());
+            formData.append('classificationId', values.classificationId || '');
+            formData.append('letterTypeId', values.letterTypeId || '');
+
+            if (values.file) formData.append('file', values.file);
+
+            // Agenda fields (hanya jika agenda = true)
+            if (agenda) {
+                formData.append('tglMulai', values.tglMulai.toISOString());
+                formData.append('tglSelesai', values.tglSelesai.toISOString());
+                formData.append('jamMulai', values.jamMulai);
+                formData.append('jamSelesai', values.jamSelesai);
+                formData.append('tempat', values.tempat);
+                formData.append('acara', values.acara);
+                if (values.catatan) formData.append('catatan', values.catatan);
             }
 
             const response = await postLetters(formData);
@@ -391,8 +206,8 @@ export function CreateLetterForm() {
                 children: (
                     <>
                         <Text size="sm">
-                            <strong>Nomor Surat:</strong> {response.number}
-                            <CopyButton value={response.number} timeout={2000}>
+                            <strong>ID Surat:</strong> {response.id}
+                            <CopyButton value={response.id} timeout={2000}>
                                 {({ copied, copy }) => (
                                     <Tooltip label={copied ? 'Disalin' : 'Salin'} withArrow position="right">
                                         <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy} ml="xs">
@@ -402,12 +217,12 @@ export function CreateLetterForm() {
                                 )}
                             </CopyButton>
                             <br />
-                            <strong>Tanggal:</strong> {convertUTC(response.date)}<br />
-                            <strong>Kode Klasifikasi Surat:</strong>{response.classificationId}<br />
-                            <strong>Kode Bidang:</strong>{response.departmentId} <br />
-                            <strong>Surat Dari:</strong>{response.from} <br />
-                            <strong>Perihal:</strong> {response.subject}<br />
-                            <strong>File:</strong> {response.filename}<br />
+                            <strong>No Agenda:</strong> {response.noAgenda}<br />
+                            <strong>No Surat:</strong> {response.noSurat}<br />
+                            <strong>Klasifikasi:</strong> {response.Classification?.name}<br />
+                            <strong>Jenis Surat:</strong> {response.LetterType?.name} <br />
+                            <strong>Surat Dari:</strong> {response.suratDari} <br />
+                            <strong>Perihal:</strong> {response.perihal}<br />
                         </Text>
                         <Button onClick={() => { form.reset(); modals.closeAll(); handleBack(); }} mt="md">
                             OK
@@ -419,8 +234,12 @@ export function CreateLetterForm() {
         } catch (error: any) {
             let errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
             if (error.response) {
-                const errorData = await error.response.json();
-                errorMessage = errorData.message || errorMessage;
+                try {
+                    const errorData = await error.response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    console.error('Failed to parse error response:', e);
+                }
             }
             modals.open({
                 title: 'Error',
@@ -448,6 +267,10 @@ export function CreateLetterForm() {
         router.push('/suratin');
     };
 
+    const resetNoAgenda = () => {
+        setNoAgenda(1);
+    };
+
     return (
         <>
             <Paper withBorder shadow="md" p="md">
@@ -456,26 +279,20 @@ export function CreateLetterForm() {
                 </Button>
                 <Box component="form" onSubmit={form.onSubmit((values) => handleConfirmSubmit(values))}>
                     <Text component="h2" fw="bold" fz="lg">
-                        Entri Surat
+                        Entri Surat Masuk
                     </Text>
-
-                    {showFileReview && (
-                        <Box mb="md">
-                            <FileReviewModal />
-                        </Box>
-                    )}
 
                     <Grid>
                         <Grid.Col span={6}>
                             <Group align="flex-end">
                                 <TextInput
+                                    value={`${currentYear}/${noAgenda.toString().padStart(4, '0')}`}
                                     label="No Agenda"
-                                    value={form.values.agendaNumber || ''}
                                     readOnly
-                                    withAsterisk
+                                    style={{ flex: 1 }}
                                 />
                                 <Button
-                                    onClick={resetAgendaNumber}
+                                    onClick={resetNoAgenda}
                                     variant="outline"
                                     style={{ height: '36px' }}
                                 >
@@ -484,136 +301,84 @@ export function CreateLetterForm() {
                             </Group>
                         </Grid.Col>
 
-                        <Grid.Col span={3}>
-                            <DateInput
-                                {...form.getInputProps('startDate')}
-                                label="Tanggal Awal"
-                                placeholder="Pilih tanggal"
-                                valueFormat="DD-MMMM-YYYY"
-                                clearable
-                                withAsterisk
-                                disabled={!addToAgenda}
-                            />
-                        </Grid.Col>
-                        <Grid.Col span={3}>
-                            <DateInput
-                                {...form.getInputProps('endDate')}
-                                label="Tanggal Akhir"
-                                placeholder="Pilih tanggal"
-                                valueFormat="DD-MMMM-YYYY"
-                                clearable
-                                withAsterisk
-                                disabled={!addToAgenda}
-                            />
-                        </Grid.Col>
                         <Grid.Col span={6}>
                             <TextInput
-                                {...form.getInputProps('letterNumber')}
+                                {...form.getInputProps('noSurat')}
                                 label="No Surat"
-                                placeholder="000"
+                                placeholder="Masukkan nomor surat"
                                 withAsterisk
                             />
                         </Grid.Col>
-                        <Grid.Col span={3}>
-                            <TimeInput
-                                {...form.getInputProps('startTime')}
-                                label="Jam Awal"
-                                placeholder=""
-                                withAsterisk
-                                disabled={!addToAgenda}
-                            />
-                        </Grid.Col>
-                        <Grid.Col span={3}>
-                            <TimeInput
-                                {...form.getInputProps('endTime')}
-                                label="Jam Akhir"
-                                placeholder=""
-                                withAsterisk
-                                disabled={!addToAgenda}
-                            />
-                        </Grid.Col>
+
                         <Grid.Col span={6}>
                             <Select
                                 {...form.getInputProps('classificationId')}
-                                label="Kode Klasifikasi Surat"
-                                placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih atau Cari"}
+                                label="Klasifikasi Surat"
+                                placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih klasifikasi"}
                                 data={classificationOptions}
                                 clearable
                                 searchable
                                 withAsterisk
-                                nothingFoundMessage="Kode Klasifikasi tidak ditemukan..."
-                                checkIconPosition="right"
+                                nothingFoundMessage="Klasifikasi tidak ditemukan..."
                                 disabled={isClassificationsLoading || !!classificationsError}
                                 error={classificationsError ? "Gagal memuat data" : null}
                             />
                         </Grid.Col>
+
                         <Grid.Col span={6}>
-                            <TextInput
-                                {...form.getInputProps('place')}
-                                label="Tempat"
-                                placeholder="Bidang X"
+                            <Select
+                                {...form.getInputProps('letterTypeId')}
+                                label="Jenis Surat"
+                                placeholder="Pilih jenis surat"
+                                data={letterTypeOptions}
+                                clearable
+                                searchable
                                 withAsterisk
-                                disabled={!addToAgenda}
+                                nothingFoundMessage="Jenis surat tidak ditemukan..."
                             />
                         </Grid.Col>
+
                         <Grid.Col span={6}>
                             <TextInput
-                                {...form.getInputProps('from')}
+                                {...form.getInputProps('suratDari')}
                                 label="Surat Dari"
-                                placeholder="Bidang X"
+                                placeholder="Asal surat"
                                 withAsterisk
                             />
                         </Grid.Col>
+
                         <Grid.Col span={6}>
                             <TextInput
-                                {...form.getInputProps('event')}
-                                label="Acara"
-                                placeholder="Acara Apa"
-                                withAsterisk
-                                disabled={!addToAgenda}
-                            />
-                        </Grid.Col>
-                        <Grid.Col span={6}>
-                            <TextInput
-                                {...form.getInputProps('subject')}
+                                {...form.getInputProps('perihal')}
                                 label="Perihal"
-                                placeholder="Perihal"
+                                placeholder="Perihal surat"
                                 withAsterisk
                             />
                         </Grid.Col>
+
                         <Grid.Col span={6}>
-                            <TextInput
-                                label="File Digital"
-                                placeholder="Pilih file pertama = file utama, file lain = lampiran"
-                                readOnly
-                                styles={{
-                                    input: {
-                                        borderColor: '#ffffff',
-                                    }
-                                }}
-                            />
-                        </Grid.Col>
-                        <Grid.Col span={3}>
                             <DateInput
-                                {...form.getInputProps('letterDate')}
+                                {...form.getInputProps('tglSurat')}
                                 label="Tanggal Surat"
                                 placeholder="Pilih tanggal"
-                                valueFormat="DD-MMMM-YYYY"
+                                valueFormat="DD-MM-YYYY"
                                 clearable
                                 withAsterisk
                             />
                         </Grid.Col>
-                        <Grid.Col span={3}>
-                            <DateInput
-                                {...form.getInputProps('receivedDate')}
-                                label="Diterima pada"
-                                placeholder="Pilih tanggal"
-                                valueFormat="DD-MMMM-YYYY"
-                                clearable
-                                withAsterisk
-                            />
-                        </Grid.Col>
+
                         <Grid.Col span={6}>
+                            <DateInput
+                                {...form.getInputProps('diterimaTgl')}
+                                label="Tanggal Diterima"
+                                placeholder="Pilih tanggal"
+                                valueFormat="DD-MM-YYYY"
+                                clearable
+                                withAsterisk
+                            />
+                        </Grid.Col>
+
+                        <Grid.Col span={12}>
                             <FileInput
                                 clearable
                                 {...form.getInputProps('file')}
@@ -621,110 +386,141 @@ export function CreateLetterForm() {
                                 label="Upload File (Format .jpg/.png/.gif/.bmp/.pdf)"
                                 placeholder="Pilih file"
                                 accept="image/*,.pdf"
+                                withAsterisk
                             />
                         </Grid.Col>
-                        <Grid.Col span={6}>
-                            <Select
-                                {...form.getInputProps('levelId')}
-                                label="Jenis Surat"
-                                placeholder={isLevelsLoading ? "Memuat data..." : "Pilih atau Cari"}
-                                data={levelOptions}
-                                clearable
-                                searchable
-                                nothingFoundMessage="Sifat Surat tidak ditemukan..."
-                                checkIconPosition="right"
-                                disabled={isLevelsLoading || !!levelsError}
-                                error={levelsError ? "Gagal memuat data" : null}
-                            />
-                        </Grid.Col>
-                        <Grid.Col span={2}>
-                            <Button
-                                fullWidth
-                                variant="outline"
-                                mt="xl"
-                                style={{
-                                    backgroundColor: '#f2f2f2',
-                                    borderColor: '#a2a2a2',
-                                    color: '#000',
-                                }}
-                            >
-                                Simpan
-                            </Button>
-                        </Grid.Col>
-                        <Grid.Col span={2}>
-                            <Button
-                                fullWidth
-                                variant="outline"
-                                mt="xl"
-                                style={{
-                                    backgroundColor: '#f2f2f2',
-                                    borderColor: '#a2a2a2',
-                                    color: '#000',
-                                }}
-                            >
-                                Simpan Cetak
-                            </Button>
-                        </Grid.Col>
-                        <Grid.Col span={2}>
-                            <Button
-                                fullWidth
-                                variant="outline"
-                                mt="xl"
-                                style={{
-                                    backgroundColor: '#f2f2f2',
-                                    borderColor: '#a2a2a2',
-                                    color: '#000',
-                                }}
-                                onClick={() => form.reset()}
-                            >
-                                Reset
-                            </Button>
-                        </Grid.Col>
-                        <Grid.Col span={2}>
+
+                        <Grid.Col span={4}>
                             <Checkbox
-                                checked={addToAgenda}
-                                label="Masukkan Agenda ?"
+                                checked={langsungKe}
+                                label="Langsung Ke"
                                 onChange={(e) => {
                                     const isChecked = e.currentTarget.checked;
-                                    form.setFieldValue('addToAgenda', isChecked);
-                                    setAddToAgenda(isChecked);
-                                }}
-                            />
-                        </Grid.Col>
-                        <Grid.Col span={1.5}>
-                            <Checkbox
-                                checked={directTo}
-                                label="Langsung Ke ?"
-                                onChange={(e) => {
-                                    const isChecked = e.currentTarget.checked;
-                                    form.setFieldValue('directTo', isChecked);
-                                    setDirectTo(isChecked);
+                                    form.setFieldValue('langsungKe', isChecked);
+                                    setLangsungKe(isChecked);
                                     if (!isChecked) {
-                                        form.setFieldValue('targetDepartment', null);
+                                        form.setFieldValue('ditujukanKe', '');
                                     }
                                 }}
                             />
                         </Grid.Col>
-                        <Grid.Col span={2.5}>
+
+                        <Grid.Col span={8}>
                             <Select
-                                {...form.getInputProps('targetDepartment')}
-                                placeholder={directTo ? (isDepartmentsLoading ? "Memuat data..." : "Tujuan Bidang") : ""}
-                                data={fivedepartmentOptions}
+                                {...form.getInputProps('ditujukanKe')}
+                                placeholder={langsungKe ? "Pilih tujuan" : ""}
+                                data={departmentOptions}
                                 clearable
                                 searchable
-                                withAsterisk
+                                withAsterisk={langsungKe}
                                 nothingFoundMessage="Bidang tidak ditemukan..."
-                                disabled={!directTo || isDepartmentsLoading || !!departmentsError}
-                                error={departmentsError ? "Gagal memuat data" : null}
+                                disabled={!langsungKe}
                             />
                         </Grid.Col>
+
+                        <Grid.Col span={12}>
+                            <Checkbox
+                                checked={agenda}
+                                label="Masukkan ke Agenda"
+                                onChange={(e) => {
+                                    const isChecked = e.currentTarget.checked;
+                                    form.setFieldValue('agenda', isChecked);
+                                    setAgenda(isChecked);
+                                }}
+                            />
+                        </Grid.Col>
+
+                        {/* Agenda Fields - hanya muncul jika agenda = true */}
+                        {agenda && (
+                            <>
+                                <Grid.Col span={12}>
+                                    <Text fw="bold" size="md" mt="md" mb="sm">Informasi Agenda</Text>
+                                </Grid.Col>
+
+                                <Grid.Col span={6}>
+                                    <DateInput
+                                        {...form.getInputProps('tglMulai')}
+                                        label="Tanggal Mulai"
+                                        placeholder="Pilih tanggal"
+                                        valueFormat="DD-MM-YYYY"
+                                        clearable
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
+
+                                <Grid.Col span={6}>
+                                    <DateInput
+                                        {...form.getInputProps('tglSelesai')}
+                                        label="Tanggal Selesai"
+                                        placeholder="Pilih tanggal"
+                                        valueFormat="DD-MM-YYYY"
+                                        clearable
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
+
+                                <Grid.Col span={6}>
+                                    <TimeInput
+                                        {...form.getInputProps('jamMulai')}
+                                        label="Jam Mulai"
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
+
+                                <Grid.Col span={6}>
+                                    <TimeInput
+                                        {...form.getInputProps('jamSelesai')}
+                                        label="Jam Selesai"
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
+
+                                <Grid.Col span={6}>
+                                    <TextInput
+                                        {...form.getInputProps('tempat')}
+                                        label="Tempat"
+                                        placeholder="Lokasi kegiatan"
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
+
+                                <Grid.Col span={6}>
+                                    <TextInput
+                                        {...form.getInputProps('acara')}
+                                        label="Acara"
+                                        placeholder="Nama kegiatan"
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
+
+                                <Grid.Col span={12}>
+                                    <TextInput
+                                        {...form.getInputProps('catatan')}
+                                        label="Catatan"
+                                        placeholder="Catatan tambahan (opsional)"
+                                    />
+                                </Grid.Col>
+                            </>
+                        )}
                     </Grid>
 
                     <Space h="sm" />
 
-                    <Button type="submit" loading={loading}>
-                        Submit
-                    </Button>
+                    <Group justify="flex-end" mt="md">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                form.reset();
+                                setAgenda(false);
+                                setLangsungKe(false);
+                            }}
+                        >
+                            Reset
+                        </Button>
+                        <Button type="submit" loading={loading}>
+                            Submit
+                        </Button>
+                    </Group>
                 </Box>
             </Paper>
         </>
