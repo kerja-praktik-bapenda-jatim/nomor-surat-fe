@@ -15,28 +15,34 @@ export const SimpleTableLetter = () => {
   const columns = useMemo<MRT_ColumnDef<Letters>[]>(
     () => [
       {
-        accessorKey: "letterNumber",
+        accessorKey: "noSurat",
         header: "Nomor Surat",
-				accessorFn: (row) => row.number,
-      },
-			{
-        accessorKey: "name",
-        header: "Kode Bidang",
-        accessorFn: (row) => `${row.departmentId} / ${row.CreateUser.username}`,
-      },
-			{
-        accessorKey: "date",
-        header: "Tanggal",
-        accessorFn: (row) => convertUTC(row.date),
-      },
-			{
-        accessorKey: "from",
-        header: "Surat Dari",
-				accessorFn: (row) => `${row.from} / ${row.CreateUser.username}`,
+        accessorFn: (row) => row.noSurat,
       },
       {
-        accessorKey: "subject",
+        accessorKey: "classification",
+        header: "Klasifikasi / Jenis",
+        accessorFn: (row) => `${row.Classification?.name || "Tidak ada"} / ${row.LetterType?.name || "Tidak ada"}`,
+      },
+      {
+        accessorKey: "tglSurat",
+        header: "Tanggal Surat",
+        accessorFn: (row) => convertUTC(row.tglSurat),
+      },
+      {
+        accessorKey: "suratDari",
+        header: "Surat Dari",
+        accessorFn: (row) => `${row.suratDari} / ${row.CreateUser?.username || "Unknown"}`,
+      },
+      {
+        accessorKey: "perihal",
         header: "Perihal",
+        accessorFn: (row) => row.perihal,
+      },
+      {
+        accessorKey: "diterimaTgl",
+        header: "Tanggal Diterima",
+        accessorFn: (row) => convertUTC(row.diterimaTgl),
       },
       {
         accessorKey: "actions",

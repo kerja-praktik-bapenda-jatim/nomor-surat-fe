@@ -81,98 +81,164 @@ export function ViewLetterForm() {
             </Group>
             <Box>
                 <Text component="h2" fw="bold" fz="lg">
-                    View Surat
+                    View Surat Masuk
                 </Text>
 
                 <Grid>
                     <Grid.Col span={3}>
-                        <TextInput value={letter?.agendaNumber} label="No Agenda" readOnly />
+                        <TextInput value={letter?.noAgenda?.toString() || ''} label="No Agenda" readOnly />
                     </Grid.Col>
-                    <Grid.Col span={3}>
-                        <TextInput value={letter?.departmentId} label="Kode Bidang" readOnly />
-                    </Grid.Col>
-                    <Grid.Col span={3}>
-                        <TextInput value={letter?.startDate ? convertUTC(letter.startDate) : ''} label="Tanggal Awal" readOnly />
-                    </Grid.Col>
-                    <Grid.Col span={3}>
-                        <TextInput value={letter?.endDate ? convertUTC(letter.endDate) : ''} label="Tanggal Akhir" readOnly />
-                    </Grid.Col>
-
-                    <Grid.Col span={6}>
-                        <TextInput value={letter?.letterNumber} label="No Surat" readOnly />
-                    </Grid.Col>
-                    <Grid.Col span={3}>
-                        <TextInput value={letter?.startTime} label="Jam Awal" readOnly />
-                    </Grid.Col>
-                    <Grid.Col span={3}>
-                        <TextInput value={letter?.endTime} label="Jam Akhir" readOnly />
-                    </Grid.Col>
-
-                    <Grid.Col span={6}>
-                        <TextInput
-                            value={`${letter?.classificationId || ''} - ${letter?.Classification?.name || ''}`}
-                            label="Kode Klasifikasi Surat"
-                            readOnly
-                        />
-                    </Grid.Col>
-                    <Grid.Col span={6}>
-                        <TextInput value={letter?.place} label="Tempat" readOnly />
-                    </Grid.Col>
-
-                    <Grid.Col span={6}>
-                        <TextInput value={letter?.from} label="Surat Dari" readOnly />
-                    </Grid.Col>
-                    <Grid.Col span={6}>
-                        <TextInput value={letter?.event} label="Acara" readOnly />
-                    </Grid.Col>
-
-                    <Grid.Col span={6}>
-                        <TextInput value={letter?.subject} label="Perihal" readOnly />
-                    </Grid.Col>
-                    <Grid.Col span={6}>
-                        <TextInput value={letter?.filename} label="File Digital" readOnly />
-                    </Grid.Col>
-
-                    <Grid.Col span={3}>
-                        <TextInput value={letter?.letterDate ? convertUTC(letter.letterDate) : ''} label="Tanggal Surat" readOnly />
-                    </Grid.Col>
-                    <Grid.Col span={3}>
-                        <TextInput value={letter?.receivedDate ? convertUTC(letter.receivedDate) : ''} label="Diterima pada" readOnly />
-                    </Grid.Col>
-
-                    <Grid.Col span={6}>
-                        <TextInput value={letter?.Level?.name} label="Jenis Surat" readOnly />
-                    </Grid.Col>
-
                     <Grid.Col span={3}>
                         <TextInput
-                            value={letter?.addToAgenda ? 'Ya' : 'Tidak'}
-                            label="Masukkan Agenda"
+                            value={letter?.Classification?.name || 'Tidak ada'}
+                            label="Klasifikasi"
                             readOnly
                         />
                     </Grid.Col>
                     <Grid.Col span={3}>
                         <TextInput
-                            value={letter?.directTo ? 'Ya' : 'Tidak'}
+                            value={letter?.tglSurat ? convertUTC(letter.tglSurat) : ''}
+                            label="Tanggal Surat"
+                            readOnly
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                        <TextInput
+                            value={letter?.diterimaTgl ? convertUTC(letter.diterimaTgl) : ''}
+                            label="Tanggal Diterima"
+                            readOnly
+                        />
+                    </Grid.Col>
+
+                    <Grid.Col span={6}>
+                        <TextInput value={letter?.noSurat || ''} label="No Surat" readOnly />
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <TextInput
+                            value={letter?.LetterType?.name || 'Tidak ada'}
+                            label="Jenis Surat"
+                            readOnly
+                        />
+                    </Grid.Col>
+
+                    <Grid.Col span={6}>
+                        <TextInput value={letter?.suratDari || ''} label="Surat Dari" readOnly />
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <TextInput value={letter?.perihal || ''} label="Perihal" readOnly />
+                    </Grid.Col>
+
+                    <Grid.Col span={6}>
+                        <TextInput value={letter?.ditujukanKe || ''} label="Ditujukan Ke" readOnly />
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <TextInput
+                            value={letter?.upload ? 'File tersedia' : 'Tidak ada file'}
+                            label="File Digital"
+                            readOnly
+                        />
+                    </Grid.Col>
+
+                    <Grid.Col span={3}>
+                        <TextInput
+                            value={letter?.langsungKe ? 'Ya' : 'Tidak'}
                             label="Langsung Ke"
                             readOnly
                         />
                     </Grid.Col>
+                    <Grid.Col span={3}>
+                        <TextInput
+                            value={letter?.agenda ? 'Ya' : 'Tidak'}
+                            label="Masukkan Agenda"
+                            readOnly
+                        />
+                    </Grid.Col>
 
-                    {letter?.targetDepartment && (
-                        <Grid.Col span={6}>
-                            <TextInput
-                                value={letter.targetDepartment}
-                                label="Tujuan Bidang"
-                                readOnly
-                            />
-                        </Grid.Col>
+                    {/* Tampilkan informasi agenda jika ada */}
+                    {letter?.agenda && letter?.Agenda && (
+                        <>
+                            <Grid.Col span={12}>
+                                <Text fw="bold" size="md" mt="md" mb="sm">Informasi Agenda</Text>
+                            </Grid.Col>
+                            <Grid.Col span={3}>
+                                <TextInput
+                                    value={letter.Agenda.tglMulai ? convertUTC(letter.Agenda.tglMulai) : ''}
+                                    label="Tanggal Mulai"
+                                    readOnly
+                                />
+                            </Grid.Col>
+                            <Grid.Col span={3}>
+                                <TextInput
+                                    value={letter.Agenda.tglSelesai ? convertUTC(letter.Agenda.tglSelesai) : ''}
+                                    label="Tanggal Selesai"
+                                    readOnly
+                                />
+                            </Grid.Col>
+                            <Grid.Col span={3}>
+                                <TextInput
+                                    value={letter.Agenda.jamMulai || ''}
+                                    label="Jam Mulai"
+                                    readOnly
+                                />
+                            </Grid.Col>
+                            <Grid.Col span={3}>
+                                <TextInput
+                                    value={letter.Agenda.jamSelesai || ''}
+                                    label="Jam Selesai"
+                                    readOnly
+                                />
+                            </Grid.Col>
+                            <Grid.Col span={6}>
+                                <TextInput
+                                    value={letter.Agenda.tempat || ''}
+                                    label="Tempat"
+                                    readOnly
+                                />
+                            </Grid.Col>
+                            <Grid.Col span={6}>
+                                <TextInput
+                                    value={letter.Agenda.acara || ''}
+                                    label="Acara"
+                                    readOnly
+                                />
+                            </Grid.Col>
+                            <Grid.Col span={12}>
+                                <TextInput
+                                    value={letter.Agenda.catatan || ''}
+                                    label="Catatan"
+                                    readOnly
+                                />
+                            </Grid.Col>
+                        </>
                     )}
+
+                    <Grid.Col span={12}>
+                        <Text fw="bold" size="md" mt="md" mb="sm">Informasi Sistem</Text>
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <TextInput
+                            value={letter?.createdAt ? convertUTC(letter.createdAt) : ''}
+                            label="Dibuat Pada"
+                            readOnly
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <TextInput
+                            value={letter?.updatedAt ? convertUTC(letter.updatedAt) : ''}
+                            label="Diperbarui Pada"
+                            readOnly
+                        />
+                    </Grid.Col>
                 </Grid>
 
                 <Space h="md" />
 
-                {fileUrl ? (
+                {isFileLoading ? (
+                    <Center>
+                        <Loader size="md" />
+                        <Text ml="sm">Memuat file...</Text>
+                    </Center>
+                ) : fileUrl ? (
                     <iframe src={fileUrl} width="100%" height="600px" title="Surat File" />
                 ) : (
                     <Text>File tidak tersedia untuk ditampilkan.</Text>
