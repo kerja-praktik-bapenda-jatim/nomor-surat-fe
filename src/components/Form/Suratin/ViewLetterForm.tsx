@@ -211,24 +211,6 @@ export function ViewLetterForm() {
                             </Grid.Col>
                         </>
                     )}
-
-                    <Grid.Col span={12}>
-                        <Text fw="bold" size="md" mt="md" mb="sm">Informasi Sistem</Text>
-                    </Grid.Col>
-                    <Grid.Col span={6}>
-                        <TextInput
-                            value={letter?.createdAt ? convertUTC(letter.createdAt) : ''}
-                            label="Dibuat Pada"
-                            readOnly
-                        />
-                    </Grid.Col>
-                    <Grid.Col span={6}>
-                        <TextInput
-                            value={letter?.updatedAt ? convertUTC(letter.updatedAt) : ''}
-                            label="Diperbarui Pada"
-                            readOnly
-                        />
-                    </Grid.Col>
                 </Grid>
 
                 <Space h="md" />
