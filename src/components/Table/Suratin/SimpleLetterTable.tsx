@@ -15,9 +15,9 @@ export const SimpleTableLetter = () => {
   const columns = useMemo<MRT_ColumnDef<Letters>[]>(
     () => [
       {
-        accessorKey: "noSurat",
-        header: "Nomor Surat",
-        accessorFn: (row) => row.noSurat,
+        accessorKey: "noAgenda",
+        header: "Nomor Agenda",
+        accessorFn: (row) => row.noAgenda,
       },
       {
         accessorKey: "classification",
@@ -32,7 +32,7 @@ export const SimpleTableLetter = () => {
 			{
 				accessorKey: "suratDari",
 				header: "Surat Dari",
-				accessorFn: (row) => row.suratDari, 
+				accessorFn: (row) => row.suratDari,
 			},
       {
         accessorKey: "perihal",

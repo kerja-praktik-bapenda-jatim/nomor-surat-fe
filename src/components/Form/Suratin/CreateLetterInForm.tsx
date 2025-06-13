@@ -5,10 +5,10 @@ import { hasLength, useForm } from '@mantine/form';
 import { DateInput, TimeInput } from '@mantine/dates';
 import { useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
-import { IconArrowLeft, IconCheck, IconCopy } from '@tabler/icons-react';
+import { IconArrowLeft, IconCheck, IconCopy, IconRefresh } from '@tabler/icons-react';
 import { postLetters } from '@/services/suratin';
 import { modals } from '@mantine/modals';
-import { useClassifications } from '@/services/data';
+import { useClassifications, useLetterTypes } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
 
 interface FormValues {
@@ -36,19 +36,17 @@ interface FormValues {
 
 export function CreateLetterForm() {
     const { data: classificationsData, isLoading: isClassificationsLoading, error: classificationsError } = useClassifications();
+    const { data: letterTypesData, isLoading: isLetterTypesLoading } = useLetterTypes();
 
     const classificationOptions = classificationsData?.map((classification) => ({
         value: classification.id,
         label: `${classification.id} - ${classification.name}`,
     })) || [];
 
-    const letterTypeOptions = [
-        { value: '1', label: 'Surat Biasa' },
-        { value: '2', label: 'Surat Penting' },
-        { value: '3', label: 'Surat Rahasia' },
-        { value: '4', label: 'Surat Segera' },
-        { value: '5', label: 'Undangan' },
-    ];
+    const letterTypeOptions = letterTypesData?.map((letterType) => ({
+        value: letterType.id.toString(),
+        label: letterType.name,
+    })) || [];
 
     const departmentOptions = [
         { value: 'SEKRETARIAT', label: 'SEKRETARIAT' },
@@ -63,23 +61,20 @@ export function CreateLetterForm() {
     const [langsungKe, setLangsungKe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    const [noAgenda, setNoAgenda] = useState(1);
+    const [noAgenda, setNoAgenda] = useState(0);
     const router = useRouter();
 
     useEffect(() => {
         const user = getCurrentUser();
         setUser(user);
-        fetchLatestNoAgenda(currentYear);
+        generateRandomAgenda();
     }, []);
 
-    const fetchLatestNoAgenda = async (year: number) => {
-        try {
-            const nextNumber = Math.floor(Math.random() * 100) + 1;
-            setNoAgenda(nextNumber);
-        } catch (error) {
-            console.error('Failed to fetch latest agenda number:', error);
-            setNoAgenda(1);
-        }
+    // Function to generate random agenda number
+    const generateRandomAgenda = () => {
+        // Generate random number between 1000-9999
+        const randomNum = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
+        setNoAgenda(randomNum);
     };
 
     const form = useForm<FormValues>({
@@ -205,32 +200,37 @@ export function CreateLetterForm() {
 
             const response = await postLetters(formData);
 
+            // Generate new random agenda for next entry
+            generateRandomAgenda();
+
             modals.open({
                 title: 'Surat berhasil dibuat',
                 centered: true,
                 children: (
                     <>
                         <Text size="sm">
-                            <strong>ID Surat:</strong> {response.id}
-                            <CopyButton value={response.id} timeout={2000}>
-                                {({ copied, copy }) => (
-                                    <Tooltip label={copied ? 'Disalin' : 'Salin'} withArrow position="right">
-                                        <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy} ml="xs">
-                                            {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
-                                        </ActionIcon>
-                                    </Tooltip>
-                                )}
-                            </CopyButton>
-                            <br />
                             <strong>No Agenda:</strong> {response.noAgenda}<br />
                             <strong>No Surat:</strong> {response.noSurat}<br />
                             <strong>Klasifikasi:</strong> {response.Classification?.name}<br />
-                            <strong>Jenis Surat:</strong> {response.LetterType?.name} <br />
-                            <strong>Surat Dari:</strong> {response.suratDari} <br />
+                            <strong>Jenis Surat:</strong> {response.LetterType?.name}<br />
+                            <strong>Surat Dari:</strong> {response.suratDari}<br />
                             <strong>Perihal:</strong> {response.perihal}<br />
                         </Text>
-                        <Button onClick={() => { form.reset(); modals.closeAll(); handleBack(); }} mt="md">
-                            OK
+                        <Button onClick={() => {
+                            form.reset();
+                            modals.closeAll();
+                            // Reset form for next entry
+                            setAgenda(false);
+                            setLangsungKe(false);
+                        }} mt="md">
+                            Tambah Surat Lagi
+                        </Button>
+                        <Button onClick={() => {
+                            form.reset();
+                            modals.closeAll();
+                            handleBack();
+                        }} mt="md" variant="outline" ml="sm">
+                            Selesai
                         </Button>
                     </>
                 )
@@ -272,10 +272,6 @@ export function CreateLetterForm() {
         router.push('/suratin');
     };
 
-    const resetNoAgenda = () => {
-        setNoAgenda(1);
-    };
-
     return (
         <>
             <Paper withBorder shadow="md" p="md">
@@ -289,20 +285,23 @@ export function CreateLetterForm() {
 
                     <Grid>
                         <Grid.Col span={6}>
-                            <Group align="flex-end">
+                            <Group gap="xs">
                                 <TextInput
-                                    value={`${currentYear}/${noAgenda.toString().padStart(4, '0')}`}
+                                    value={`${currentYear}/${noAgenda}`}
                                     label="No Agenda"
                                     readOnly
                                     style={{ flex: 1 }}
                                 />
-                                <Button
-                                    onClick={resetNoAgenda}
-                                    variant="outline"
-                                    style={{ height: '36px' }}
-                                >
-                                    Reset
-                                </Button>
+                                <Tooltip label="Generate nomor baru">
+                                    <ActionIcon
+                                        onClick={generateRandomAgenda}
+                                        variant="light"
+                                        size="lg"
+                                        style={{ marginTop: '25px' }}
+                                    >
+                                        <IconRefresh size={16} />
+                                    </ActionIcon>
+                                </Tooltip>
                             </Group>
                         </Grid.Col>
 
@@ -518,9 +517,10 @@ export function CreateLetterForm() {
                                 form.reset();
                                 setAgenda(false);
                                 setLangsungKe(false);
+                                generateRandomAgenda(); // Generate nomor baru saat reset
                             }}
                         >
-                            Reset
+                            Reset Form
                         </Button>
                         <Button type="submit" loading={loading}>
                             Submit

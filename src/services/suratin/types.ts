@@ -85,6 +85,32 @@ export interface LetterResponse {
   };
 }
 
+// ✅ PERBAIKAN: Update interface untuk surat masuk
+export interface UpdateLetterInRequest {
+  noAgenda?: number;
+  noSurat: string;
+  suratDari: string;
+  perihal: string;
+  tglSurat: string;
+  diterimaTgl: string;
+  langsungKe: boolean;
+  ditujukanKe: string;
+  agenda: boolean;
+  classificationId: string;
+  letterTypeId: string;
+  file?: File | null;
+
+  // Agenda fields (optional, only if agenda is true)
+  tglMulai?: string;
+  tglSelesai?: string;
+  jamMulai?: string;
+  jamSelesai?: string;
+  tempat?: string;
+  acara?: string;
+  catatan?: string;
+}
+
+// ✅ Keep the old one for backward compatibility jika diperlukan
 export interface UpdateLetterResponse {
   noSurat: string;
   suratDari: string;

@@ -1,5 +1,5 @@
 "use client";
-import { ViewLetterForm } from "@/components/Form/Suratin/ViewLetterForm";
+import { ViewLetterForm } from "@/components/Form/Suratin/ViewLetterInForm";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 
 export default function ViewSuratPage() {

@@ -1,7 +1,7 @@
 import {useQuery} from "@tanstack/react-query";
 import ky from "ky";
 import Cookies from "js-cookie";
-import type {BaseString} from "./types";
+import type {BaseString, LetterType} from "./types";
 
 const BASE_URL = process.env.API_BASE_URL as string;
 
@@ -53,6 +53,13 @@ export const getStorageLocation = async () => {
     return res;
 };
 
+// ✅ Tambah function untuk Letter Types
+export const getLetterTypes = async () => {
+    const res = await ky.get(`${BASE_URL}lettertype`, {
+    }).json<LetterType[]>();
+    return res;
+};
+
 export const useLevels = () =>
     useQuery<BaseString[]>({
         queryKey: ["Levels"],
@@ -99,4 +106,11 @@ export const useStorageLocations = () =>
     useQuery<BaseString[]>({
         queryKey: ["StorageLocation"],
         queryFn: () => getStorageLocation(),
+    });
+
+// ✅ Tambah hook untuk Letter Types
+export const useLetterTypes = () =>
+    useQuery<LetterType[]>({
+        queryKey: ["LetterTypes"],
+        queryFn: () => getLetterTypes(),
     });

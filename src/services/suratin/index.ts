@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import ky from "ky";
-import type {InputExport, LetterResponse, Letters, UpdateLetterResponse, AgendaResponse} from "./types";
+import type {InputExport, LetterResponse, Letters, UpdateLetterResponse, UpdateLetterInRequest, AgendaResponse} from "./types";
 import { currentTimestamp } from "@/utils/utils";
 import { getTokenFromCookies } from "@/services/auth";
 
@@ -60,31 +60,55 @@ export const postLetters = async (formData: FormData): Promise<LetterResponse> =
 		return res;
 };
 
-// export const postLetters = async (data: any): Promise<LetterResponse> => {
-//   if (data instanceof FormData) {
-//     const res = await ky
-//       .post(`${BASE_URL}`, {
-//         headers: {
-//           Authorization: `Bearer ${getTokenFromCookies()}`,
-//         },
-//         body: data,
-//       })
-//       .json<LetterResponse>();
-//     return res;
-//   }
+// ✅ PERBAIKAN: Function untuk update surat masuk
+export const updateLetterIn = async (
+  id: string,
+  data: UpdateLetterInRequest,
+): Promise<LetterResponse> => {
+  try {
+    const formData = new FormData();
 
-//   const res = await ky
-//     .post(`${BASE_URL}`, {
-//       headers: {
-//         'Content-Type': 'application/json',
-//         Authorization: `Bearer ${getTokenFromCookies()}`,
-//       },
-//       json: data,
-//     })
-//     .json<LetterResponse>();
-//   return res;
-// };
+    // ✅ Letter fields sesuai dengan surat masuk (tanpa noAgenda karena readonly)
+    formData.append("noSurat", data.noSurat);
+    formData.append("suratDari", data.suratDari);
+    formData.append("perihal", data.perihal);
+    formData.append("tglSurat", data.tglSurat);
+    formData.append("diterimaTgl", data.diterimaTgl);
+    formData.append("langsungKe", String(data.langsungKe));
+    formData.append("ditujukanKe", data.ditujukanKe);
+    formData.append("agenda", String(data.agenda));
+    formData.append("classificationId", data.classificationId);
+    formData.append("letterTypeId", data.letterTypeId);
 
+    // ✅ Agenda fields (optional, only if agenda is true)
+    if (data.agenda) {
+      if (data.tglMulai) formData.append("tglMulai", data.tglMulai);
+      if (data.tglSelesai) formData.append("tglSelesai", data.tglSelesai);
+      if (data.jamMulai) formData.append("jamMulai", data.jamMulai);
+      if (data.jamSelesai) formData.append("jamSelesai", data.jamSelesai);
+      if (data.tempat) formData.append("tempat", data.tempat);
+      if (data.acara) formData.append("acara", data.acara);
+      if (data.catatan) formData.append("catatan", data.catatan);
+    }
+
+    // ✅ File upload (optional)
+    if (data.file) formData.append("file", data.file);
+
+    const res = await ky.patch(`${BASE_URL}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${getTokenFromCookies()}`,
+      },
+      body: formData,
+    }).json<LetterResponse>();
+
+    return res;
+  } catch (error) {
+    console.error("Gagal memperbarui surat masuk:", error);
+    throw error;
+  }
+};
+
+// ✅ Keep old function for backward compatibility (but fix it)
 export const patchLetter = async (
   id: string,
   formData: UpdateLetterResponse,

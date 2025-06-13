@@ -1,11 +1,11 @@
 "use client";
-import { UpdateLetterForm } from "@/components/Form/Suratin/UpdateLetterForm";
+import { UpdateLetterInForm } from "@/components/Form/Suratin/UpdateLetterInForm";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 
 export default function EditSuratPage() {
     return (
         <PageContainer title="">
-            <UpdateLetterForm />
+            <UpdateLetterInForm />
         </PageContainer>
     );
 }
