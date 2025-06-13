@@ -286,7 +286,7 @@ export function UpdateLetterInForm() {
                     {/* ✅ Klasifikasi dengan debug info */}
                     <Grid.Col span={6}>
                         <Select
-                            {...form.getInputProps('classificationId?')}
+                            {...form.getInputProps('classificationId? name')}
                             label="Klasifikasi Surat"
                             placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih klasifikasi"}
                             data={classificationOptions}
