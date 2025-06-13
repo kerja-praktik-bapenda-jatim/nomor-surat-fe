@@ -160,3 +160,15 @@ export interface AgendaResponse {
     suratDari: string;
   };
 }
+
+// Di file types.ts atau di bagian interface InputExport
+export interface InputExport {
+    startDate: string;
+    endDate: string;
+    classificationId?: string;
+    letterTypeId?: string;
+    departmentId?: string;
+    // ✅ Tambahkan property untuk surat masuk
+    suratDari?: string;
+    perihal?: string;
+}

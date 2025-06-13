@@ -203,38 +203,28 @@ export function CreateLetterForm() {
             // Generate new random agenda for next entry
             generateRandomAgenda();
 
-            modals.open({
-                title: 'Surat berhasil dibuat',
-                centered: true,
-                children: (
-                    <>
-                        <Text size="sm">
-                            <strong>No Agenda:</strong> {response.noAgenda}<br />
-                            <strong>No Surat:</strong> {response.noSurat}<br />
-                            <strong>Klasifikasi:</strong> {response.Classification?.name}<br />
-                            <strong>Jenis Surat:</strong> {response.LetterType?.name}<br />
-                            <strong>Surat Dari:</strong> {response.suratDari}<br />
-                            <strong>Perihal:</strong> {response.perihal}<br />
-                        </Text>
-                        <Button onClick={() => {
-                            form.reset();
-                            modals.closeAll();
-                            // Reset form for next entry
-                            setAgenda(false);
-                            setLangsungKe(false);
-                        }} mt="md">
-                            Tambah Surat Lagi
-                        </Button>
-                        <Button onClick={() => {
-                            form.reset();
-                            modals.closeAll();
-                            handleBack();
-                        }} mt="md" variant="outline" ml="sm">
-                            Selesai
-                        </Button>
-                    </>
-                )
-            });
+						modals.open({
+								title: 'Berhasil',
+								centered: true,
+								children: (
+										<>
+												<Text size="sm" mb="md">
+														Surat berhasil dibuat
+												</Text>
+												<Group justify="flex-end" gap="sm">
+														<Button
+																onClick={() => {
+																		form.reset();
+																		modals.closeAll();
+																		handleBack();
+																}}
+														>
+																Selesai
+														</Button>
+												</Group>
+										</>
+								)
+						});
 
         } catch (error: any) {
             let errorMessage = "Terjadi kesalahan. Silakan coba lagi.";

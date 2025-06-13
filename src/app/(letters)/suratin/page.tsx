@@ -13,7 +13,10 @@ export default function SuratinPage() {
             <Paper withBorder radius="md" p="md">
                 <Group>
                     <Button onClick={() => router.push('/suratin/add')} rightSection= {<IconFilePlus />} color="blue">
-                        Entri Surat
+                        Buat Surat Masuk
+                    </Button>
+										<Button onClick={() => router.push('/suratin/export')} rightSection= {<IconFileExport />}>
+                        Ekspor Surat Masuk
                     </Button>
                 </Group>
                 <SimpleTableLetter />

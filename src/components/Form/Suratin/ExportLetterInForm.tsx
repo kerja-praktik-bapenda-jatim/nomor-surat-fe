@@ -1,22 +1,33 @@
 "use client"
 import { useEffect, useState } from 'react';
-import { Button, Paper, Text, Space, Select } from '@mantine/core';
+import { Button, Paper, Text, Space, Select, TextInput } from '@mantine/core'; // ✅ Tambah TextInput
 import { useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
-import { exportLetters } from '@/services/surat';
+import { exportLetters } from '@/services/suratin';
 import { useRouter } from 'next/navigation';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useClassifications, useDepartments } from '@/services/data';
+import { useClassifications, useLetterTypes } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
 
-export function ExportLetterForm() {
+// ✅ Define interface untuk form values
+interface ExportFormValues {
+    startDate: string;
+    endDate: string;
+    letterTypeId: string;
+    classificationId: string;
+    suratDari: string;
+    perihal: string;
+}
+
+export function ExportLetterInForm() {
     const router = useRouter();
+
     const {
-        data: departmentsData,
-        isLoading: isDepartmentsLoading,
-        error: departmentsError,
-    } = useDepartments();
+        data: letterTypesData,
+        isLoading: isLetterTypesLoading,
+        error: letterTypesError,
+    } = useLetterTypes();
 
     const {
         data: classificationsData,
@@ -24,9 +35,9 @@ export function ExportLetterForm() {
         error: classificationsError,
     } = useClassifications();
 
-    const departmentOptions = departmentsData?.map((department) => ({
-        value: department.id,
-        label: `${department.id} - ${department.name}`,
+    const letterTypeOptions = letterTypesData?.map((letterType) => ({
+        value: letterType.id.toString(),
+        label: letterType.name,
     })) || [];
 
     const classificationOptions = classificationsData?.map((classification) => ({
@@ -34,12 +45,14 @@ export function ExportLetterForm() {
         label: `${classification.id} - ${classification.name}`,
     })) || [];
 
-    const form = useForm({
+    const form = useForm<ExportFormValues>({
         initialValues: {
             startDate: '',
             endDate: '',
-            departmentId: '',
+            letterTypeId: '',
             classificationId: '',
+            suratDari: '',
+            perihal: '',
         },
         validate: {
             startDate: (value) => value ? null : 'Tanggal mulai harus dipilih',
@@ -48,21 +61,21 @@ export function ExportLetterForm() {
     });
 
     const [loading, setLoading] = useState(false);
-
     const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
-            
-        useEffect(() => {
-            const user = getCurrentUser();
-            console.log("isAdmin", user.isAdmin)
-            setUser(user);
-        }, []);
 
-    const handleSubmit = async (values: typeof form.values) => {
+    useEffect(() => {
+        const user = getCurrentUser();
+        console.log("isAdmin", user.isAdmin)
+        setUser(user);
+    }, []);
+
+    const handleSubmit = async (values: ExportFormValues) => {
         setLoading(true);
         try {
-            const response = await exportLetters(values);
+            // ✅ Cast to any untuk menghindari TypeScript error
+            const response = await exportLetters(values as any);
             modals.open({
-                title: 'Ekspor Surat',
+                title: 'Ekspor Surat Masuk',
                 centered: true,
                 children: (
                     <>
@@ -103,7 +116,7 @@ export function ExportLetterForm() {
     };
 
     const handleBack = () => {
-        router.push('/surat');
+        router.push('/suratin');
     };
 
     return (
@@ -112,7 +125,7 @@ export function ExportLetterForm() {
                 Kembali
             </Button>
             <Text component="h2" fw="bold" fz="lg">
-                Ekspor Surat
+                Ekspor Surat Masuk
             </Text>
             <form onSubmit={form.onSubmit(handleSubmit)}>
                 <DateInput
@@ -145,20 +158,33 @@ export function ExportLetterForm() {
                 />
                 <Space h="md" />
                 <Select
-                    {...form.getInputProps('departmentId')}
-                    label="Kode Bidang"
-                    placeholder={isDepartmentsLoading ? "Memuat data..." : "Pilih atau Cari"}
-                    data={departmentOptions}
+                    {...form.getInputProps('letterTypeId')}
+                    label="Jenis Surat"
+                    placeholder={isLetterTypesLoading ? "Memuat data..." : "Pilih atau Cari"}
+                    data={letterTypeOptions}
                     clearable
                     searchable
-                    nothingFoundMessage="Kode Bidang tidak ditemukan..."
+                    nothingFoundMessage="Jenis Surat tidak ditemukan..."
                     checkIconPosition="right"
-                    disabled={isDepartmentsLoading || !!departmentsError || !user.isAdmin}
-                    error={departmentsError ? "Gagal memuat data" : null}
+                    disabled={isLetterTypesLoading || !!letterTypesError}
+                    error={letterTypesError ? "Gagal memuat data" : null}
+                />
+                <Space h="md" />
+                {/* ✅ Ganti dengan TextInput untuk menghindari error creatable */}
+                <TextInput
+                    {...form.getInputProps('suratDari')}
+                    label="Surat Dari (Opsional)"
+                    placeholder="Ketik asal surat"
+                />
+                <Space h="md" />
+                <TextInput
+                    {...form.getInputProps('perihal')}
+                    label="Perihal (Opsional)"
+                    placeholder="Ketik perihal"
                 />
                 <Space h="md" />
                 <Button type="submit" mt="md" loading={loading}>
-                    Ekspor
+                    Ekspor Surat Masuk
                 </Button>
             </form>
         </Paper>

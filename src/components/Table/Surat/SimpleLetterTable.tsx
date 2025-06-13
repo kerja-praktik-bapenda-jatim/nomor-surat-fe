@@ -21,7 +21,7 @@ export const SimpleTableLetter = () => {
       {
         accessorKey: "name",
         header: "Kode Bidang",
-        accessorFn: (row) => `${row.departmentId} / ${row.CreateUser.username}`,
+				accessorFn: (row) => `${row.departmentId} / ${row.CreateUser?.username || '-'}`,
       },
       {
         accessorKey: "date",

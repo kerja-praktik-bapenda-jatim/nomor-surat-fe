@@ -177,45 +177,59 @@ export const deleteLetter = async (id: string) => {
 };
 
 export const exportLetters = async (values: InputExport) => {
-  const searchParams: Record<string, string> = {
-    startDate: values.startDate,
-    endDate: values.endDate,
-  };
+    const searchParams: Record<string, string> = {
+        startDate: values.startDate,
+        endDate: values.endDate,
+        recursive: 'true',
+    };
 
-  if (values.classificationId) {
-    searchParams.classificationId = values.classificationId;
-  }
-
-  if (values.letterTypeId) {
-    searchParams.letterTypeId = values.letterTypeId;
-  }
-
-  try {
-    const response = await ky.get(`${BASE_URL}/export`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-      searchParams,
-    });
-
-    const blob = await response.blob();
-    const filename = `Surat-Masuk-${currentTimestamp()}.xlsx`;
-    const link = document.createElement("a");
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    return { message: "File berhasil diunduh." };
-  } catch (error: any) {
-    if (error.response) {
-      const errorData = await error.response.json();
-      throw new Error(errorData.message || "Terjadi kesalahan.");
-    } else {
-      throw new Error("Terjadi kesalahan jaringan.");
+    // ✅ Parameter untuk surat masuk
+    if (values.classificationId) {
+        searchParams.classificationId = values.classificationId;
     }
-  }
+
+    if (values.letterTypeId) {
+        searchParams.letterTypeId = values.letterTypeId;
+    }
+
+    // ✅ Tambahan parameter untuk surat masuk jika ada
+    if (values.suratDari) {
+        searchParams.suratDari = values.suratDari;
+    }
+
+    if (values.perihal) {
+        searchParams.perihal = values.perihal;
+    }
+
+    try {
+        const response = await ky.get(`${BASE_URL}/export`, {
+            headers: {
+                Authorization: `Bearer ${getTokenFromCookies()}`,
+            },
+            searchParams,
+        });
+
+        // Mengonversi respons menjadi Blob untuk file
+        const blob = await response.blob();
+        const filename = `Surat-Masuk-${currentTimestamp()}.xlsx`; // ✅ Ubah nama file
+
+        // Membuat link untuk mengunduh file
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click(); // Memicu klik untuk mengunduh file
+        document.body.removeChild(link);
+
+        return { message: 'File berhasil diunduh.' };
+    } catch (error: any) {
+        if (error.response) {
+            const errorData = await error.response.json();
+            throw new Error(errorData.message || 'Terjadi kesalahan.');
+        } else {
+            throw new Error('Terjadi kesalahan jaringan.');
+        }
+    }
 };
 
 // Agenda-specific functions
@@ -255,6 +269,9 @@ export const deleteAgenda = async (id: string) => {
     return false;
   }
 };
+
+// ✅ SOLUSI 1: Ganti nama function yang sudah ada
+
 
 // React Query hooks
 export const useLetters = () =>

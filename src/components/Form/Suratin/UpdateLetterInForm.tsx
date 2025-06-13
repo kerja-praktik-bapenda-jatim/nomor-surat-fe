@@ -193,23 +193,28 @@ export function UpdateLetterInForm() {
 
             const response = await updateLetterIn(letterId, updateData);
 
-            modals.open({
-                title: 'Surat berhasil diperbarui',
-                centered: true,
-                children: (
-                    <>
-                        <Text size="sm">
-                            <strong>No Agenda:</strong> {response.noAgenda}<br />
-                            <strong>No Surat:</strong> {response.noSurat}<br />
-                            <strong>Klasifikasi:</strong> {response.Classification?.name}<br />
-                            <strong>Jenis Surat:</strong> {response.LetterType?.name}<br />
-                        </Text>
-                        <Button onClick={() => { modals.closeAll(); handleBack(); }} mt="md">
-                            OK
-                        </Button>
-                    </>
-                )
-            });
+						modals.open({
+								title: 'Berhasil',
+								centered: true,
+								children: (
+										<>
+												<Text size="sm" mb="md">
+														Surat berhasil diperbarui
+												</Text>
+												<Group justify="flex-end" gap="sm">
+														<Button
+																onClick={() => {
+																		form.reset();
+																		modals.closeAll();
+																		handleBack();
+																}}
+														>
+																Selesai
+														</Button>
+												</Group>
+										</>
+								)
+						});
 
         } catch (error: any) {
             let errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
@@ -264,7 +269,8 @@ export function UpdateLetterInForm() {
                     {/* ✅ No Agenda - READONLY */}
                     <Grid.Col span={6}>
                         <TextInput
-                            value={`${currentYear}/${form.values.noAgenda.toString().padStart(4, '0')}`}
+                            // value={`${currentYear}/${form.values.noAgenda.toString().padStart(4, '0')}`}
+														value={letter?.noAgenda?.toString()}
                             label="No Agenda"
                             readOnly
                             // style={{
@@ -283,47 +289,63 @@ export function UpdateLetterInForm() {
                         />
                     </Grid.Col>
 
-                    {/* ✅ Klasifikasi dengan debug info */}
-                    <Grid.Col span={6}>
-                        <Select
-                            {...form.getInputProps('classificationId? name')}
-                            label="Klasifikasi Surat"
-                            placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih klasifikasi"}
-                            data={classificationOptions}
-                            clearable
-                            searchable
-                            withAsterisk
-                            nothingFoundMessage="Klasifikasi tidak ditemukan..."
-                            disabled={isClassificationsLoading}
-                        />
-                        {/* Debug info - hapus setelah fix
-                        {process.env.NODE_ENV === 'development' && (
-                            <Text size="xs" c="dimmed">
-                                Current: {form.values.classificationId} | Options: {classificationOptions.length}
-                            </Text>
-                        )} */}
-                    </Grid.Col>
+										<Grid.Col span={6}>
+												<Select
+														{...form.getInputProps('classificationId')}
+														label="Klasifikasi Surat"
+														placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih klasifikasi"}
+														data={classificationOptions}
+														clearable
+														searchable
+														withAsterisk
+														nothingFoundMessage="Klasifikasi tidak ditemukan..."
+														disabled={isClassificationsLoading}
+														// ✅ Tampilkan data yang sudah ada dengan renderOption custom
+														renderOption={({ option }) => (
+																<div>
+																		{option.label}
+																</div>
+														)}
+														// ✅ Atau gunakan defaultValue jika data sudah di-load
+														defaultValue={letter?.classificationId}
+												/>
 
-                    {/* ✅ Jenis Surat dengan debug info */}
-                    <Grid.Col span={6}>
-                        <Select
-                            {...form.getInputProps('letterTypeId')}
-                            label="Jenis Surat"
-                            placeholder={isLetterTypesLoading ? "Memuat data..." : "Pilih jenis surat"}
-                            data={letterTypeOptions}
-                            clearable
-                            searchable
-                            withAsterisk
-                            nothingFoundMessage="Jenis surat tidak ditemukan..."
-                            disabled={isLetterTypesLoading}
-                        />
-                        {/* Debug info - hapus setelah fix */}
-                        {/* {process.env.NODE_ENV === 'development' && (
-                            <Text size="xs" c="dimmed">
-                                Current: {form.values.letterTypeId} | Options: {letterTypeOptions.length}
-                            </Text>
-                        )} */}
-                    </Grid.Col>
+												{/* ✅ Optional: Tampilkan data saat ini di bawah select */}
+												{letter?.Classification && (
+														<Text size="xs" c="dimmed" mt={4}>
+																Saat ini: {letter.Classification.id} - {letter.Classification.name}
+														</Text>
+												)}
+										</Grid.Col>
+
+										<Grid.Col span={6}>
+												<Select
+														{...form.getInputProps('letterTypeId')}
+														label="Jenis Surat"
+														placeholder={isLetterTypesLoading ? "Memuat data..." : "Pilih jenis surat"}
+														data={letterTypeOptions}
+														clearable
+														searchable
+														withAsterisk
+														nothingFoundMessage="Jenis surat tidak ditemukan..."
+														disabled={isLetterTypesLoading}
+														// ✅ Tampilkan data yang sudah ada dengan renderOption custom
+														renderOption={({ option }) => (
+																<div>
+																		{option.label}
+																</div>
+														)}
+														// ✅ Atau gunakan defaultValue jika data sudah di-load
+														defaultValue={letter?.letterTypeId?.toString()}
+												/>
+
+												{/* ✅ Optional: Tampilkan data saat ini di bawah select */}
+												{letter?.LetterType && (
+														<Text size="xs" c="dimmed" mt={4}>
+																Saat ini: {letter.LetterType.name}
+														</Text>
+												)}
+										</Grid.Col>
 
                     <Grid.Col span={6}>
                         <TextInput
@@ -397,17 +419,33 @@ export function UpdateLetterInForm() {
                         />
                     </Grid.Col>
 
-                    <Grid.Col span={8}>
-                        <Select
-                            {...form.getInputProps('ditujukanKe')}
-                            placeholder={langsungKe ? "Pilih tujuan" : ""}
-                            data={departmentOptions}
-                            clearable
-                            searchable
-                            withAsterisk={langsungKe}
-                            disabled={!langsungKe}
-                        />
-                    </Grid.Col>
+										<Grid.Col span={8}>
+												<Select
+														{...form.getInputProps('ditujukanKe')}
+														placeholder={langsungKe ? "Pilih tujuan" : ""}
+														data={departmentOptions}
+														clearable
+														searchable
+														withAsterisk={langsungKe}
+														disabled={!langsungKe}
+														nothingFoundMessage="Bidang tidak ditemukan..."
+														// ✅ Tampilkan data yang sudah ada dengan renderOption custom
+														renderOption={({ option }) => (
+																<div>
+																		{option.label}
+																</div>
+														)}
+														// ✅ Atau gunakan defaultValue jika data sudah di-load
+														defaultValue={letter?.ditujukanKe}
+												/>
+
+												{/* ✅ Optional: Tampilkan data saat ini di bawah select */}
+												{letter?.ditujukanKe && langsungKe && (
+														<Text size="xs" c="dimmed" mt={4}>
+																Saat ini: {letter.ditujukanKe}
+														</Text>
+												)}
+										</Grid.Col>
 
                     <Grid.Col span={12}>
                         <Checkbox
