@@ -31,7 +31,7 @@ export const SimpleTableLetter = () => {
       {
         accessorKey: "update",
         header: "Update",
-        accessorFn: (row) => `${convertUTC(row.updatedAt)} oleh ${row.UpdateUser.username}`,
+				accessorFn: (row) => `${convertUTC(row.updatedAt)} oleh ${row.UpdateUser?.username || '-'}`,
       },
       {
         accessorKey: "to",

@@ -1,176 +1,46 @@
-export interface Letters {
+// Interface untuk Agenda berdasarkan model Sequelize
+export interface AgendaSurat {
   id: string;
-  date: string;
-  number: string;
-  subject: string;
-  to: string;
-  from: string;
-  place: string;
-  event: string;
-  filename: string;
-  reserved: boolean;
-  attachmentCount: number;
-  description: string;
-  departmentId: string;
-  lastReserved: string;
-  documentIndexName: string;
+  tglMulai: string; // Start date
+  tglSelesai: string; // End date
+  jamMulai: string; // Start time
+  jamSelesai: string; // End time
+  tempat: string; // Location/place
+  acara: string; // Event/activity name
+  catatan: string; // Notes
+  letterIn_id: string; // Foreign key to LetterIn
   createdAt: string;
   updatedAt: string;
-  classificationId: string;
-  levelId: string;
-  updateUserId: string;
-  startDate: string;
-  endDate: string;
-  letterNumber: string;
-  agendaNumber: string;
-  letterDate: string;
-  receivedDate: string;
-  startTime: string;
-  endTime: string;
-  addToAgenda: boolean;
-  directTo: boolean;
-  targetDepartment: string | null;
-  activeRetentionPeriodId: string;
-  inactiveRetentionPeriodId: string;
-  jraDescriptionId: string;
-  storageLocationId: string;
-  accessId: string;
-  Level: {
-    name: string;
-  };
-  Classification: {
-    name: string;
-  };
-  StorageLocation: {
-    name: string;
-  };
-  JraDescription: {
-    name: string;
-  };
-  ActiveRetentionPeriod: {
-    name: string;
-  };
-  InactiveRetentionPeriod: {
-    name: string;
-  };
-  Access: {
-    name: string;
-  };
-  Department: {
-    name: string;
-  };
-  CreateUser: {
-    username: string;
-  };
-  UpdateUser: {
-    username: string;
-  };
-  userId: string;
-}
-
-export interface LetterResponse {
-  id: string;
-  date: string;
-  reserved: string;
-  attachmentCount: number;
-  userId: string;
-  departmentId: string;
-  subject: string;
-  to: string;
-  from: string;
-  place: string;
-  event: string;
-  classificationId: string;
-  levelId: string;
-  description: string;
-  filename: string;
-  updatedAt: string;
-  createdAt: string;
-  number: string;
-  letterNumber: string;
-  agendaNumber: string;
-  documentIndexName: string;
-  activeRetentionPeriodId: string;
-  inactiveRetentionPeriodId: string;
-  jraDescriptionId: string;
-  storageLocationId: string;
-  accessId: string;
-  startDate: string;
-  endDate: string;
-  letterDate: string;
-  receivedDate: string;
-  startTime: string;
-  endTime: string;
-  addToAgenda: boolean;
-  directTo: boolean;
-  targetDepartment: string | null;
-  Level: {
-    name: string;
-  };
-  Classification: {
-    name: string;
-  };
-  StorageLocation: {
-    name: string;
-  };
-  JraDescription: {
-    name: string;
-  };
-  ActiveRetentionPeriod: {
-    name: string;
-  };
-  InactiveRetentionPeriod: {
-    name: string;
-  };
-  Access: {
-    name: string;
-  };
-  Department: {
-    name: string;
+  // Relasi dengan LetterIn
+  LetterIn?: {
+    id: string;
+    subject: string;
+    from: string;
+    number: string;
+    // tambahkan field LetterIn lainnya sesuai kebutuhan
   };
 }
 
-export interface UpdateLetterResponse {
-  subject: string;
-  to: string;
-  from: string;
-  place: string;
-  event: string;
-  attachmentCount: number;
-  departmentId: string;
-  classificationId: string;
-  levelId: string;
-  description: string;
-  accessId: string;
-  documentIndexName: string;
-  activeRetentionPeriodId: string;
-  inactiveRetentionPeriodId: string;
-  jraDescriptionId: string;
-  storageLocationId: string;
-  letterNumber: string;
-  agendaNumber: string;
-  startDate: string;
-  endDate: string;
-  letterDate: string;
-  receivedDate: string;
-  startTime: string;
-  endTime: string;
-  addToAgenda: boolean;
-  directTo: boolean;
-  targetDepartment: string | null;
-  file: File | null;
-  archiveFile: File | null;
-};
-
-export interface SpareLetters {
-  date: string | null;
-  spareCounts: string;
-  departmentId: string;
+// Interface untuk payload saat membuat Agenda baru
+// types.ts - Update interface
+export interface CreateAgendaSuratPayload {
+  tglMulai: string; // Start date
+  tglSelesai: string; // End date
+  jamMulai: string; // Start time
+  jamSelesai: string; // End time
+  tempat: string; // Location/place
+  acara: string; // Event/activity name
+  catatan?: string; // Notes (optional)
+  letterIn_id?: string | null; // Foreign key to LetterIn (optional untuk standalone)
 }
 
-export interface InputExport {
-  startDate: string;
-  endDate: string;
-  departmentId: string;
-  classificationId: string;
+// Interface untuk response umum dari API
+export interface ApiResponse {
+  message: string;
+}
+
+// Interface untuk response error
+export interface ErrorResponse {
+  message: string;
+  error?: any;
 }

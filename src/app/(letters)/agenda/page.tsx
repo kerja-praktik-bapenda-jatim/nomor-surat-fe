@@ -1,169 +1,156 @@
-'use client'
+'use client';
+import { PageContainer } from "@/components/PageContainer/PageContainer";
+import { Button, Group, Paper, Alert, Text } from "@mantine/core";
+import { IconCalendarPlus, IconTrash, IconInfoCircle, IconX } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import {
-  Group,
-  Paper,
-  Text,
-  Box,
-  Grid,
-  Container,
-  Button,
-  Title,
-  Menu,
-  ActionIcon,
-  rem
-} from "@mantine/core";
-import { IconSpeakerphone, IconDots, IconTrash } from "@tabler/icons-react";
-import { useState } from "react"; // Tambahkan ini
+import { useState } from "react";
+import { notifications } from '@mantine/notifications';
+import { ViewAgenda } from "@/components/Form/Agenda/ViewAgendaForm";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteAgendaSuratById } from "@/services/agenda";
 
-export default function SuratPage() {
+export default function AgendaPage() {
   const router = useRouter();
-  const [agendaItems, setAgendaItems] = useState([ // Gunakan state
-    {
-      id: 1,
-      date: "JUMAT, 07/03/25",
-      time: "07.30",
-      title: "KEGIATAN LEADERSHIP UPDATE FORUM (LI-IF) TAHUN 2025"
+  const queryClient = useQueryClient();
+
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const deleteAgendaMutation = useMutation({
+    mutationFn: deleteAgendaSuratById,
+    onSuccess: () => {
+      notifications.show({
+        title: 'Berhasil',
+        message: 'Agenda berhasil dihapus',
+        color: 'green'
+      });
+      queryClient.invalidateQueries({ queryKey: ["AgendaSurats"] });
     },
-    {
-      id: 2,
-      date: "JUMAT, 07/03/25",
-      time: "07.30",
-      title: "KEGIATAN LEADERSHIP UPDATE FORUM (LI-IF) TAHUN 2025"
-    },
-    {
-      id: 3,
-      date: "JUMAT, 07/03/25",
-      time: "07.30",
-      title: "KEGIATAN LEADERSHIP UPDATE FORUM (LI-IF) TAHUN 2025"
-    },
-  ]);
+    onError: (error: any) => {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Gagal menghapus agenda',
+        color: 'red'
+      });
+    }
+  });
 
-  const handleAgendaClick = (id: number) => {
-    console.log(`Clicked agenda item ${id}`);
-  };
+  const handleDeleteSelected = () => {
+    // Validasi: Cek apakah ada agenda yang dipilih
+    if (selectedIds.length === 0) {
+      notifications.show({
+        title: 'Peringatan',
+        message: 'Pilih minimal satu agenda untuk dihapus',
+        color: 'yellow'
+      });
+      return;
+    }
 
-  const handleDeleteAgenda = (id: number) => {
-    // Filter out the item to be deleted
-    const updatedAgendaItems = agendaItems.filter(item => item.id !== id);
-    setAgendaItems(updatedAgendaItems);
-
-    // Jika Anda menyimpan data ke API, tambahkan kode berikut:
-    // deleteAgendaFromAPI(id).then(() => {
-    //   setAgendaItems(updatedAgendaItems);
-    // }).catch(error => {
-    //   console.error('Error deleting agenda:', error);
-    // });
-
-    console.log(`Deleted agenda item ${id}`);
+    // Konfirmasi penghapusan
+    if (confirm(`Hapus ${selectedIds.length} agenda yang dipilih?`)) {
+      selectedIds.forEach((id) => deleteAgendaMutation.mutate(id));
+      setSelectedIds([]);
+      setSelectionMode(false);
+    }
   };
 
   return (
-    <>
-      <Title order={1} mb="lg">Agenda</Title>
-
-      <Container size="xl" p={0}>
-        <Box mb="xl">
-          <Group justify="flex-end">
-            <Button
-              variant="outline"
-              color="blue"
-              onClick={() => router.push('/agenda/add')}
-            >
-              Tambah Agenda
-            </Button>
-            <Button
-              variant="outline"
-              color="red"
-              onClick={() => {
-                // Jika Anda ingin menghapus semua agenda
-                if (confirm('Apakah Anda yakin ingin menghapus semua agenda?')) {
-                  setAgendaItems([]);
-                }
-              }}
-            >
-              Hapus Semua Agenda
-            </Button>
-          </Group>
-        </Box>
-
-        {agendaItems.length === 0 ? (
-          <Text ta="center" c="dimmed" py="xl">Tidak ada agenda</Text>
-        ) : (
-          <Grid>
-            {agendaItems.map((item) => (
-              <Grid.Col
-                key={item.id}
-                span={{ base: 12, sm: 6, md: 4, lg: 3 }}
+    <PageContainer title="Agenda Surat">
+      <Paper withBorder radius="md" p="md">
+        <Group mb="md">
+          {selectionMode ? (
+            <>
+              <Button
+                onClick={handleDeleteSelected}
+                color="red"
+                loading={deleteAgendaMutation.isPending}
+                rightSection={<IconTrash size={16} />}
               >
-                <Paper
-                  p="md"
-                  withBorder
-                  style={{
-                    cursor: 'pointer',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative'
-                  }}
-                  onClick={() => handleAgendaClick(item.id)}
-                >
-                  <Menu position="bottom-end" withinPortal>
-                    <Menu.Target>
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          position: 'absolute',
-                          top: rem(8),
-                          right: rem(8),
-                          zIndex: 1
-                        }}
-                      >
-                        <IconDots style={{ width: rem(16), height: rem(16) }} />
-                      </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                      <Menu.Item
-                        leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
-                        color="red"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('Apakah Anda yakin ingin menghapus agenda ini?')) {
-                            handleDeleteAgenda(item.id);
-                          }
-                        }}
-                      >
-                        Hapus Agenda
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
+                Hapus
+              </Button>
+              <Button
+                onClick={() => {
+                  setSelectionMode(false);
+                  setSelectedIds([]);
+                }}
+                variant="outline"
+								rightSection={<IconX size={16} />}
+              >
+                Batal
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={() => router.push('/agenda/add')}
+                rightSection={<IconCalendarPlus />}
+                color="blue"
+              >
+                Buat Agenda
+              </Button>
+              <Button
+                onClick={() => {
+                  setSelectionMode(true);
+                  // Langsung tampilkan notifikasi instruksi
+                  notifications.show({
+                    title: 'Mode Hapus Agenda',
+                    message: 'Pilih agenda yang ingin dihapus dengan mencentang kotak di pojok kanan card',
+                    color: 'blue',
+                    autoClose: 4000
+                  });
+                }}
+                rightSection={<IconTrash size={16} />}
+                color="red"
+                variant="outline"
+              >
+                Hapus Agenda
+              </Button>
+            </>
+          )}
+        </Group>
 
-                  <Group mb="xs">
-                    <IconSpeakerphone size={32} stroke={1.5} />
-                    <Box>
-                      <Text fw={700}>{item.date}</Text>
-                      <Text size="sm">{item.time}</Text>
-                    </Box>
-                  </Group>
-
-                  <Text
-                    fw={500}
-                    style={{
-                      flexGrow: 1,
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    {item.title}
-                  </Text>
-                </Paper>
-              </Grid.Col>
-            ))}
-          </Grid>
+        {/* Card peringatan saat selection mode aktif tapi tidak ada yang dipilih */}
+        {selectionMode && selectedIds.length === 0 && (
+          <Alert
+            icon={<IconInfoCircle size={16} />}
+            title="Mode Hapus Agenda"
+            color="blue"
+            mb="md"
+            style={{
+              background: "linear-gradient(135deg, #e3f2fd 0%, #f8fafc 100%)",
+              border: "1px solid #2196f3",
+            }}
+          >
+            <Text size="sm" c="dimmed">
+              Silakan pilih agenda yang ingin dihapus dengan mencentang kotak di pojok kanan atas setiap card agenda
+            </Text>
+          </Alert>
         )}
-      </Container>
-    </>
+
+        {/* Card konfirmasi saat ada agenda yang dipilih */}
+        {selectionMode && selectedIds.length > 0 && (
+          <Alert
+            icon={<IconTrash size={16} />}
+            title={`${selectedIds.length} Agenda Dipilih`}
+            color="red"
+            mb="md"
+            style={{
+              background: "linear-gradient(135deg, #ffebee 0%, #f8fafc 100%)",
+              border: "1px solid #f44336",
+            }}
+          >
+            <Text size="sm" c="dimmed">
+              Klik tombol "Hapus" untuk menghapus agenda yang telah dipilih
+            </Text>
+          </Alert>
+        )}
+
+        <ViewAgenda
+          selectionMode={selectionMode}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+        />
+      </Paper>
+    </PageContainer>
   );
-}	
+}
