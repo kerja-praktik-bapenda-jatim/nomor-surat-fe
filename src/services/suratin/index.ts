@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import ky from "ky";
-import type {InputExport, LetterResponse, Letters, UpdateLetterResponse, UpdateLetterInRequest, AgendaResponse} from "./types";
+import type {InputExport, LetterResponse, Letterins, LetterinsResponse, UpdateLetterResponse, UpdateLetterInRequest, AgendaResponse, NextAgendaResponse} from "./types";
 import { currentTimestamp } from "@/utils/utils";
 import { getTokenFromCookies } from "@/services/auth";
 
@@ -15,8 +15,9 @@ export const getLetters = async (params?: Record<string, string>) => {
       },
       searchParams: params,
     })
-    .json<Letters[]>();
-  return res;
+    .json<LetterinsResponse>();  // ✅ Gunakan interface wrapper
+
+  return res.data;  // ✅ Return array Letterins dari property 'data'
 };
 
 export const getAllLetters = async () => {
@@ -31,6 +32,18 @@ export const getLetterById = async (id: string): Promise<LetterResponse> => {
       },
     })
     .json<LetterResponse>();
+  return res;
+};
+
+// ✅ FUNGSI BARU: Get nomor agenda selanjutnya
+export const getNextAgendaNumber = async (): Promise<NextAgendaResponse> => {
+  const res = await ky
+    .get(`${BASE_URL}/next-agenda`, {
+      headers: {
+        Authorization: `Bearer ${getTokenFromCookies()}`,
+      },
+    })
+    .json<NextAgendaResponse>();
   return res;
 };
 
@@ -50,14 +63,14 @@ export const downloadLetterFile = async (id: string): Promise<string | null> => 
   }
 };
 
-export const postLetters = async (formData: FormData): Promise<LetterResponse> => {
-		const res = await ky.post(`${BASE_URL}`, {
-				headers: {
-						Authorization: `Bearer ${getTokenFromCookies()}`,
-				},
-				body: formData,
-		}).json<LetterResponse>();
-		return res;
+export const postLetterins = async (formData: FormData): Promise<LetterResponse> => {
+  const res = await ky.post(`${BASE_URL}`, {
+    headers: {
+      Authorization: `Bearer ${getTokenFromCookies()}`,
+    },
+    body: formData,
+  }).json<LetterResponse>();
+  return res;
 };
 
 // ✅ PERBAIKAN: Function untuk update surat masuk
@@ -68,7 +81,7 @@ export const updateLetterIn = async (
   try {
     const formData = new FormData();
 
-    // ✅ Letter fields sesuai dengan surat masuk (tanpa noAgenda karena readonly)
+    // ✅ Letter fields sesuai dengan surat masuk (TANPA noAgenda karena readonly)
     formData.append("noSurat", data.noSurat);
     formData.append("suratDari", data.suratDari);
     formData.append("perihal", data.perihal);
@@ -123,7 +136,7 @@ export const patchLetter = async (
       throw new Error('Harap isi kolom wajib pada form');
     }
 
-    // Letter fields
+    // Letter fields (TANPA noAgenda)
     formDataToSend.append("noSurat", formData.noSurat);
     formDataToSend.append("suratDari", formData.suratDari);
     formDataToSend.append("perihal", formData.perihal);
@@ -162,7 +175,7 @@ export const patchLetter = async (
   }
 };
 
-export const deleteLetter = async (id: string) => {
+export const deleteLetterin = async (id: string) => {
   try {
     await ky.delete(`${BASE_URL}/${id}`, {
       headers: {
@@ -270,21 +283,32 @@ export const deleteAgenda = async (id: string) => {
   }
 };
 
-// ✅ SOLUSI 1: Ganti nama function yang sudah ada
-
-
 // React Query hooks
 export const useLetters = () =>
-  useQuery<Letters[]>({
-    queryKey: ["Letters"],
+  useQuery<Letterins[]>({
+    queryKey: ["LettersIn"],  // ✅ Key spesifik untuk surat masuk
     queryFn: () => getAllLetters(),
+    staleTime: 0,         // ✅ Tidak menyimpan cache
+    refetchOnMount: true, // ✅ Selalu refetch saat component mount
+    refetchOnWindowFocus: false, // ✅ Jangan refetch saat focus window
   });
 
-export const useLetterById = (id: string) =>
+export const useLetterinById = (id: string) =>
   useQuery<LetterResponse>({
     queryKey: ["Letter", id],
     queryFn: () => getLetterById(id),
     enabled: !!id,
+  });
+
+// ✅ HOOK BARU: untuk get next agenda number
+export const useNextAgendaNumber = () =>
+  useQuery<NextAgendaResponse>({
+    queryKey: ["NextAgenda"],
+    queryFn: () => getNextAgendaNumber(),
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    staleTime: 0,
+    enabled: true, // ✅ Selalu enabled
   });
 
 export const useDownloadLetterFile = (id: string) =>

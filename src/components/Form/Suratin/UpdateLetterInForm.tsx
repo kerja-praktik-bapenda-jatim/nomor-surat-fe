@@ -8,7 +8,7 @@ import { IconArrowLeft, IconInfoCircle } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import { useClassifications, useLetterTypes } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
-import { useLetterById, updateLetterIn } from '@/services/suratin';
+import { useLetterinById, updateLetterIn } from '@/services/suratin';
 import type { UpdateLetterInRequest } from '@/services/suratin/types';
 
 interface FormValues {
@@ -42,7 +42,7 @@ export function UpdateLetterInForm() {
 
     const { data: classificationsData, isLoading: isClassificationsLoading } = useClassifications();
     const { data: letterTypesData, isLoading: isLetterTypesLoading } = useLetterTypes();
-    const { data: letter, isLoading } = useLetterById(letterId);
+    const { data: letter, isLoading } = useLetterinById(letterId);
 
     const classificationOptions = classificationsData?.map((classification) => ({
         value: classification.id,
@@ -113,7 +113,7 @@ export function UpdateLetterInForm() {
         },
     });
 
-    // ✅ Load existing data to form dengan fix untuk classification & letterType
+    // ✅ Load existing data to form dengan fix untuk filename
     useEffect(() => {
         if (letter && classificationsData && letterTypesData) {
             console.log('Loading letter data:', letter);
@@ -150,16 +150,55 @@ export function UpdateLetterInForm() {
             setLangsungKe(letter.langsungKe || false);
             setAgenda(letter.agenda || false);
 
-            // ✅ Check if file exists
-            setHasExistingFile(!!letter.upload);
+            // ✅ UBAH: Check filename instead of upload
+            setHasExistingFile(!!letter.filename);
 
             console.log('Form values set:', {
                 classificationId: letter.classificationId,
                 letterTypeId: letter.letterTypeId,
-                hasFile: !!letter.upload
+                hasFile: !!letter.filename  // ✅ UBAH dari letter.upload ke letter.filename
             });
         }
     }, [letter, classificationsData, letterTypesData]);
+
+    const handleFileChange = (file: File | null) => {
+        if (file) {
+            const isImage = file.type.match('image.*');
+            const isPDF = file.type.match('application/pdf');
+
+            if (!isImage && !isPDF) {
+                modals.open({
+                    title: 'Format Tidak Didukung',
+                    centered: true,
+                    children: <Text size="sm">Hanya file gambar (JPG/PNG/GIF/BMP) dan PDF yang didukung</Text>,
+                    withCloseButton: true
+                });
+                form.setFieldValue('file', null);
+                return;
+            }
+
+            // ✅ File size validation 2MB
+            const maxSize = 2 * 1024 * 1024; // 2MB
+            if (file.size > maxSize) {
+                modals.open({
+                    title: 'File Terlalu Besar',
+                    centered: true,
+                    children: (
+                        <Text size="sm">
+                            Ukuran file maksimal 2MB. File Anda: {(file.size / 1024 / 1024).toFixed(2)}MB
+                        </Text>
+                    ),
+                    withCloseButton: true
+                });
+                form.setFieldValue('file', null);
+                return;
+            }
+
+            form.setFieldValue('file', file);
+        } else {
+            form.setFieldValue('file', null);
+        }
+    };
 
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
@@ -193,28 +232,28 @@ export function UpdateLetterInForm() {
 
             const response = await updateLetterIn(letterId, updateData);
 
-						modals.open({
-								title: 'Berhasil',
-								centered: true,
-								children: (
-										<>
-												<Text size="sm" mb="md">
-														Surat berhasil diperbarui
-												</Text>
-												<Group justify="flex-end" gap="sm">
-														<Button
-																onClick={() => {
-																		form.reset();
-																		modals.closeAll();
-																		handleBack();
-																}}
-														>
-																Selesai
-														</Button>
-												</Group>
-										</>
-								)
-						});
+            modals.open({
+                title: 'Berhasil',
+                centered: true,
+                children: (
+                    <>
+                        <Text size="sm" mb="md">
+                            Surat berhasil diperbarui
+                        </Text>
+                        <Group justify="flex-end" gap="sm">
+                            <Button
+                                onClick={() => {
+                                    form.reset();
+                                    modals.closeAll();
+                                    handleBack();
+                                }}
+                            >
+                                Selesai
+                            </Button>
+                        </Group>
+                    </>
+                )
+            });
 
         } catch (error: any) {
             let errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
@@ -269,14 +308,9 @@ export function UpdateLetterInForm() {
                     {/* ✅ No Agenda - READONLY */}
                     <Grid.Col span={6}>
                         <TextInput
-                            // value={`${currentYear}/${form.values.noAgenda.toString().padStart(4, '0')}`}
-														value={letter?.noAgenda?.toString()}
+                            value={letter?.noAgenda?.toString()}
                             label="No Agenda"
                             readOnly
-                            // style={{
-                            //     backgroundColor: '#f8f9fa',
-                            //     color: '#6c757d'
-                            // }}
                         />
                     </Grid.Col>
 
@@ -289,63 +323,35 @@ export function UpdateLetterInForm() {
                         />
                     </Grid.Col>
 
-										<Grid.Col span={6}>
-												<Select
-														{...form.getInputProps('classificationId')}
-														label="Klasifikasi Surat"
-														placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih klasifikasi"}
-														data={classificationOptions}
-														clearable
-														searchable
-														withAsterisk
-														nothingFoundMessage="Klasifikasi tidak ditemukan..."
-														disabled={isClassificationsLoading}
-														// ✅ Tampilkan data yang sudah ada dengan renderOption custom
-														renderOption={({ option }) => (
-																<div>
-																		{option.label}
-																</div>
-														)}
-														// ✅ Atau gunakan defaultValue jika data sudah di-load
-														defaultValue={letter?.classificationId}
-												/>
+                    <Grid.Col span={6}>
+                        <Select
+                            {...form.getInputProps('classificationId')}
+                            label="Klasifikasi Surat"
+                            placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih klasifikasi"}
+                            data={classificationOptions}
+                            clearable
+                            searchable
+                            withAsterisk
+                            nothingFoundMessage="Klasifikasi tidak ditemukan..."
+                            disabled={isClassificationsLoading}
+                            defaultValue={letter?.classificationId}
+                        />
+                    </Grid.Col>
 
-												{/* ✅ Optional: Tampilkan data saat ini di bawah select */}
-												{letter?.Classification && (
-														<Text size="xs" c="dimmed" mt={4}>
-																Saat ini: {letter.Classification.id} - {letter.Classification.name}
-														</Text>
-												)}
-										</Grid.Col>
-
-										<Grid.Col span={6}>
-												<Select
-														{...form.getInputProps('letterTypeId')}
-														label="Jenis Surat"
-														placeholder={isLetterTypesLoading ? "Memuat data..." : "Pilih jenis surat"}
-														data={letterTypeOptions}
-														clearable
-														searchable
-														withAsterisk
-														nothingFoundMessage="Jenis surat tidak ditemukan..."
-														disabled={isLetterTypesLoading}
-														// ✅ Tampilkan data yang sudah ada dengan renderOption custom
-														renderOption={({ option }) => (
-																<div>
-																		{option.label}
-																</div>
-														)}
-														// ✅ Atau gunakan defaultValue jika data sudah di-load
-														defaultValue={letter?.letterTypeId?.toString()}
-												/>
-
-												{/* ✅ Optional: Tampilkan data saat ini di bawah select */}
-												{letter?.LetterType && (
-														<Text size="xs" c="dimmed" mt={4}>
-																Saat ini: {letter.LetterType.name}
-														</Text>
-												)}
-										</Grid.Col>
+                    <Grid.Col span={6}>
+                        <Select
+                            {...form.getInputProps('letterTypeId')}
+                            label="Jenis Surat"
+                            placeholder={isLetterTypesLoading ? "Memuat data..." : "Pilih jenis surat"}
+                            data={letterTypeOptions}
+                            clearable
+                            searchable
+                            withAsterisk
+                            nothingFoundMessage="Jenis surat tidak ditemukan..."
+                            disabled={isLetterTypesLoading}
+                            defaultValue={letter?.letterTypeId?.toString()}
+                        />
+                    </Grid.Col>
 
                     <Grid.Col span={6}>
                         <TextInput
@@ -387,20 +393,15 @@ export function UpdateLetterInForm() {
                         />
                     </Grid.Col>
 
-                    {/* ✅ File Upload dengan informasi file existing */}
                     <Grid.Col span={12}>
-                        {hasExistingFile && (
-                            <Alert icon={<IconInfoCircle size={16} />} title="File Existing" color="blue" mb="sm">
-                                File sudah ada. Upload file baru hanya jika ingin mengganti file lama.
-                            </Alert>
-                        )}
                         <FileInput
                             clearable
                             {...form.getInputProps('file')}
+                            onChange={handleFileChange}
                             label="Upload File Baru (Opsional)"
                             placeholder={hasExistingFile ? "Pilih file untuk mengganti file lama" : "Pilih file"}
                             accept="image/*,.pdf"
-                            description={hasExistingFile ? "File saat ini: Tersedia" : "Belum ada file"}
+                            description={hasExistingFile ? `File saat ini: ${letter?.filename || 'Tersedia'}` : "Belum ada file"}
                         />
                     </Grid.Col>
 
@@ -419,33 +420,19 @@ export function UpdateLetterInForm() {
                         />
                     </Grid.Col>
 
-										<Grid.Col span={8}>
-												<Select
-														{...form.getInputProps('ditujukanKe')}
-														placeholder={langsungKe ? "Pilih tujuan" : ""}
-														data={departmentOptions}
-														clearable
-														searchable
-														withAsterisk={langsungKe}
-														disabled={!langsungKe}
-														nothingFoundMessage="Bidang tidak ditemukan..."
-														// ✅ Tampilkan data yang sudah ada dengan renderOption custom
-														renderOption={({ option }) => (
-																<div>
-																		{option.label}
-																</div>
-														)}
-														// ✅ Atau gunakan defaultValue jika data sudah di-load
-														defaultValue={letter?.ditujukanKe}
-												/>
-
-												{/* ✅ Optional: Tampilkan data saat ini di bawah select */}
-												{letter?.ditujukanKe && langsungKe && (
-														<Text size="xs" c="dimmed" mt={4}>
-																Saat ini: {letter.ditujukanKe}
-														</Text>
-												)}
-										</Grid.Col>
+                    <Grid.Col span={8}>
+                        <Select
+                            {...form.getInputProps('ditujukanKe')}
+                            placeholder={langsungKe ? "Pilih tujuan" : ""}
+                            data={departmentOptions}
+                            clearable
+                            searchable
+                            withAsterisk={langsungKe}
+                            disabled={!langsungKe}
+                            nothingFoundMessage="Bidang tidak ditemukan..."
+                            defaultValue={letter?.ditujukanKe}
+                        />
+                    </Grid.Col>
 
                     <Grid.Col span={12}>
                         <Checkbox
@@ -550,4 +537,3 @@ export function UpdateLetterInForm() {
         </Paper>
     );
 }
-

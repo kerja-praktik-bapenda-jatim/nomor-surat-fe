@@ -1,5 +1,6 @@
-export interface Letters {
+export interface Letterins {
   id: string;
+  tahun: number; // ✅ Tambah field tahun
   noAgenda: number;
   noSurat: string;
   suratDari: string;
@@ -9,7 +10,8 @@ export interface Letters {
   langsungKe: boolean;
   ditujukanKe: string;
   agenda: boolean;
-  upload: string | null;
+  filename: string | null;
+  filePath: string | null;
   classificationId: string;
   letterTypeId: string;
   createdAt: string;
@@ -47,6 +49,7 @@ export interface Letters {
 
 export interface LetterResponse {
   id: string;
+  tahun: number; // ✅ Tambah field tahun
   noAgenda: number;
   noSurat: string;
   suratDari: string;
@@ -56,7 +59,9 @@ export interface LetterResponse {
   langsungKe: boolean;
   ditujukanKe: string;
   agenda: boolean;
-  upload: string | null;
+  // ✅ HAPUS field upload, ganti dengan filename dan filePath
+  filename: string | null;    // ✅ TAMBAH INI
+  filePath: string | null;    // ✅ TAMBAH INI
   classificationId: string;
   letterTypeId: string;
   createdAt: string;
@@ -85,9 +90,32 @@ export interface LetterResponse {
   };
 }
 
-// ✅ PERBAIKAN: Update interface untuk surat masuk
+// ✅ INTERFACE BARU: Response wrapper untuk pagination
+export interface LetterinsResponse {
+  data: Letterins[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalRows: number;
+    rowsPerPage: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+  };
+  success: boolean;
+}
+
+// ✅ INTERFACE BARU: Response untuk next agenda number
+export interface NextAgendaResponse {
+  tahun: number;
+  noAgenda: number;
+  formatted: string; // format: "2025/1"
+}
+
+// ✅ PERBAIKAN: Update interface untuk surat masuk (TANPA noAgenda)
 export interface UpdateLetterInRequest {
-  noAgenda?: number;
+  // noAgenda DIHAPUS karena readonly dan auto-generate
   noSurat: string;
   suratDari: string;
   perihal: string;
@@ -110,7 +138,7 @@ export interface UpdateLetterInRequest {
   catatan?: string;
 }
 
-// ✅ Keep the old one for backward compatibility jika diperlukan
+// ✅ Keep the old one for backward compatibility (TANPA noAgenda)
 export interface UpdateLetterResponse {
   noSurat: string;
   suratDari: string;
@@ -134,13 +162,6 @@ export interface UpdateLetterResponse {
   catatan?: string;
 }
 
-export interface InputExport {
-  startDate: string;
-  endDate: string;
-  classificationId?: string;
-  letterTypeId?: string;
-}
-
 export interface AgendaResponse {
   id: string;
   tglMulai: string;
@@ -158,17 +179,19 @@ export interface AgendaResponse {
     noSurat: string;
     perihal: string;
     suratDari: string;
+    tahun: number; // ✅ Tambah tahun
+    noAgenda: number; // ✅ Tambah noAgenda
   };
 }
 
-// Di file types.ts atau di bagian interface InputExport
+// ✅ PERBAIKAN: Interface untuk export
 export interface InputExport {
-    startDate: string;
-    endDate: string;
-    classificationId?: string;
-    letterTypeId?: string;
-    departmentId?: string;
-    // ✅ Tambahkan property untuk surat masuk
-    suratDari?: string;
-    perihal?: string;
+  startDate: string;
+  endDate: string;
+  classificationId?: string;
+  letterTypeId?: string;
+  departmentId?: string;
+  // ✅ Tambahkan property untuk surat masuk
+  suratDari?: string;
+  perihal?: string;
 }

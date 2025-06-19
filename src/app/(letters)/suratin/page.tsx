@@ -1,6 +1,6 @@
 "use client";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
-import { SimpleTableLetter } from "@/components/Table/Suratin/SimpleLetterTable";
+import { SimpleTableLetterIn } from "@/components/Table/Suratin/SimpleLetterInTable";
 import { Button, Group, Paper } from "@mantine/core";
 import { IconFileExport, IconFilePlus } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ export default function SuratinPage() {
                         Ekspor Surat Masuk
                     </Button>
                 </Group>
-                <SimpleTableLetter />
+                <SimpleTableLetterIn />
             </Paper>
         </PageContainer>
     );

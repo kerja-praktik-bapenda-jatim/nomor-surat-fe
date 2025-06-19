@@ -4,7 +4,7 @@ import { ExportLetterInForm } from "@/components/Form/Suratin/ExportLetterInForm
 
 export default function ExportSuratMasukPage() {
     return (
-        <PageContainer title="Ekspor Surat Masuk">
+        <PageContainer title="">
             <ExportLetterInForm />
         </PageContainer>
     );

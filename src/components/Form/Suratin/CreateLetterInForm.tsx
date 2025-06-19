@@ -1,12 +1,11 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { Button, FileInput, TextInput, Text, Space, Box, Paper, CopyButton, Tooltip, ActionIcon, Select, NumberInput, Grid, Checkbox, Group, Image } from '@mantine/core';
+import { Button, FileInput, TextInput, Text, Space, Box, Paper, Group, Select, Grid, Checkbox, Loader, Alert } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
 import { DateInput, TimeInput } from '@mantine/dates';
 import { useRouter } from "next/navigation";
-import { convertUTC } from '@/utils/utils';
-import { IconArrowLeft, IconCheck, IconCopy, IconRefresh } from '@tabler/icons-react';
-import { postLetters } from '@/services/suratin';
+import { IconArrowLeft, IconInfoCircle } from '@tabler/icons-react';
+import { postLetterins, useNextAgendaNumber } from '@/services/suratin';
 import { modals } from '@mantine/modals';
 import { useClassifications, useLetterTypes } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
@@ -37,6 +36,8 @@ interface FormValues {
 export function CreateLetterForm() {
     const { data: classificationsData, isLoading: isClassificationsLoading, error: classificationsError } = useClassifications();
     const { data: letterTypesData, isLoading: isLetterTypesLoading } = useLetterTypes();
+    // ✅ GUNAKAN HOOK UNTUK GET NEXT AGENDA NUMBER
+    const { data: nextAgendaData, isLoading: isNextAgendaLoading, error: nextAgendaError, refetch: refetchNextAgenda } = useNextAgendaNumber();
 
     const classificationOptions = classificationsData?.map((classification) => ({
         value: classification.id,
@@ -60,22 +61,14 @@ export function CreateLetterForm() {
     const [agenda, setAgenda] = useState(false);
     const [langsungKe, setLangsungKe] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    const [noAgenda, setNoAgenda] = useState(0);
     const router = useRouter();
 
     useEffect(() => {
         const user = getCurrentUser();
         setUser(user);
-        generateRandomAgenda();
-    }, []);
-
-    // Function to generate random agenda number
-    const generateRandomAgenda = () => {
-        // Generate random number between 1000-9999
-        const randomNum = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
-        setNoAgenda(randomNum);
-    };
+        // ✅ FORCE REFETCH saat component load
+        refetchNextAgenda();
+    }, [refetchNextAgenda]);
 
     const form = useForm<FormValues>({
         mode: 'uncontrolled',
@@ -130,7 +123,25 @@ export function CreateLetterForm() {
             if (!isImage && !isPDF) {
                 modals.open({
                     title: 'Format Tidak Didukung',
+                    centered: true,
                     children: <Text size="sm">Hanya file gambar (JPG/PNG/GIF/BMP) dan PDF yang didukung</Text>,
+                    withCloseButton: true
+                });
+                form.setFieldValue('file', null);
+                return;
+            }
+
+            // ✅ TAMBAH VALIDASI SIZE dengan modal centered
+            const maxSize = 2 * 1024 * 1024; // 2MB
+            if (file.size > maxSize) {
+                modals.open({
+                    title: 'File Terlalu Besar',
+                    centered: true, // ✅ TAMBAH INI untuk center modal
+                    children: (
+                        <Text size="sm">
+                            Ukuran file maksimal 2MB. File Anda: {(file.size / 1024 / 1024).toFixed(2)}MB
+                        </Text>
+                    ),
                     withCloseButton: true
                 });
                 form.setFieldValue('file', null);
@@ -160,12 +171,13 @@ export function CreateLetterForm() {
 
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
+        console.log('🚀 Starting form submission...'); // ✅ DEBUG
 
         try {
             const formData = new FormData();
+            console.log('📝 Building form data...'); // ✅ DEBUG
 
-            // Letter fields sesuai dengan model backend
-            formData.append('noAgenda', noAgenda.toString());
+            // ✅ Letter fields TANPA noAgenda (auto-generate di backend)
             formData.append('noSurat', values.noSurat);
             formData.append('suratDari', values.suratDari);
             formData.append('perihal', values.perihal);
@@ -182,11 +194,13 @@ export function CreateLetterForm() {
                 formData.append('letterTypeId', values.letterTypeId);
             }
             if (values.file) {
+                console.log('📎 File size:', (values.file.size / 1024 / 1024).toFixed(2), 'MB'); // ✅ DEBUG
                 formData.append('file', values.file);
             }
 
             // Agenda fields (hanya jika agenda = true)
             if (agenda) {
+                console.log('📅 Adding agenda data...'); // ✅ DEBUG
                 formData.append('tglMulai', values.tglMulai.toISOString());
                 formData.append('tglSelesai', values.tglSelesai.toISOString());
                 formData.append('jamMulai', values.jamMulai);
@@ -198,33 +212,32 @@ export function CreateLetterForm() {
                 }
             }
 
-            const response = await postLetters(formData);
+            console.log('🌐 Sending API request...'); // ✅ DEBUG
+            const response = await postLetterins(formData);
+            console.log('✅ API response received:', response); // ✅ DEBUG
 
-            // Generate new random agenda for next entry
-            generateRandomAgenda();
-
-						modals.open({
-								title: 'Berhasil',
-								centered: true,
-								children: (
-										<>
-												<Text size="sm" mb="md">
-														Surat berhasil dibuat
-												</Text>
-												<Group justify="flex-end" gap="sm">
-														<Button
-																onClick={() => {
-																		form.reset();
-																		modals.closeAll();
-																		handleBack();
-																}}
-														>
-																Selesai
-														</Button>
-												</Group>
-										</>
-								)
-						});
+            modals.open({
+                title: 'Berhasil',
+                centered: true,
+                children: (
+                    <>
+                        <Text size="sm" mb="md">
+                            Surat berhasil dibuat
+                        </Text>
+                        <Group justify="flex-end" gap="sm">
+                            <Button
+                                onClick={() => {
+                                    form.reset();
+                                    modals.closeAll();
+                                    handleBack();
+                                }}
+                            >
+                                Selesai
+                            </Button>
+                        </Group>
+                    </>
+                )
+            });
 
         } catch (error: any) {
             let errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
@@ -262,6 +275,92 @@ export function CreateLetterForm() {
         router.push('/suratin');
     };
 
+		const resetForm = () => {
+				console.log('🔄 Resetting form...'); // Debug log
+
+				// Method 1: Set values explicitly
+				form.setValues({
+						noSurat: '',
+						suratDari: '',
+						perihal: '',
+						tglSurat: new Date(),
+						diterimaTgl: new Date(),
+						langsungKe: false,
+						ditujukanKe: '',
+						agenda: false,
+						classificationId: null,
+						letterTypeId: null,
+						file: null,
+
+						// Agenda fields
+						tglMulai: new Date(),
+						tglSelesai: new Date(),
+						jamMulai: '',
+						jamSelesai: '',
+						tempat: '',
+						acara: '',
+						catatan: '',
+				});
+
+				// Method 2: Clear all errors
+				form.clearErrors();
+
+				// Method 3: Reset local state
+				setAgenda(false);
+				setLangsungKe(false);
+
+				// Method 4: Force re-render dengan timeout
+				setTimeout(() => {
+						form.clearErrors();
+						refetchNextAgenda();
+				}, 100);
+
+				console.log('✅ Form reset completed'); // Debug log
+		};
+
+    // ✅ RENDER NOMOR AGENDA DENGAN LOADING YANG LEBIH SMOOTH
+    const renderAgendaNumber = () => {
+        if (isNextAgendaLoading) {
+            return (
+                <Box>
+                    <Text size="sm" fw={500} mb={5}>Nomor Agenda</Text>
+                    <Box h={36} bg="gray.1" style={{ borderRadius: 4, border: '1px solid #dee2e6' }}>
+                        <Group gap="xs" h="100%" px="sm">
+                            <Loader size="xs" />
+                            <Text size="sm" c="dimmed">2025/...</Text>
+                        </Group>
+                    </Box>
+                    <Text size="xs" c="dimmed" mt={2}>Mengambil nomor agenda terbaru...</Text>
+                </Box>
+            );
+        }
+
+        if (nextAgendaError) {
+            return (
+                <Alert icon={<IconInfoCircle size={16} />} color="red" variant="light">
+                    <Group justify="space-between">
+                        <Text size="sm">Gagal memuat nomor agenda.</Text>
+                        <Button size="xs" variant="light" onClick={() => refetchNextAgenda()}>
+                            Coba Lagi
+                        </Button>
+                    </Group>
+                </Alert>
+            );
+        }
+
+        if (nextAgendaData) {
+            return (
+                <TextInput
+                    value={nextAgendaData.formatted}
+                    label="Nomor Agenda"
+                    readOnly
+                />
+            );
+        }
+
+        return null;
+    };
+
     return (
         <>
             <Paper withBorder shadow="md" p="md">
@@ -275,30 +374,14 @@ export function CreateLetterForm() {
 
                     <Grid>
                         <Grid.Col span={6}>
-                            <Group gap="xs">
-                                <TextInput
-                                    value={`${currentYear}/${noAgenda}`}
-                                    label="No Agenda"
-                                    readOnly
-                                    style={{ flex: 1 }}
-                                />
-                                <Tooltip label="Generate nomor baru">
-                                    <ActionIcon
-                                        onClick={generateRandomAgenda}
-                                        variant="light"
-                                        size="lg"
-                                        style={{ marginTop: '25px' }}
-                                    >
-                                        <IconRefresh size={16} />
-                                    </ActionIcon>
-                                </Tooltip>
-                            </Group>
+                            {/* ✅ TAMPILKAN NOMOR AGENDA FORMAT 2025/0001 */}
+                            {renderAgendaNumber()}
                         </Grid.Col>
 
                         <Grid.Col span={6}>
                             <TextInput
                                 {...form.getInputProps('noSurat')}
-                                label="No Surat"
+                                label="Nomor Surat"
                                 placeholder="Masukkan nomor surat"
                                 withAsterisk
                             />
@@ -377,7 +460,7 @@ export function CreateLetterForm() {
                                 clearable
                                 {...form.getInputProps('file')}
                                 onChange={handleFileChange}
-                                label="Upload File (Format .jpg/.png/.gif/.bmp/.pdf)"
+                                label="Upload File (Format .pdf, maks 2MB)"
                                 placeholder="Pilih file"
                                 accept="image/*,.pdf"
                                 withAsterisk
@@ -501,21 +584,20 @@ export function CreateLetterForm() {
                     <Space h="sm" />
 
                     <Group justify="flex-end" mt="md">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                form.reset();
-                                setAgenda(false);
-                                setLangsungKe(false);
-                                generateRandomAgenda(); // Generate nomor baru saat reset
-                            }}
-                        >
-                            Reset Form
-                        </Button>
-                        <Button type="submit" loading={loading}>
-                            Submit
-                        </Button>
-                    </Group>
+												<Button
+														variant="outline"
+														onClick={resetForm}
+												>
+														Reset Form
+												</Button>
+												<Button
+														type="submit"
+														loading={loading}
+														disabled={isNextAgendaLoading}
+												>
+														{loading ? 'Menyimpan...' : 'Submit'}
+												</Button>
+										</Group>
                 </Box>
             </Paper>
         </>

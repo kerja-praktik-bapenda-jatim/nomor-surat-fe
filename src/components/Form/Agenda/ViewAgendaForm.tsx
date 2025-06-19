@@ -229,7 +229,7 @@ export function ViewAgenda({
                 withBorder
                 p="md"
                 radius="lg"
-                h={220} // Reduced height since we have less content
+                h={270} // Reduced height since we have less content
                 style={{
                   position: "relative",
                   cursor: "default", // Changed from pointer to default
@@ -300,6 +300,13 @@ export function ViewAgenda({
                     <IconClock size={14} color="#64748b" />
                     <Text size="sm" c="#64748b" fw={500}>
                       {formatTime(item.jamMulai)}
+                    </Text>
+                  </Group>
+
+									{/* Tempat */}
+                  <Group gap={6}>
+                    <Text size="sm" c="#000000" fw={500}>
+                      {item.tempat}
                     </Text>
                   </Group>
 

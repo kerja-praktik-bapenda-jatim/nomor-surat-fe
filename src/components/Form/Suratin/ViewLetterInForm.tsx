@@ -5,22 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
-import { deleteLetter, useDownloadLetterFile, useLetterById } from '@/services/suratin';
+import { deleteLetterin, useLetterinById } from '@/services/suratin';
 
 export function ViewLetterForm() {
     const { id } = useParams();
     const letterId = Array.isArray(id) ? id[0] : id;
     const router = useRouter();
-    const { data: letter, isLoading: isLetterLoading, error: letterError } = useLetterById(letterId);
-    const { data: fileUrl, isLoading: isFileLoading, error: fileError } = useDownloadLetterFile(letterId);
-
-    useEffect(() => {
-        return () => {
-            if (fileUrl) {
-                URL.revokeObjectURL(fileUrl);
-            }
-        };
-    }, [fileUrl]);
+    const { data: letter, isLoading: isLetterLoading, error: letterError } = useLetterinById(letterId);
 
     const handleEdit = () => {
         router.push(`/suratin/edit/${id}`);
@@ -43,7 +34,7 @@ export function ViewLetterForm() {
             confirmProps: { color: 'red' },
             onCancel: () => console.log('Penghapusan dibatalkan'),
             onConfirm: async () => {
-                const isDeleted = await deleteLetter(letterId);
+                const isDeleted = await deleteLetterin(letterId);
                 if (isDeleted) {
                     router.push('/suratin');
                 } else {
@@ -133,7 +124,7 @@ export function ViewLetterForm() {
                     </Grid.Col>
                     <Grid.Col span={6}>
                         <TextInput
-                            value={letter?.upload ? 'File tersedia' : 'Tidak ada file'}
+                            value={letter?.filename || 'Tidak ada file'}
                             label="File Digital"
                             readOnly
                         />
@@ -215,15 +206,10 @@ export function ViewLetterForm() {
 
                 <Space h="md" />
 
-                {isFileLoading ? (
-                    <Center>
-                        <Loader size="md" />
-                        <Text ml="sm">Memuat file...</Text>
-                    </Center>
-                ) : fileUrl ? (
-                    <iframe src={fileUrl} width="100%" height="600px" title="Surat File" />
+                {letter?.filename ? (
+                    <Text>File tersedia tetapi tidak dapat ditampilkan.</Text>
                 ) : (
-                    <Text>File tidak tersedia untuk ditampilkan.</Text>
+                    <Text>Tidak ada file yang tersedia.</Text>
                 )}
             </Box>
         </Paper>

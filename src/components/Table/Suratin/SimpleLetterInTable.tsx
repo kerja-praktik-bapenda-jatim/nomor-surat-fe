@@ -1,18 +1,28 @@
 import { type MRT_ColumnDef, MantineReactTable } from "mantine-react-table";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useLetters } from "@/services/suratin";
-import { Letters } from "@/services/suratin/types";
+import { Letterins } from "@/services/suratin/types";
 import { convertUTC } from "@/utils/utils";
 import { useRouter } from "next/navigation";
 import { ActionIcon } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
 
-export const SimpleTableLetter = () => {
-  const { data } = useLetters();
+export const SimpleTableLetterIn = () => {
+  const { data, isLoading, error } = useLetters();
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  console.log("Surat masuk data:", data);
+
+  // ✅ Clear cache surat keluar saat masuk ke halaman surat masuk
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["LettersOut"] });
+    queryClient.removeQueries({ queryKey: ["LettersOut"] });
+  }, [queryClient]);
 
   //should be memoized or stable
-  const columns = useMemo<MRT_ColumnDef<Letters>[]>(
+  const columns = useMemo<MRT_ColumnDef<Letterins>[]>(
     () => [
       {
         accessorKey: "noAgenda",
@@ -29,11 +39,11 @@ export const SimpleTableLetter = () => {
         header: "Tanggal Surat",
         accessorFn: (row) => convertUTC(row.tglSurat),
       },
-			{
-				accessorKey: "suratDari",
-				header: "Surat Dari",
-				accessorFn: (row) => row.suratDari,
-			},
+      {
+        accessorKey: "suratDari",
+        header: "Surat Dari",
+        accessorFn: (row) => row.suratDari,
+      },
       {
         accessorKey: "perihal",
         header: "Perihal",
@@ -59,13 +69,23 @@ export const SimpleTableLetter = () => {
     [router],
   );
 
+  // ✅ Show loading state
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // ✅ Show error state
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
   return (
     <MantineReactTable
       columns={columns}
       data={data ?? []}
       mantinePaperProps={{ shadow: "0", withBorder: false }}
       enableColumnOrdering
-      enablePagination={false}
+      enablePagination={true}
       enableStickyHeader
       mantineTableContainerProps={{
         style: {
