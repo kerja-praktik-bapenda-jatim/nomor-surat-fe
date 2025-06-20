@@ -22,10 +22,12 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ],
     "plugins": [
       {
         "name": "next"
@@ -39,7 +41,7 @@
     "**/*.mjs",
     "jest.config.js",
     ".next/types/**/*.ts",
-    "export/types/**/*.ts"
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules"

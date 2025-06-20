@@ -78,7 +78,7 @@ export const SimpleTableLetterIn = () => {
 								color="red"
 								radius="xl"
 								onClick={() =>
-									window.open(`/suratin/print/${row.original.id}`, "_blank")
+									window.open(`/suratin/print/${row.original.noAgenda}`, "_blank")
 								}
 							>
 								Cetak
