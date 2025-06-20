@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { ActionIcon } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button, Group } from "@mantine/core";
 
 export const SimpleTableLetterIn = () => {
   const { data, isLoading, error } = useLetters();
@@ -54,17 +55,38 @@ export const SimpleTableLetterIn = () => {
         header: "Tanggal Diterima",
         accessorFn: (row) => convertUTC(row.diterimaTgl),
       },
-      {
-        accessorKey: "actions",
-        header: "Aksi",
-        Cell: ({ row }) => (
-          <ActionIcon
-            onClick={() => router.push(`/suratin/view/${row.original.id}`)}
-          >
-            <IconEye size={14} />
-          </ActionIcon>
-        ),
-      },
+			{
+				accessorKey: "actions",
+				header: "Aksi",
+				Cell: ({ row }) => {
+					const router = useRouter();
+
+					return (
+						<Group>
+							<Button
+								size="xs"
+								variant="light"
+								color="blue"
+								radius="xl"
+								onClick={() => router.push(`/suratin/view/${row.original.id}`)}
+							>
+								Lihat
+							</Button>
+							<Button
+								size="xs"
+								variant="light"
+								color="red"
+								radius="xl"
+								onClick={() =>
+									window.open(`/suratin/print/${row.original.id}`, "_blank")
+								}
+							>
+								Cetak
+							</Button>
+						</Group>
+					);
+				},
+			}
     ],
     [router],
   );
