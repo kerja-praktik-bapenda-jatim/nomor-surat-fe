@@ -304,11 +304,12 @@ export function ViewAgenda({
                   </Group>
 
 									{/* Tempat */}
-                  <Group gap={6}>
-                    <Text size="sm" c="#000000" fw={500}>
-                      {item.tempat}
-                    </Text>
-                  </Group>
+									<Group gap={6}>
+										<IconMapPin size={16} stroke={1.5} color="#000000" />
+										<Text size="sm" c="#000000" fw={500}>
+											{item.tempat}
+										</Text>
+									</Group>
 
                   {/* Acara */}
                   <Box style={{ flex: 1, minHeight: "40px" }}>

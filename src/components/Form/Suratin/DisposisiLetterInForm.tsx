@@ -65,6 +65,7 @@ interface LetterData {
   diterimaTanggal: Date | null;
   kodeKlasifikasi: string;
   jenisSurat: string;
+  filename: string; // Added filename property
 }
 
 interface SearchState {
@@ -98,6 +99,7 @@ const createInitialLetterData = (): LetterData => ({
   diterimaTanggal: null,
   kodeKlasifikasi: '',
   jenisSurat: '',
+  filename: '', // Initialize filename
 });
 
 const createInitialSearchState = (): SearchState => ({
@@ -461,6 +463,7 @@ export function DisposisiLetterForm() {
           diterimaTanggal: letterDispositionData.letter.diterimaTgl ? new Date(letterDispositionData.letter.diterimaTgl) : null,
           kodeKlasifikasi: letterDispositionData.letter.Classification?.name || '',
           jenisSurat: letterDispositionData.letter.LetterType?.name || '',
+          filename: letterDispositionData.letter.filename || '', // Set filename from API response
         });
 
         updateSearchState({ isFound: true, isAttempted: true });
@@ -817,6 +820,14 @@ export function DisposisiLetterForm() {
         placeholder="Akan terisi otomatis setelah pencarian"
         readOnly
         mb="md"
+      />
+
+      <TextInput
+        value={letterData.filename}
+        label="File Digital"
+				placeholder="Akan terisi otomatis setelah pencarian"
+        readOnly
+				mb="md"
       />
     </Box>
   );

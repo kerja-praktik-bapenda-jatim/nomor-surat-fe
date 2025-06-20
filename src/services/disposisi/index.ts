@@ -23,6 +23,7 @@ export interface Letter {
   perihal: string;
   tglSurat: string;
   diterimaTgl: string;
+  filename?: string; // Added filename property
   Classification?: { id: string; name: string };
   LetterType?: { id: string; name: string };
 }
