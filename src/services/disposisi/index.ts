@@ -39,158 +39,214 @@ export interface Disposisi {
   updatedAt: string;
 }
 
-// ✅ SEARCH FUNCTION
-export const searchLetterByAgenda = async (tahun: string, noAgenda: string): Promise<Letter> => {
-  const searchParam = tahun === new Date().getFullYear().toString()
-    ? noAgenda
-    : `${tahun}/${noAgenda}`;
+export interface CreateDisposisiPayload {
+  letterIn_id: string;
+  noDispo: number;
+  tglDispo: string;
+  dispoKe: string[];
+  isiDispo: string;
+}
 
-  console.log('🔍 Searching letter:', searchParam);
+export interface LetterDispositionCheck {
+  isDisposed: boolean;
+  dispositions?: Disposisi[];
+  letter?: Letter;
+  error?: string;
+}
 
-  try {
-    const res = await ky.get(`${BASE_URL}letterin/search/${searchParam}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-    }).json<Letter>();
+export interface NextDisposisiNumber {
+  noDispo: number;
+}
 
-    console.log('✅ Letter found:', res);
-    return res;
-  } catch (error) {
-    console.error('❌ Letter search error:', error);
-    throw error;
-  }
+// ========================== UTILITIES =============================
+
+const createAuthHeader = () => ({
+  Authorization: `Bearer ${getTokenFromCookies()}`
+});
+
+const createSearchParam = (tahun: string, noAgenda: string): string => {
+  const currentYear = new Date().getFullYear().toString();
+  return tahun === currentYear ? noAgenda : `${tahun}/${noAgenda}`;
 };
 
-// ✅ GET NEXT DISPOSISI NUMBER - CORRECT BACKEND ENDPOINT
-export const getNextDisposisiNumber = async (): Promise<NextDisposisiNumber> => {
-  console.log('🔢 Getting next disposisi number...');
-
-  // The correct endpoint from server.js is '/api/disposisi-letterin/next-number'
-  const endpoint = 'disposisi-letterin/next-number';
-
-  try {
-    console.log(`🔍 Using correct endpoint: ${BASE_URL}${endpoint}`);
-
-    const res = await ky.get(`${BASE_URL}${endpoint}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-      timeout: 10000
-    }).json<any>();
-
-    console.log('✅ Next number response:', res);
-
-    // Normalize response format
-    let nextNumber: number;
-    if (typeof res === 'number') {
-      nextNumber = res;
-    } else if (res.noDispo) {
-      nextNumber = res.noDispo;
-    } else if (res.no_dispo) {
-      nextNumber = res.no_dispo;
-    } else if (res.nextNumber) {
-      nextNumber = res.nextNumber;
-    } else if (res.next_number) {
-      nextNumber = res.next_number;
-    } else {
-      throw new Error('Invalid response format');
-    }
-
-    return { noDispo: nextNumber };
-  } catch (error: any) {
-    console.log(`❌ Failed to get next number:`, error.message);
-
-    // If API fails, use fallback
-    console.log('🔄 Using fallback number generation...');
-    return await getFallbackNextNumber();
-  }
+const extractDisposisiNumber = (response: any): number => {
+  return response.noDispo ||
+         response.no_dispo ||
+         response.nextNumber ||
+         response.next_number ||
+         (typeof response === "number" ? response : 0);
 };
 
-// ✅ FALLBACK: GET NEXT NUMBER FROM EXISTING DISPOSISI LIST
-const getFallbackNextNumber = async (): Promise<NextDisposisiNumber> => {
-  try {
-    console.log('🔄 Getting fallback number from disposisi list...');
+const normalizeDispositionsArray = (response: any): any[] => {
+  return Array.isArray(response) ? response : (response.data || []);
+};
 
-    // Try to get existing disposisi list from correct endpoint
-    const endpoint = 'disposisi-letterin';
+// ========================== LOCAL STORAGE HELPERS =============================
 
+class DisposisiLocalStorage {
+  static getLastNumber(): number {
+    if (typeof localStorage === 'undefined') return 0;
+    return parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.LAST_DISPOSISI_NUMBER) || "0");
+  }
+
+  static setLastNumber(number: number): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(LOCAL_STORAGE_KEYS.LAST_DISPOSISI_NUMBER, number.toString());
+  }
+
+  static getDisposisiList(): Disposisi[] {
+    if (typeof localStorage === 'undefined') return [];
     try {
-      const existingDisposisi = await ky.get(`${BASE_URL}${endpoint}`, {
-        headers: {
-          Authorization: `Bearer ${getTokenFromCookies()}`,
-        },
-        timeout: 10000
-      }).json<any>();
-
-      console.log('📊 Existing disposisi response:', existingDisposisi);
-
-      let lastNumber = 0;
-
-      // Handle different response formats
-      if (Array.isArray(existingDisposisi)) {
-        // ✅ FIXED: Add type annotation for parameter 'd'
-        lastNumber = Math.max(...existingDisposisi.map((d: any) => d.noDispo || 0));
-      } else if (existingDisposisi.data && Array.isArray(existingDisposisi.data)) {
-        // ✅ FIXED: Add type annotation for parameter 'd'
-        lastNumber = Math.max(...existingDisposisi.data.map((d: any) => d.noDispo || 0));
-      } else if (existingDisposisi.length > 0) {
-        // ✅ FIXED: Add type annotation for parameter 'd'
-        lastNumber = Math.max(...existingDisposisi.map((d: any) => d.noDispo || 0));
-      }
-
-      const nextNumber = lastNumber + 1;
-
-      console.log('✅ Fallback number calculated:', nextNumber);
-      return { noDispo: nextNumber };
-    } catch (error: any) {
-      console.log(`❌ Failed fallback with ${endpoint}:`, error.message);
-      throw error;
+      return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.DISPOSISI_LIST) || "[]");
+    } catch {
+      return [];
     }
-
-  } catch (error) {
-    console.log('❌ Fallback also failed, using manual generation');
-    // Ultimate fallback: start from 1 or use localStorage
-    const stored = localStorage.getItem('lastDisposisiNumber');
-    const lastNumber = stored ? parseInt(stored) : 0;
-    return { noDispo: lastNumber + 1 };
   }
-};
 
-// ✅ MANUAL NUMBER GENERATOR (if API completely fails)
-export const generateManualNextNumber = (): NextDisposisiNumber => {
-  // Get from localStorage or generate based on timestamp
-  const stored = localStorage.getItem('lastDisposisiNumber');
-  const lastNumber = stored ? parseInt(stored) : 0;
-  const nextNumber = lastNumber + 1;
+  static addDisposisi(disposisi: Disposisi): void {
+    if (typeof localStorage === 'undefined') return;
+    const list = this.getDisposisiList();
+    list.push(disposisi);
+    localStorage.setItem(LOCAL_STORAGE_KEYS.DISPOSISI_LIST, JSON.stringify(list));
+  }
 
-  localStorage.setItem('lastDisposisiNumber', nextNumber.toString());
+  static clear(): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.removeItem(LOCAL_STORAGE_KEYS.DISPOSISI_LIST);
+    localStorage.removeItem(LOCAL_STORAGE_KEYS.LAST_DISPOSISI_NUMBER);
+  }
+}
 
-  console.log('🔢 Manual number generated:', nextNumber);
-  return { noDispo: nextNumber };
-};
+// ========================== API SERVICES =============================
 
-// ✅ SIMPLE AND DIRECT APPROACH - MATCH EXACTLY WHAT CONTROLLER EXPECTS
-export const createDisposisi = async (payload: CreateDisposisiPayload): Promise<Disposisi> => {
-  console.log('📝 Creating disposisi with exact controller format:', payload);
+export class DisposisiApiService {
+  static async searchLetterByAgenda(tahun: string, noAgenda: string): Promise<Letter> {
+    const searchParam = createSearchParam(tahun, noAgenda);
 
-  // Use EXACT same field names and format as the controller expects
-  const exactPayload = {
-    letterIn_id: payload.letterIn_id,
-    noDispo: payload.noDispo,
-    tglDispo: payload.tglDispo,
-    dispoKe: payload.dispoKe, // Keep as array - let Sequelize handle it
-    isiDispo: payload.isiDispo
-  };
+    return ky
+      .get(`${BASE_URL}letterin/search/${searchParam}`, {
+        headers: createAuthHeader()
+      })
+      .json<Letter>();
+  }
 
-  const endpoint = 'disposisi-letterin';
+  static async checkLetterDisposition(tahun: string, noAgenda: string): Promise<LetterDispositionCheck> {
+    try {
+      const letter = await this.searchLetterByAgenda(tahun, noAgenda);
 
-  try {
-    console.log(`📡 Sending to: ${BASE_URL}${endpoint}`);
-    console.log('📋 Exact payload:', exactPayload);
+      try {
+        const response = await ky
+          .get(`${BASE_URL}disposisi-letterin/check-letter/${letter.id}`, {
+            headers: createAuthHeader()
+          })
+          .json<any>();
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: 'POST',
+        return {
+          isDisposed: response.isDisposed || false,
+          dispositions: response.dispositions || [],
+          letter
+        };
+      } catch {
+        return this.getFallbackLetterDisposition(letter);
+      }
+    } catch {
+      return { isDisposed: false, error: "Surat tidak ditemukan" };
+    }
+  }
+
+  private static async getFallbackLetterDisposition(letter: Letter): Promise<LetterDispositionCheck> {
+    try {
+      const response = await ky
+        .get(`${BASE_URL}disposisi-letterin`, {
+          headers: createAuthHeader(),
+          searchParams: { letterIn_id: letter.id, limit: "100" }
+        })
+        .json<any>();
+
+      const dispositions = normalizeDispositionsArray(response)
+        .filter((d: any) => d.letterIn_id === letter.id);
+
+      return {
+        isDisposed: dispositions.length > 0,
+        dispositions,
+        letter
+      };
+    } catch {
+      return { isDisposed: false, letter };
+    }
+  }
+
+  static async getNextDisposisiNumber(): Promise<NextDisposisiNumber> {
+    try {
+      // Always use sequential strategy - get max + 1
+      const response = await ky
+        .get(`${BASE_URL}disposisi-letterin/next-number`, {
+          headers: createAuthHeader()
+        })
+        .json<any>();
+
+      const backendNumber = extractDisposisiNumber(response);
+
+      // Verify this is truly sequential by checking against max
+      const maxNumber = await this.getMaxDisposisiNumber();
+      const sequentialNumber = Math.max(backendNumber, maxNumber + 1);
+
+      return { noDispo: sequentialNumber };
+    } catch {
+      return this.generateFallbackNumber();
+    }
+  }
+
+  private static async getMaxDisposisiNumber(): Promise<number> {
+    try {
+      const response = await ky
+        .get(`${BASE_URL}disposisi-letterin`, {
+          headers: createAuthHeader(),
+          searchParams: {
+            limit: '1',
+            sortBy: 'noDispo',
+            sortOrder: 'desc'
+          }
+        })
+        .json<any>();
+
+      const data = normalizeDispositionsArray(response);
+      return data.length > 0 ? (data[0].noDispo || 0) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private static async generateFallbackNumber(): Promise<NextDisposisiNumber> {
+    try {
+      // Always use max + 1 strategy (no gap filling)
+      const response = await ky
+        .get(`${BASE_URL}disposisi-letterin`, {
+          headers: createAuthHeader()
+        })
+        .json<any>();
+
+      const data = normalizeDispositionsArray(response);
+      const maxNumber = Math.max(...data.map((d: any) => d.noDispo || 0), 0);
+
+      return { noDispo: maxNumber + 1 };
+    } catch {
+      const localNumber = DisposisiLocalStorage.getLastNumber();
+      return { noDispo: localNumber + 1 };
+    }
+  }
+
+  static generateManualNextNumber(): NextDisposisiNumber {
+    const currentNumber = DisposisiLocalStorage.getLastNumber();
+    const nextNumber = currentNumber + 1;
+
+    DisposisiLocalStorage.setLastNumber(nextNumber);
+    return { noDispo: nextNumber };
+  }
+
+  static async createDisposisi(payload: CreateDisposisiPayload): Promise<Disposisi> {
+    const response = await fetch(`${BASE_URL}disposisi-letterin`, {
+      method: "POST",
       headers: {
         ...createAuthHeader(),
         "Content-Type": "application/json"
@@ -226,30 +282,52 @@ export const createDisposisi = async (payload: CreateDisposisiPayload): Promise<
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
-  return disposisiData;
-};
-
-// ✅ GET ALL DISPOSISI FROM LOCAL STORAGE
-export const getDisposisiFromLocalStorage = (): Disposisi[] => {
-  try {
-    const stored = localStorage.getItem('disposisiList');
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error('Error reading from localStorage:', error);
-    return [];
+    return disposisi;
   }
-};
+}
 
-// ✅ CLEAR LOCAL STORAGE (for testing)
-export const clearDisposisiLocalStorage = (): void => {
-  localStorage.removeItem('disposisiList');
-  localStorage.removeItem('lastDisposisiNumber');
-  console.log('🗑️ localStorage cleared');
-};
+// ========================== VALIDATION =============================
 
-// ✅ HOOKS WITH ERROR HANDLING
-export const useLetterByAgenda = (tahun: string, noAgenda: string, enabled: boolean = false) =>
-  useQuery<Letter>({
+export class DisposisiValidator {
+  static validate(data: CreateDisposisiPayload): string[] {
+    const errors: string[] = [];
+
+    if (!data.letterIn_id) {
+      errors.push("Data surat harus dipilih");
+    }
+
+    if (!data.noDispo) {
+      errors.push("Nomor disposisi harus diisi");
+    }
+
+    if (!data.tglDispo) {
+      errors.push("Tanggal disposisi harus diisi");
+    }
+
+    if (!data.dispoKe || data.dispoKe.length === 0) {
+      errors.push("Tujuan disposisi harus dipilih");
+    }
+
+    if (!data.isiDispo || data.isiDispo.length < 10) {
+      errors.push("Isi disposisi minimal 10 karakter");
+    }
+
+    return errors;
+  }
+
+  static isValid(data: CreateDisposisiPayload): boolean {
+    return this.validate(data).length === 0;
+  }
+}
+
+// ========================== REACT QUERY HOOKS =============================
+
+export const useLetterByAgenda = (
+  tahun: string,
+  noAgenda: string,
+  enabled: boolean = false
+) => {
+  return useQuery({
     queryKey: ["letter-by-agenda", tahun, noAgenda],
     queryFn: () => DisposisiApiService.searchLetterByAgenda(tahun, noAgenda),
     enabled: enabled && Boolean(noAgenda),
@@ -295,18 +373,18 @@ export const useNextDisposisiNumberWithFallback = () => {
   });
 };
 
-// ✅ VALIDATION
-export const validateDisposisiData = (data: CreateDisposisiPayload): string[] => {
-  const errors: string[] = [];
-
-  if (!data.letterIn_id) errors.push("Data surat harus dipilih");
-  if (!data.noDispo) errors.push("Nomor disposisi harus diisi");
-  if (!data.tglDispo) errors.push("Tanggal disposisi harus diisi");
-  if (!data.dispoKe || data.dispoKe.length === 0) errors.push("Tujuan disposisi harus dipilih");
-  if (!data.isiDispo || data.isiDispo.length < 10) errors.push("Isi disposisi minimal 10 karakter");
-
-  return errors;
+// Hook untuk React Query - untuk mendapatkan disposisi berdasarkan letter ID
+export const useDisposisiByLetterId = (letterIn_id: string, enabled = true) => {
+  return useQuery<Disposisi[]>({
+    queryKey: ["disposisi-by-letter", letterIn_id],
+    queryFn: () => getDisposisiByLetterId(letterIn_id),
+    enabled: enabled && !!letterIn_id,
+    retry: 2,
+    retryDelay: 1000,
+  });
 };
+
+// ========================== UTILITY FUNCTIONS =============================
 
 // ✅ DISCOVER AVAILABLE ENDPOINTS
 export const discoverBackendEndpoints = async (): Promise<{
@@ -488,13 +566,15 @@ export const getDisposisiByLetterId = async (letterIn_id: string): Promise<Dispo
   }
 };
 
-// Hook untuk React Query
-export const useDisposisiByLetterId = (letterIn_id: string, enabled = true) =>
-  useQuery<Disposisi[]>({
-    queryKey: ["disposisi-by-letter", letterIn_id],
-    queryFn: () => getDisposisiByLetterId(letterIn_id),
-    enabled: enabled && !!letterIn_id,
-    retry: 2,
-    retryDelay: 1000,
-  }
-);
+// ========================== LEGACY EXPORTS =============================
+
+// Legacy exports for backward compatibility
+export const searchLetterByAgenda = DisposisiApiService.searchLetterByAgenda;
+export const checkLetterDisposition = DisposisiApiService.checkLetterDisposition;
+export const getNextDisposisiNumber = DisposisiApiService.getNextDisposisiNumber;
+export const generateManualNextNumber = DisposisiApiService.generateManualNextNumber;
+export const createDisposisi = DisposisiApiService.createDisposisi;
+export const createDisposisiLocalStorage = DisposisiApiService.createDisposisiOffline;
+export const getDisposisiFromLocalStorage = DisposisiLocalStorage.getDisposisiList;
+export const clearDisposisiLocalStorage = DisposisiLocalStorage.clear;
+export const validateDisposisiData = DisposisiValidator.validate;
