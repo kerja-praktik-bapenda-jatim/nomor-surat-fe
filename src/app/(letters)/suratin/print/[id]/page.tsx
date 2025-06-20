@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLetterByAgenda } from '@/services/disposisi';
+import { useDisposisiByLetterId } from '@/services/disposisi'; // Add this import
 import { getCurrentUser } from '@/services/auth';
 
 interface LetterData {
@@ -31,8 +32,6 @@ export default function PrintPage() {
   const router = useRouter();
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Extract agenda number and year from id parameter
-  // Assuming id format is like "agenda-year" or just "agenda"
   const [searchAgenda, setSearchAgenda] = useState('');
   const [selectedYear, setSelectedYear] = useState('2025');
   const [enableSearch, setEnableSearch] = useState(false);
@@ -65,10 +64,6 @@ export default function PrintPage() {
   useEffect(() => {
     if (id) {
       const idStr = Array.isArray(id) ? id[0] : id;
-
-      // Try to parse different formats
-      // Format 1: "123-2025" (agenda-year)
-      // Format 2: "123" (just agenda, use current year)
       const parts = idStr.split('-');
 
       if (parts.length >= 2) {
@@ -89,13 +84,20 @@ export default function PrintPage() {
     setUser(currentUser);
   }, []);
 
-  // React Query hook for fetching letter data
+  // Fetch letter data
   const {
     data: apiLetterData,
     isLoading: isLetterLoading,
     error: letterError,
     refetch: refetchLetter
   } = useLetterByAgenda(selectedYear, searchAgenda, enableSearch && !!searchAgenda);
+
+  // Fetch disposisi data
+  const {
+    data: apiDisposisiData,
+    isLoading: isDisposisiLoading,
+    error: disposisiError
+  } = useDisposisiByLetterId(letterData.letterIn_id, !!letterData.letterIn_id);
 
   // Handle letter data when found
   useEffect(() => {
@@ -117,6 +119,38 @@ export default function PrintPage() {
     }
   }, [apiLetterData, enableSearch]);
 
+  // Handle disposisi data
+  useEffect(() => {
+    if (apiDisposisiData && apiDisposisiData.length > 0) {
+      console.log('📝 Setting disposisi data for PDF:', apiDisposisiData);
+
+      // Ambil disposisi terbaru (index 0)
+      const latestDisposisi = apiDisposisiData[0];
+
+      setDisposisiData({
+        noDisposisi: latestDisposisi.noDispo || 0,
+        tanggalDisposisi: latestDisposisi.tglDispo ? new Date(latestDisposisi.tglDispo) : new Date(),
+        tujuanDisposisi: Array.isArray(latestDisposisi.dispoKe)
+          ? latestDisposisi.dispoKe
+          : JSON.parse(latestDisposisi.dispoKe || '[]'),
+        isiDisposisi: latestDisposisi.isiDispo || '',
+        createdBy: user.userName,
+        departmentName: user.departmentName,
+      });
+    } else if (letterData.letterIn_id && !isDisposisiLoading) {
+      // Jika tidak ada data disposisi tapi letter ID ada
+      console.log('⚠️ No disposisi data found for letter:', letterData.letterIn_id);
+      setDisposisiData({
+        noDisposisi: 0,
+        tanggalDisposisi: new Date(),
+        tujuanDisposisi: [],
+        isiDisposisi: 'Tidak ada data disposisi',
+        createdBy: user.userName,
+        departmentName: user.departmentName,
+      });
+    }
+  }, [apiDisposisiData, letterData.letterIn_id, isDisposisiLoading, user]);
+
   // Handle loading and error states
   useEffect(() => {
     if (letterError && enableSearch) {
@@ -124,30 +158,24 @@ export default function PrintPage() {
       setError('Surat tidak ditemukan');
       setLoading(false);
     }
-  }, [letterError, enableSearch]);
 
-  // TODO: Fetch disposisi data based on letter ID
-  // This would require a new service function to get disposisi by letter ID
-  useEffect(() => {
-    if (letterData.letterIn_id) {
-      // Mock disposisi data for now
-      // In real implementation, you would fetch this from API
-      setDisposisiData({
-        noDisposisi: 1,
-        tanggalDisposisi: new Date(),
-        tujuanDisposisi: ['SEKRETARIAT', 'BIDANG PAJAK DAERAH'],
-        isiDisposisi: 'Mohon ditindaklanjuti sesuai dengan ketentuan yang berlaku.',
-        createdBy: user.userName,
-        departmentName: user.departmentName,
-      });
+    if (disposisiError) {
+      console.error('❌ Disposisi error:', disposisiError);
+      // Tidak set error karena mungkin tidak ada disposisi
     }
-  }, [letterData.letterIn_id, user]);
+
+    // Set loading false jika semua data sudah selesai loading
+    if (!isLetterLoading && !isDisposisiLoading) {
+      setLoading(false);
+    }
+  }, [letterError, disposisiError, isLetterLoading, isDisposisiLoading, enableSearch]);
+
+  // ... (fungsi handleDownload, handleBack, formatDate, getDepartmentList tetap sama)
 
   const handleDownload = async () => {
     if (contentRef.current && !isDownloading) {
       setIsDownloading(true);
       try {
-        // Dynamic import to avoid SSR issues
         const html2pdf = (await import('html2pdf.js')).default;
 
         const filename = `Lembar-Disposisi-${searchAgenda}-${selectedYear}.pdf`;
@@ -176,7 +204,7 @@ export default function PrintPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    router.push('/suratin');
   };
 
   const formatDate = (date: Date | null) => {

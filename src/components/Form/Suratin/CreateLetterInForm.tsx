@@ -324,6 +324,12 @@ export function CreateLetterForm() {
         await refetchLetterTypes();
     };
 
+		const [agendaNumber, setAgendaNumber] = useState("2025/0001");
+
+		const resetAgendaNumber = () => {
+			setAgendaNumber(""); // atau set ke default: "2025/0001"
+		};
+
     // ✅ RENDER NOMOR AGENDA DENGAN LOADING YANG LEBIH SMOOTH
     const renderAgendaNumber = () => {
         if (isNextAgendaLoading) {
@@ -379,10 +385,21 @@ export function CreateLetterForm() {
                     </Text>
 
                     <Grid>
-                        <Grid.Col span={6}>
+                        <Grid.Col span={3}>
                             {/* ✅ TAMPILKAN NOMOR AGENDA FORMAT 2025/0001 */}
                             {renderAgendaNumber()}
                         </Grid.Col>
+
+												<Grid.Col span={3}>
+													  <Button
+															color="gray"
+															variant="light"
+															radius="md"
+															onClick={resetAgendaNumber}
+														>
+															Reset Nomor Agenda
+														</Button>
+												</Grid.Col>
 
                         <Grid.Col span={6}>
                             <TextInput

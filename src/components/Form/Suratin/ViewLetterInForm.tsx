@@ -5,13 +5,22 @@ import { useParams, useRouter } from "next/navigation";
 import { convertUTC } from '@/utils/utils';
 import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
-import { deleteLetterin, useLetterinById } from '@/services/suratin';
+import { deleteLetterin, useDownloadLetterFile, useLetterinById } from '@/services/suratin';
 
-export function ViewLetterForm() {
+export function ViewLetterInForm() {
     const { id } = useParams();
     const letterId = Array.isArray(id) ? id[0] : id;
     const router = useRouter();
     const { data: letter, isLoading: isLetterLoading, error: letterError } = useLetterinById(letterId);
+    const { data: fileUrl, isLoading: isFileLoading, error: fileError } = useDownloadLetterFile(letterId);
+
+    useEffect(() => {
+        return () => {
+            if (fileUrl) {
+                URL.revokeObjectURL(fileUrl);
+            }
+        };
+    }, [fileUrl]);
 
     const handleEdit = () => {
         router.push(`/suratin/edit/${id}`);
@@ -206,8 +215,8 @@ export function ViewLetterForm() {
 
                 <Space h="md" />
 
-                {letter?.filename ? (
-                    <Text>File tersedia tetapi tidak dapat ditampilkan.</Text>
+                {fileUrl ? (
+                    <iframe src={fileUrl} width="100%" height="600px" title="Surat File" />
                 ) : (
                     <Text>Tidak ada file yang tersedia.</Text>
                 )}
