@@ -1,10 +1,11 @@
 "use client";
+
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from "next/navigation";
 import {
   Button,
   TextInput,
   Text,
-  Space,
   Box,
   Paper,
   Select,
@@ -13,32 +14,40 @@ import {
   Textarea,
   Group,
   Alert,
-  Loader
 } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
-import { useRouter } from "next/navigation";
 import { IconArrowLeft, IconInfoCircle, IconSearch, IconCheck } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
+
+// Services
 import { useClassifications } from '@/services/data';
-import { getCurrentUser } from '@/services/auth';
+import { getCurrentUser, getTokenFromCookies } from '@/services/auth';
 import {
   createDisposisi,
   useNextDisposisiNumberWithFallback,
-  useLetterByAgenda,
   validateDisposisiData,
-  getDisposisiFromLocalStorage
+  getDisposisiFromLocalStorage,
+  useLetterDispositionCheck
 } from '@/services/disposisi';
-import { getTokenFromCookies } from '@/services/auth';
 
-// Define DEPARTMENT_OPTIONS locally if import fails
+// ========================== CONSTANTS =============================
+
 const DEPARTMENT_OPTIONS = [
   { value: 'SEKRETARIAT', label: 'Sekretariat' },
   { value: 'BIDANG PAJAK DAERAH', label: 'Bidang Pajak Daerah' },
   { value: 'BIDANG PERENCANAAN DAN PENGEMBANGAN', label: 'Bidang Perencanaan dan Pengembangan' },
   { value: 'BIDANG RETRIBUSI DAN PENDAPATAN LAIN-LAIN', label: 'Bidang Retribusi dan Pendapatan Lain-lain' },
   { value: 'BIDANG PENGENDALIAN DAN PEMBINAAN', label: 'Bidang Pengendalian dan Pembinaan' },
-];
+] as const;
+
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 11 }, (_, i) => {
+  const year = CURRENT_YEAR - 5 + i;
+  return { value: year.toString(), label: year.toString() };
+});
+
+// ========================== TYPES =============================
 
 interface FormValues {
   noDisposisi: number | '';
@@ -58,55 +67,63 @@ interface LetterData {
   jenisSurat: string;
 }
 
-export function DisposisiLetterForm() {
-  const { data: classificationsData, isLoading: isClassificationsLoading, error: classificationsError } = useClassifications();
+interface SearchState {
+  agenda: string;
+  year: string;
+  isLoading: boolean;
+  isAttempted: boolean;
+  isFound: boolean;
+  isEnabled: boolean;
+  shouldSearch: boolean; // 🆕 TAMBAHAN: Flag untuk kontrol pencarian
+}
 
-  const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
-  const [loading, setLoading] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [letterFound, setLetterFound] = useState(false);
-  const [searchAttempted, setSearchAttempted] = useState(false);
-  const [enableSearch, setEnableSearch] = useState(false);
-  const [searchAgenda, setSearchAgenda] = useState('');
-  const [selectedYear, setSelectedYear] = useState('2025');
-  const [isSubmitted, setIsSubmitted] = useState(false);
+interface AppState {
+  isSubmitting: boolean;
+  isSubmitted: boolean;
+  user: {
+    userName: string;
+    departmentName: string;
+    isAdmin: boolean;
+  };
+}
 
-  const [letterData, setLetterData] = useState<LetterData>({
-    letterIn_id: '',
-    noSurat: '',
-    suratDari: '',
-    perihal: '',
-    tanggalSurat: null,
-    diterimaTanggal: null,
-    kodeKlasifikasi: '',
-    jenisSurat: '',
-  });
+// ========================== INITIAL VALUES =============================
 
-  const router = useRouter();
+const createInitialLetterData = (): LetterData => ({
+  letterIn_id: '',
+  noSurat: '',
+  suratDari: '',
+  perihal: '',
+  tanggalSurat: null,
+  diterimaTanggal: null,
+  kodeKlasifikasi: '',
+  jenisSurat: '',
+});
 
-  // Generate year options (current year ± 5 years)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 11 }, (_, i) => {
-    const year = currentYear - 5 + i;
-    return { value: year.toString(), label: year.toString() };
-  });
+const createInitialSearchState = (): SearchState => ({
+  agenda: '',
+  year: CURRENT_YEAR.toString(),
+  isLoading: false,
+  isAttempted: false,
+  isFound: false,
+  isEnabled: false,
+  shouldSearch: false, // 🆕 TAMBAHAN: Default false
+});
 
-  // React Query hooks
-  const {
-    data: nextDisposisiData,
-    isLoading: isNextDisposisiLoading,
-    error: nextDisposisiError,
-    refetch: refetchNextDisposisi
-  } = useNextDisposisiNumberWithFallback();
+const createInitialAppState = (): AppState => ({
+  isSubmitting: false,
+  isSubmitted: false,
+  user: {
+    userName: "Guest",
+    departmentName: "Unknown Department",
+    isAdmin: false,
+  },
+});
 
-  const {
-    data: apiLetterData,
-    isLoading: isLetterLoading,
-    error: letterError,
-    refetch: refetchLetter
-  } = useLetterByAgenda(selectedYear, searchAgenda, enableSearch && !!searchAgenda);
+// ========================== CUSTOM HOOKS =============================
 
-  const form = useForm<FormValues>({
+const useDisposisiForm = () => {
+  return useForm<FormValues>({
     mode: 'uncontrolled',
     validate: {
       noDisposisi: (value) => (!value ? 'Nomor disposisi tidak boleh kosong' : null),
@@ -121,163 +138,461 @@ export function DisposisiLetterForm() {
       isiDisposisi: '',
     },
   });
+};
 
-  // Set nomor disposisi only once when data is available and not set yet
-  useEffect(() => {
-    if (nextDisposisiData?.noDispo && !form.getValues().noDisposisi) {
-      console.log('📝 Setting initial nomor disposisi:', nextDisposisiData.noDispo);
-      form.setFieldValue('noDisposisi', nextDisposisiData.noDispo);
-    }
-  }, [nextDisposisiData?.noDispo]);
+// ========================== UTILITY FUNCTIONS =============================
 
-  // Handle letter data when found
-  useEffect(() => {
-    console.log('🔍 Letter data effect triggered:', {
-      hasApiData: !!apiLetterData,
-      enableSearch,
-      searchAttempted,
-      letterFound
+const formatDateToLocalString = (date: Date | null): string => {
+  return date ? new Date(date).toLocaleDateString('id-ID') : '';
+};
+
+const logDebug = (message: string, data?: any) => {
+  console.log(`🔍 ${message}`, data);
+};
+
+const logSuccess = (message: string, data?: any) => {
+  console.log(`✅ ${message}`, data);
+};
+
+const logError = (message: string, error?: any) => {
+  console.error(`❌ ${message}`, error);
+};
+
+const logWarning = (message: string, data?: any) => {
+  console.warn(`⚠️ ${message}`, data);
+};
+
+// ========================== MODAL HELPERS =============================
+
+class ModalHelpers {
+  static showWarning(message: string) {
+    modals.open({
+      title: 'Peringatan',
+      centered: true,
+      children: <Text size="sm">{message}</Text>,
     });
+  }
 
-    if (apiLetterData && enableSearch && searchAttempted && !letterFound) {
-      console.log('📝 Setting letter data to state:', apiLetterData);
-
-      setLetterData({
-        letterIn_id: apiLetterData.id || '',
-        noSurat: apiLetterData.noSurat || '',
-        suratDari: apiLetterData.suratDari || '',
-        perihal: apiLetterData.perihal || '',
-        tanggalSurat: apiLetterData.tglSurat ? new Date(apiLetterData.tglSurat) : null,
-        diterimaTanggal: apiLetterData.diterimaTgl ? new Date(apiLetterData.diterimaTgl) : null,
-        kodeKlasifikasi: apiLetterData.Classification?.name || '',
-        jenisSurat: apiLetterData.LetterType?.name || '',
-      });
-
-      setLetterFound(true);
-
-      console.log('✅ Letter found successfully');
-    }
-  }, [apiLetterData?.id, enableSearch, searchAttempted, letterFound, refetchNextDisposisi]);
-
-  // Handle error clearing
-  useEffect(() => {
-    if (letterError && enableSearch && searchAttempted && letterFound) {
-      console.log('❌ Letter search error, clearing data');
-      setLetterFound(false);
-      clearLetterData();
-    }
-  }, [letterError, enableSearch, searchAttempted, letterFound]);
-
-  // Load user and initial disposisi number
-  useEffect(() => {
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    // Get next disposisi number on component mount
-    refetchNextDisposisi();
-
-    // Debug: Test correct endpoint
-    console.log('🔍 Testing disposisi-letterin endpoint...');
-    fetch('http://localhost:8080/api/disposisi-letterin/next-number', {
-      headers: {
-        'Authorization': `Bearer ${getTokenFromCookies()}`,
-      }
-    })
-    .then(res => res.json())
-    .then(data => {
-      console.log('✅ Disposisi endpoint test successful:', data);
-    })
-    .catch(err => {
-      console.log('❌ Disposisi endpoint test failed:', err);
+  static showValidationErrors(errors: string[]) {
+    modals.open({
+      title: 'Validasi Error',
+      centered: true,
+      children: (
+        <Box>
+          <Text size="sm" mb="sm">Terdapat error pada form:</Text>
+          {errors.map((error, index) => (
+            <Text key={index} size="sm" c="red">• {error}</Text>
+          ))}
+        </Box>
+      ),
     });
-  }, [refetchNextDisposisi]);
+  }
 
-  const clearLetterData = () => {
-    setLetterData({
-      letterIn_id: '',
-      noSurat: '',
-      suratDari: '',
-      perihal: '',
-      tanggalSurat: null,
-      diterimaTanggal: null,
-      kodeKlasifikasi: '',
-      jenisSurat: '',
-    });
-  };
-
-  const handleSearchLetter = useCallback(async () => {
-    if (!searchAgenda.trim()) {
-      modals.open({
-        title: 'Peringatan',
-        centered: true,
-        children: <Text size="sm">Masukkan nomor agenda terlebih dahulu</Text>,
-      });
-      return;
-    }
-
-    console.log('🔍 Starting search...', { selectedYear, searchAgenda });
-
-    setSearchLoading(true);
-    setLetterFound(false);
-    setEnableSearch(true);
-    setSearchAttempted(false);
-    setIsSubmitted(false);
-    clearLetterData();
-
-    try {
-      console.log('📡 Triggering refetch...');
-      await refetchLetter();
-      setSearchAttempted(true);
-      console.log('✅ Search completed');
-    } catch (error) {
-      console.error('❌ Search error:', error);
-      setSearchAttempted(true);
-    } finally {
-      setSearchLoading(false);
-    }
-  }, [searchAgenda, selectedYear, refetchLetter]);
-
-  const handleConfirmSubmit = (values: typeof form.values) => {
-    const errors = validateDisposisiData({
-      letterIn_id: letterData.letterIn_id,
-      tglDispo: values.tanggalDisposisi.toISOString(),
-      dispoKe: values.tujuanDisposisi,
-      isiDispo: values.isiDisposisi,
-      noDispo: values.noDisposisi as number,
-    });
-
-    if (errors.length > 0) {
-      modals.open({
-        title: 'Validasi Error',
-        centered: true,
-        children: (
-          <Box>
-            <Text size="sm" mb="sm">Terdapat error pada form:</Text>
-            {errors.map((error, index) => (
-              <Text key={index} size="sm" c="red">• {error}</Text>
-            ))}
-          </Box>
-        ),
-      });
-      return;
-    }
-
+  static showConfirmSubmit(onConfirm: () => void) {
     modals.openConfirmModal({
       title: 'Konfirmasi Buat Disposisi',
       centered: true,
       children: (
-        <Box>
-          <Text size="sm" mb="sm">Apakah Anda yakin data disposisi sudah benar?</Text>
-        </Box>
+        <Text size="sm">Apakah Anda yakin data disposisi sudah benar?</Text>
       ),
       confirmProps: { children: 'Buat Disposisi' },
       cancelProps: { children: 'Batal' },
-      onConfirm: () => handleSubmit(values),
+      onConfirm,
     });
-  };
+  }
 
-  const handleSubmit = async (values: typeof form.values) => {
-    setLoading(true);
-    console.log('🚀 Starting disposisi creation...');
+  static showSuccessResult(
+    response: any,
+    onCreateAnother: () => void,
+    onFinish: () => void
+  ) {
+    const isLocalStorage = response.id?.startsWith('dispo_');
+
+    modals.open({
+      title: isLocalStorage ? 'Berhasil (Mode Offline)' : 'Berhasil',
+      centered: true,
+      children: (
+        <Box>
+          <Text size="sm" mb="md">
+            Disposisi berhasil {isLocalStorage ? 'disimpan secara lokal' : 'dibuat'}
+            dengan nomor: <strong>{response.noDispo}</strong>
+          </Text>
+
+          <Group justify="flex-end" gap="sm">
+            {isLocalStorage && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => this.showSavedData()}
+              >
+                Lihat Data
+              </Button>
+            )}
+            <Button onClick={onFinish}>
+              Selesai
+            </Button>
+          </Group>
+        </Box>
+      )
+    });
+  }
+
+  static showSavedData() {
+    const saved = getDisposisiFromLocalStorage();
+    modals.open({
+      title: 'Data Tersimpan',
+      children: (
+        <Box>
+          <Text size="sm" mb="sm">Total disposisi tersimpan: {saved.length}</Text>
+          {saved.slice(-3).map((item, index) => (
+            <Text key={index} size="xs" c="dimmed">
+              • No.{item.noDispo} - {new Date(item.createdAt).toLocaleString('id-ID')}
+            </Text>
+          ))}
+        </Box>
+      )
+    });
+  }
+
+  static showError(error: any) {
+    let errorMessage = "Terjadi kesalahan saat membuat disposisi.";
+
+    if (error.message) {
+      errorMessage = error.message;
+    } else if (error.response) {
+      errorMessage = `HTTP ${error.response.status}: ${error.response.statusText}`;
+    }
+
+    if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
+      errorMessage += '\n\nSaran: Periksa apakah backend sudah berjalan dan endpoint /api/disposisi tersedia.';
+    }
+
+    modals.open({
+      title: 'Error Membuat Disposisi',
+      centered: true,
+      children: (
+        <Box>
+          <Text size="sm" style={{ whiteSpace: 'pre-line' }}>{errorMessage}</Text>
+          <Button onClick={() => modals.closeAll()} mt="md" fullWidth>
+            OK
+          </Button>
+        </Box>
+      )
+    });
+  }
+
+  static showLetterAlreadyDisposed(letterDispositionData: any, resetFormCallback: () => void) {
+    modals.open({
+      title: '⚠️ Surat Sudah Didisposisikan',
+      centered: true,
+      size: 'md',
+      children: (
+        <Box>
+          <Alert color="yellow" variant="light" mb="md">
+            <Group gap="xs">
+              <IconInfoCircle size={20} />
+              <Text size="sm" fw={500}>
+                Surat ini sudah pernah didisposisikan sebelumnya
+              </Text>
+            </Group>
+          </Alert>
+
+          {letterDispositionData.dispositions && letterDispositionData.dispositions.length > 0 && (
+            <Box mb="md">
+              <Text size="sm" mb="xs"><strong>Detail Disposisi:</strong></Text>
+              {letterDispositionData.dispositions.map((dispositionItem: any, index: number) => (
+                <Box key={dispositionItem.id || index} mb="sm" p="sm" style={{ backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                  <Text size="sm" c="dimmed">Nomor Disposisi: <strong>{dispositionItem.noDispo}</strong></Text>
+                  <Text size="sm" c="dimmed">
+                    Tanggal: <strong>
+                      {dispositionItem.tglDispo ?
+                        new Date(dispositionItem.tglDispo).toLocaleDateString('id-ID') :
+                        '-'
+                      }
+                    </strong>
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    Tujuan: <strong>
+                      {Array.isArray(dispositionItem.dispoKe) ?
+                        dispositionItem.dispoKe.join(', ') :
+                        '-'
+                      }
+                    </strong>
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    Isi: <strong>{dispositionItem.isiDispo || '-'}</strong>
+                  </Text>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                modals.closeAll();
+                resetFormCallback();
+              }}
+            >
+              Cari Surat Lain
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => modals.closeAll()}
+            >
+              Tutup
+            </Button>
+          </Group>
+        </Box>
+      )
+    });
+  }
+}
+
+// ========================== MAIN COMPONENT =============================
+
+export function DisposisiLetterForm() {
+  // ========== STATE MANAGEMENT ==========
+  const [letterData, setLetterData] = useState<LetterData>(createInitialLetterData);
+  const [searchState, setSearchState] = useState<SearchState>(createInitialSearchState);
+  const [appState, setAppState] = useState<AppState>(createInitialAppState);
+  const [isiDisposisiText, setIsiDisposisiText] = useState<string>(''); // 🆕 State untuk character counter
+
+  const router = useRouter();
+  const form = useDisposisiForm();
+
+  // ========== REACT QUERY HOOKS ==========
+  const { data: classificationsData, isLoading: isClassificationsLoading } = useClassifications();
+
+  const {
+    data: nextDisposisiData,
+    isLoading: isNextDisposisiLoading,
+    refetch: refetchNextDisposisi
+  } = useNextDisposisiNumberWithFallback();
+
+  // 🔄 PERBAIKAN: Query hanya dijalankan ketika benar-benar diperlukan
+  const {
+    data: letterDispositionData,
+    isLoading: isCheckingDisposition,
+    error: dispositionCheckError,
+    refetch: refetchLetterCheck
+  } = useLetterDispositionCheck(
+    searchState.year,
+    searchState.agenda,
+    searchState.shouldSearch && Boolean(searchState.agenda) // 🆕 Menggunakan shouldSearch
+  );
+
+  // ========== SEARCH STATE HELPERS ==========
+  const updateSearchState = useCallback((updates: Partial<SearchState>) => {
+    setSearchState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateAppState = useCallback((updates: Partial<AppState>) => {
+    setAppState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  // ========== INITIALIZATION ==========
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    updateAppState({ user: currentUser });
+    refetchNextDisposisi();
+
+    // 🆕 RESET STATE SAAT COMPONENT MOUNT
+    logDebug('Component mounted, resetting search state...');
+    setSearchState(createInitialSearchState());
+    setLetterData(createInitialLetterData());
+
+    // Debug endpoint test
+    logDebug('Testing disposisi-letterin endpoint...');
+    fetch('http://localhost:8080/api/disposisi-letterin/next-number', {
+      headers: { 'Authorization': `Bearer ${getTokenFromCookies()}` }
+    })
+      .then(res => res.json())
+      .then(data => logSuccess('Disposisi endpoint test successful:', data))
+      .catch(err => logError('Disposisi endpoint test failed:', err));
+  }, [refetchNextDisposisi]);
+
+  // ========== FORM INITIALIZATION ==========
+  useEffect(() => {
+    if (nextDisposisiData?.noDispo && !form.getValues().noDisposisi) {
+      logDebug('Setting initial nomor disposisi:', nextDisposisiData.noDispo);
+      form.setFieldValue('noDisposisi', nextDisposisiData.noDispo);
+    }
+  }, [nextDisposisiData?.noDispo]);
+
+  const resetForm = useCallback(() => {
+    logDebug('Resetting disposisi form...');
+
+    form.reset();
+    setLetterData(createInitialLetterData());
+    setSearchState(createInitialSearchState()); // 🆕 Reset dengan state awal yang benar
+    updateAppState({ isSubmitted: false });
+    setIsiDisposisiText(''); // 🆕 Reset character counter
+
+    setTimeout(() => {
+      refetchNextDisposisi();
+    }, 100);
+
+    logSuccess('Disposisi form reset completed');
+  }, [refetchNextDisposisi]);
+
+  // ========== LETTER DATA AND DISPOSITION CHECK ==========
+  useEffect(() => {
+    if (letterDispositionData && searchState.shouldSearch) { // 🔄 PERBAIKAN: Cek shouldSearch
+      logDebug('Letter disposition check result:', letterDispositionData);
+
+      if (letterDispositionData.error) {
+        // Letter not found
+        updateSearchState({ isFound: false, isAttempted: true });
+        setLetterData(createInitialLetterData());
+        return;
+      }
+
+      if (letterDispositionData.letter) {
+        // Letter found, set the data
+        setLetterData({
+          letterIn_id: letterDispositionData.letter.id || '',
+          noSurat: letterDispositionData.letter.noSurat || '',
+          suratDari: letterDispositionData.letter.suratDari || '',
+          perihal: letterDispositionData.letter.perihal || '',
+          tanggalSurat: letterDispositionData.letter.tglSurat ? new Date(letterDispositionData.letter.tglSurat) : null,
+          diterimaTanggal: letterDispositionData.letter.diterimaTgl ? new Date(letterDispositionData.letter.diterimaTgl) : null,
+          kodeKlasifikasi: letterDispositionData.letter.Classification?.name || '',
+          jenisSurat: letterDispositionData.letter.LetterType?.name || '',
+        });
+
+        updateSearchState({ isFound: true, isAttempted: true });
+
+        // ✅ IMMEDIATE CHECK: Show warning if letter is already disposed
+        if (letterDispositionData.isDisposed) {
+          logWarning('Letter already disposed, showing warning');
+
+          // Use a timeout to prevent immediate state update during render
+          setTimeout(() => {
+            ModalHelpers.showLetterAlreadyDisposed(letterDispositionData, () => {
+              form.reset();
+              setLetterData(createInitialLetterData());
+              setSearchState(createInitialSearchState());
+              updateAppState({ isSubmitted: false });
+              setIsiDisposisiText(''); // 🆕 Reset character counter
+              setTimeout(() => refetchNextDisposisi(), 100);
+            });
+          }, 100);
+        } else {
+          logSuccess('Letter found and not disposed, ready for disposition');
+        }
+      }
+    }
+  }, [letterDispositionData, searchState.shouldSearch]); // 🔄 PERBAIKAN: Dependency yang tepat
+
+  // ========== ERROR HANDLING ==========
+  useEffect(() => {
+    if (dispositionCheckError && searchState.shouldSearch) { // 🔄 PERBAIKAN: Cek shouldSearch
+      logError('Letter disposition check error, clearing data');
+      updateSearchState({ isFound: false, isAttempted: true });
+      setLetterData(createInitialLetterData());
+    }
+  }, [dispositionCheckError, searchState.shouldSearch]);
+
+  // ========== EVENT HANDLERS ==========
+  // 🔄 PERBAIKAN: Handler pencarian yang lebih eksplisit
+  const handleSearchLetter = useCallback(async () => {
+    if (!searchState.agenda.trim()) {
+      ModalHelpers.showWarning('Masukkan nomor agenda terlebih dahulu');
+      return;
+    }
+
+    logDebug('Starting manual search...', { year: searchState.year, agenda: searchState.agenda });
+
+    // 🆕 Reset state sebelum pencarian
+    updateSearchState({
+      isLoading: true,
+      isFound: false,
+      isAttempted: false,
+      shouldSearch: false, // Reset dulu
+    });
+
+    updateAppState({ isSubmitted: false });
+    setLetterData(createInitialLetterData());
+
+    try {
+      // 🆕 Delay sebentar untuk memastikan state terupdate
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      logDebug('Triggering disposition check...');
+      updateSearchState({
+        shouldSearch: true, // 🆕 Aktifkan pencarian
+        isAttempted: true
+      });
+
+      logSuccess('Manual search initiated');
+    } catch (error) {
+      logError('Search error:', error);
+      updateSearchState({
+        isAttempted: true,
+        shouldSearch: false
+      });
+    } finally {
+      updateSearchState({ isLoading: false });
+    }
+  }, [searchState.agenda, searchState.year]);
+
+  // 🆕 TAMBAHAN: Handler untuk input agenda (tidak auto-search)
+  const handleAgendaChange = useCallback((value: string) => {
+    updateSearchState({
+      agenda: value,
+      shouldSearch: false, // 🆕 Jangan auto-search saat mengetik
+      isAttempted: false,
+      isFound: false
+    });
+    setLetterData(createInitialLetterData());
+  }, []);
+
+  // 🆕 TAMBAHAN: Handler untuk isi disposisi (character counter)
+  const handleIsiDisposisiChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = event.currentTarget.value;
+    setIsiDisposisiText(value);
+    form.setFieldValue('isiDisposisi', value);
+  }, []);
+
+  const handleConfirmSubmit = useCallback((values: FormValues) => {
+    // ✅ ADDITIONAL CHECK: Prevent submission if letter is already disposed
+    if (letterDispositionData?.isDisposed) {
+      ModalHelpers.showWarning('Surat ini sudah didisposisikan. Silakan pilih surat lain.');
+      return;
+    }
+
+    // 🔄 PERBAIKAN: Gunakan state terbaru untuk isiDisposisi
+    const submitValues = {
+      ...values,
+      isiDisposisi: isiDisposisiText
+    };
+
+    const errors = validateDisposisiData({
+      letterIn_id: letterData.letterIn_id,
+      tglDispo: submitValues.tanggalDisposisi.toISOString(),
+      dispoKe: submitValues.tujuanDisposisi,
+      isiDispo: submitValues.isiDisposisi,
+      noDispo: submitValues.noDisposisi as number,
+    });
+
+    if (errors.length > 0) {
+      ModalHelpers.showValidationErrors(errors);
+      return;
+    }
+
+    ModalHelpers.showConfirmSubmit(() => handleSubmit(submitValues));
+  }, [letterData.letterIn_id, letterDispositionData?.isDisposed, isiDisposisiText]);
+
+  const handleBack = useCallback(() => {
+    router.push('/suratin');
+  }, [router]);
+
+  const handleSubmit = useCallback(async (values: FormValues) => {
+    updateAppState({ isSubmitting: true });
+    logDebug('Starting disposisi creation...');
 
     try {
       const requestData = {
@@ -285,164 +600,52 @@ export function DisposisiLetterForm() {
         noDispo: values.noDisposisi as number,
         tglDispo: values.tanggalDisposisi.toISOString(),
         dispoKe: values.tujuanDisposisi,
-        isiDispo: values.isiDisposisi.trim(),
+        isiDispo: values.isiDisposisi.trim(), // Sudah menggunakan nilai yang benar dari handleConfirmSubmit
       };
 
-      console.log('📝 Sending disposisi data:', requestData);
+      logDebug('Sending disposisi data:', requestData);
       const response = await createDisposisi(requestData);
-      console.log('✅ Disposisi created:', response);
+      logSuccess('Disposisi created:', response);
 
-      // Set submitted flag and get next number for future disposisi
-      setIsSubmitted(true);
+      updateAppState({ isSubmitted: true });
 
-      // Get next number for future disposisi forms
-// ✅ PERBAIKAN: Refresh nomor disposisi LANGSUNG setelah berhasil
-			console.log('🔄 Refreshing next disposisi number...');
-			await refetchNextDisposisi();
+      // Refresh next disposisi number
+      logDebug('Refreshing next disposisi number...');
+      await refetchNextDisposisi();
 
-      // Check if this was saved to localStorage (fallback mode)
-      const isLocalStorage = response.id.startsWith('dispo_');
-
-      modals.open({
-        title: isLocalStorage ? 'Berhasil (Mode Offline)' : 'Berhasil',
-        centered: true,
-        children: (
-          <Box>
-            <Text size="sm" mb="md">
-              Disposisi berhasil {isLocalStorage ? 'disimpan secara lokal' : 'dibuat'} dengan nomor: <strong>{response.noDispo}</strong>
-            </Text>
-
-            <Group justify="flex-end" gap="sm">
-              {isLocalStorage && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const saved = getDisposisiFromLocalStorage();
-                    console.log('💾 Saved disposisi list:', saved);
-                    modals.open({
-                      title: 'Data Tersimpan',
-                      children: (
-                        <Box>
-                          <Text size="sm" mb="sm">Total disposisi tersimpan: {saved.length}</Text>
-                          {saved.slice(-3).map((item, index) => (
-                            <Text key={index} size="xs" c="dimmed">
-                              • No.{item.noDispo} - {new Date(item.createdAt).toLocaleString('id-ID')}
-                            </Text>
-                          ))}
-                        </Box>
-                      )
-                    });
-                  }}
-                >
-                  Lihat Data
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                onClick={() => {
-                  modals.closeAll();
-                  resetForm();
-                }}
-              >
-                Disposisi Lain
-              </Button>
-              <Button
-                onClick={() => {
-                  modals.closeAll();
-                  handleBack();
-                }}
-              >
-                Selesai
-              </Button>
-            </Group>
-          </Box>
-        )
-      });
+      ModalHelpers.showSuccessResult(
+        response,
+        () => {
+          modals.closeAll();
+          resetForm();
+        },
+        () => {
+          modals.closeAll();
+          handleBack();
+        }
+      );
 
     } catch (error: any) {
-      console.error('❌ Submit error details:', error);
-
-      let errorMessage = "Terjadi kesalahan saat membuat disposisi.";
-
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (error.response) {
-        try {
-          const errorData = await error.response.json();
-          errorMessage = errorData.message || `HTTP ${error.response.status}: ${error.response.statusText}`;
-        } catch (e) {
-          errorMessage = `HTTP ${error.response.status}: ${error.response.statusText}`;
-        }
-      }
-
-      // Add helpful suggestions based on error type
-      if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
-        errorMessage += '\n\nSaran: Periksa apakah backend sudah berjalan dan endpoint /api/disposisi tersedia.';
-      }
-
-      modals.open({
-        title: 'Error Membuat Disposisi',
-        centered: true,
-        children: (
-          <Box>
-            <Text size="sm" style={{ whiteSpace: 'pre-line' }}>{errorMessage}</Text>
-            <Button
-              onClick={() => modals.closeAll()}
-              mt="md"
-              fullWidth
-            >
-              OK
-            </Button>
-          </Box>
-        )
-      });
+      logError('Submit error details:', error);
+      ModalHelpers.showError(error);
     } finally {
-      setLoading(false);
+      updateAppState({ isSubmitting: false });
     }
-  };
+  }, [letterData.letterIn_id, refetchNextDisposisi, resetForm, handleBack]);
 
-  const handleBack = () => {
-    router.push('/suratin');
-  };
-
-  const resetForm = useCallback(() => {
-    console.log('🔄 Resetting disposisi form...');
-
-    // Reset form values
-    form.reset();
-
-    // Reset local state
-    setSearchAgenda('');
-    setSelectedYear('2025');
-    setLetterFound(false);
-    setSearchAttempted(false);
-    setEnableSearch(false);
-    setIsSubmitted(false);
-    clearLetterData();
-
-    // Get fresh disposisi number for new form
-    setTimeout(() => {
-      refetchNextDisposisi();
-    }, 100);
-
-    console.log('✅ Disposisi form reset completed');
-  }, []);
-
+  // ========== RENDER HELPERS ==========
   const renderDisposisiNumber = () => {
-    if (form.values.noDisposisi || nextDisposisiData?.noDispo) {
-      const displayNumber = form.values.noDisposisi || nextDisposisiData?.noDispo;
+    const displayNumber = form.values.noDisposisi || nextDisposisiData?.noDispo;
+
+    if (displayNumber) {
       return (
         <Box>
           <Text size="sm" fw={500} mb={5}>Nomor Disposisi</Text>
-          <Group gap="xs">
-            <TextInput
-              value={displayNumber?.toString() || ''}
-              placeholder="Nomor sequential"
-              style={{ flex: 1 }}
-              readOnly
-            />
-          </Group>
+          <TextInput
+            value={displayNumber.toString()}
+            placeholder="Nomor sequential"
+            readOnly
+          />
         </Box>
       );
     }
@@ -464,209 +667,260 @@ export function DisposisiLetterForm() {
     );
   };
 
+  const renderSearchSection = () => (
+    <Grid mb="md">
+      <Grid.Col span={4}>
+        <TextInput
+          value={searchState.agenda}
+          onChange={(event) => handleAgendaChange(event.currentTarget.value)} // 🔄 PERBAIKAN
+          label="Nomor Agenda"
+          placeholder="Ketik nomor agenda surat"
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleSearchLetter();
+            }
+          }}
+        />
+      </Grid.Col>
+
+      <Grid.Col span={4}>
+        <Select
+          value={searchState.year}
+          onChange={(value) => updateSearchState({
+            year: value || CURRENT_YEAR.toString(),
+            shouldSearch: false, // 🆕 Reset search flag saat ganti tahun
+            isAttempted: false,
+            isFound: false
+          })}
+          label="Tahun"
+          placeholder="Pilih tahun"
+          data={YEAR_OPTIONS}
+          searchable
+        />
+      </Grid.Col>
+
+      <Grid.Col span={4}>
+        <Button
+          fullWidth
+          variant="outline"
+          mt="24"
+          onClick={handleSearchLetter}
+          loading={searchState.isLoading || isCheckingDisposition}
+          leftSection={<IconSearch size={16} />}
+          style={{
+            backgroundColor: '#f2f2f2',
+            borderColor: '#a2a2a2',
+            color: '#000',
+          }}
+        >
+          {searchState.isLoading || isCheckingDisposition ? 'Mencari...' : 'Cari'}
+        </Button>
+      </Grid.Col>
+    </Grid>
+  );
+
+  const renderDispositionStatus = () => {
+    if (!searchState.isAttempted || !letterDispositionData) return null;
+
+    if (letterDispositionData.isDisposed) {
+      return (
+        <Alert color="red" variant="light" mb="md">
+          <Group gap="xs">
+            <IconInfoCircle size={16} />
+            <Text size="sm" fw={500}>
+              ⚠️ Surat sudah didisposisikan
+            </Text>
+          </Group>
+          <Text size="xs" c="dimmed" mt="xs">
+            Surat ini tidak dapat didisposisi lagi karena sudah pernah didisposisi sebelumnya.
+          </Text>
+        </Alert>
+      );
+    }
+
+    if (searchState.isFound && letterData.letterIn_id) {
+      return (
+        <Alert color="green" variant="light" mb="md">
+          <Group gap="xs">
+            <IconCheck size={16} />
+            <Text size="sm" fw={500}>
+              ✅ Surat dapat didisposisi
+            </Text>
+          </Group>
+          <Text size="xs" c="dimmed" mt="xs">
+            Surat ditemukan dan belum pernah didisposisi. Anda dapat melanjutkan proses disposisi.
+          </Text>
+        </Alert>
+      );
+    }
+
+    return null;
+  };
+
+  const renderLetterDataSection = () => (
+    <Box mb="lg">
+      <TextInput
+        value={letterData.noSurat}
+        label="No Surat"
+        placeholder="Akan terisi otomatis setelah pencarian"
+        readOnly
+        mb="md"
+      />
+
+      <TextInput
+        value={letterData.suratDari}
+        label="Surat Dari"
+        placeholder="Akan terisi otomatis setelah pencarian"
+        readOnly
+        mb="md"
+      />
+
+      <TextInput
+        value={letterData.perihal}
+        label="Perihal"
+        placeholder="Akan terisi otomatis setelah pencarian"
+        readOnly
+        mb="md"
+      />
+
+      <Grid mb="md">
+        <Grid.Col span={6}>
+          <TextInput
+            value={formatDateToLocalString(letterData.tanggalSurat)}
+            label="Tanggal Surat"
+            placeholder="Akan terisi otomatis setelah pencarian"
+            readOnly
+          />
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <TextInput
+            value={formatDateToLocalString(letterData.diterimaTanggal)}
+            label="Diterima Tanggal"
+            placeholder="Akan terisi otomatis setelah pencarian"
+            readOnly
+          />
+        </Grid.Col>
+      </Grid>
+
+      <TextInput
+        value={letterData.kodeKlasifikasi}
+        label="Kode Klasifikasi Surat"
+        placeholder="Akan terisi otomatis setelah pencarian"
+        readOnly
+        mb="md"
+      />
+
+      <TextInput
+        value={letterData.jenisSurat}
+        label="Jenis Surat"
+        placeholder="Akan terisi otomatis setelah pencarian"
+        readOnly
+        mb="md"
+      />
+    </Box>
+  );
+
+  const renderDisposisiSection = () => (
+    <Box mb="lg">
+      <Text fw={600} mb="md" c="green">Data Disposisi</Text>
+
+      <Box mb="md">
+        {renderDisposisiNumber()}
+      </Box>
+
+      <DateInput
+        {...form.getInputProps('tanggalDisposisi')}
+        label="Tanggal Disposisi"
+        placeholder="Pilih tanggal"
+        valueFormat="DD-MM-YYYY"
+        clearable
+        mb="md"
+      />
+
+      <Box mb="md">
+        <Text size="sm" fw={500} mb="sm">Didisposisikan Ke</Text>
+        <Text size="xs" c="dimmed" mb="sm">Pilih tujuan disposisi (bisa lebih dari satu)</Text>
+
+        <Checkbox.Group {...form.getInputProps('tujuanDisposisi')}>
+          <Group mt="xs">
+            {DEPARTMENT_OPTIONS.map((dept) => (
+              <Checkbox key={dept.value} value={dept.value} label={dept.label} />
+            ))}
+          </Group>
+        </Checkbox.Group>
+
+        {form.errors.tujuanDisposisi && (
+          <Text size="xs" c="red" mt="xs">{form.errors.tujuanDisposisi}</Text>
+        )}
+      </Box>
+
+      <Textarea
+        value={isiDisposisiText} // 🔄 Menggunakan state terpisah
+        onChange={handleIsiDisposisiChange} // 🔄 Handler custom
+        error={form.errors.isiDisposisi} // Tetap menggunakan form error
+        label="Isi Disposisi"
+        placeholder="Tulis isi disposisi di sini"
+        autosize
+        minRows={4}
+        mb="xs"
+      />
+      <Text size="xs" c="dimmed" mb="md">
+        {isiDisposisiText.length}/500 karakter {/* 🔄 Menggunakan state terpisah */}
+      </Text>
+    </Box>
+  );
+
+  const renderActionButtons = () => (
+    <Group justify="flex-start" gap="md" mt="lg">
+      <Button
+        type="submit"
+        loading={appState.isSubmitting}
+        disabled={!searchState.isFound || letterDispositionData?.isDisposed}
+      >
+        {appState.isSubmitting ? 'Menyimpan...' : 'Simpan'}
+      </Button>
+      <Button
+        variant="outline"
+        onClick={resetForm}
+        style={{
+          backgroundColor: '#f2f2f2',
+          borderColor: '#a2a2a2',
+          color: '#000',
+        }}
+      >
+        Reset
+      </Button>
+    </Group>
+  );
+
+  // ========== MAIN RENDER ==========
   return (
     <Paper withBorder shadow="md" p="md">
       <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
         Kembali
       </Button>
 
-      <Box component="form" onSubmit={form.onSubmit((values) => handleConfirmSubmit(values))}>
+      <Box component="form" onSubmit={form.onSubmit(handleConfirmSubmit)}>
         <Text component="h2" fw="bold" fz="lg" mb="md">
           Disposisi Surat
         </Text>
 
-        {/* Search Section */}
-        <Grid mb="md">
-          <Grid.Col span={4}>
-            <TextInput
-              value={searchAgenda}
-              onChange={(event) => setSearchAgenda(event.currentTarget.value)}
-              label="Nomor Agenda"
-              placeholder="Ketik nomor agenda surat"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSearchLetter();
-                }
-              }}
-            />
-          </Grid.Col>
-
-          <Grid.Col span={4}>
-            <Select
-              value={selectedYear}
-              onChange={(value) => setSelectedYear(value || '2025')}
-              label="Tahun"
-              placeholder="Pilih tahun"
-              data={yearOptions}
-              searchable
-            />
-          </Grid.Col>
-
-          <Grid.Col span={4}>
-            <Button
-              fullWidth
-              variant="outline"
-              mt="24"
-              onClick={handleSearchLetter}
-              loading={searchLoading || isLetterLoading}
-              leftSection={<IconSearch size={16} />}
-              style={{
-                backgroundColor: '#f2f2f2',
-                borderColor: '#a2a2a2',
-                color: '#000',
-              }}
-            >
-              {searchLoading || isLetterLoading ? 'Mencari...' : 'Cari'}
-            </Button>
-          </Grid.Col>
-        </Grid>
-
-        {/* Search attempted but no letter found */}
-        {searchAttempted && !letterFound && !searchLoading && !isLetterLoading && (
+        {renderSearchSection()}
+        {renderDispositionStatus()}
+        {searchState.isAttempted && !searchState.isFound && !searchState.isLoading && !isCheckingDisposition && (
           <Alert color="yellow" variant="light" mb="md">
             <Group gap="xs">
               <IconInfoCircle size={16} />
               <Text size="sm">
-                Surat dengan nomor agenda <strong>{searchAgenda}</strong> tahun <strong>{selectedYear}</strong> tidak ditemukan.
+                Surat dengan nomor agenda <strong>{searchState.agenda}</strong> tahun <strong>{searchState.year}</strong> tidak ditemukan.
               </Text>
             </Group>
           </Alert>
         )}
-
-        {/* Data Surat Section */}
-        <Box mb="lg">
-          <TextInput
-            value={letterData.noSurat}
-            label="No Surat"
-            placeholder="Akan terisi otomatis setelah pencarian"
-            readOnly
-            mb="md"
-          />
-
-          <TextInput
-            value={letterData.suratDari}
-            label="Surat Dari"
-            placeholder="Akan terisi otomatis setelah pencarian"
-            readOnly
-            mb="md"
-          />
-
-          <TextInput
-            value={letterData.perihal}
-            label="Perihal"
-            placeholder="Akan terisi otomatis setelah pencarian"
-            readOnly
-            mb="md"
-          />
-
-          <Grid mb="md">
-            <Grid.Col span={6}>
-              <TextInput
-                value={letterData.tanggalSurat ? new Date(letterData.tanggalSurat).toLocaleDateString('id-ID') : ''}
-                label="Tanggal Surat"
-                placeholder="Akan terisi otomatis setelah pencarian"
-                readOnly
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                value={letterData.diterimaTanggal ? new Date(letterData.diterimaTanggal).toLocaleDateString('id-ID') : ''}
-                label="Diterima Tanggal"
-                placeholder="Akan terisi otomatis setelah pencarian"
-                readOnly
-              />
-            </Grid.Col>
-          </Grid>
-
-          <TextInput
-            value={letterData.kodeKlasifikasi}
-            label="Kode Klasifikasi Surat"
-            placeholder="Akan terisi otomatis setelah pencarian"
-            readOnly
-            mb="md"
-          />
-
-          <TextInput
-            value={letterData.jenisSurat}
-            label="Jenis Surat"
-            placeholder="Akan terisi otomatis setelah pencarian"
-            readOnly
-            mb="md"
-          />
-        </Box>
-
-        {/* Data Disposisi Section */}
-        <Box mb="lg">
-          <Text fw={600} mb="md" c="green">Data Disposisi</Text>
-
-          {/* No Disposisi - Auto generated, no button needed */}
-          <Box mb="md">
-            {renderDisposisiNumber()}
-          </Box>
-
-          <DateInput
-            {...form.getInputProps('tanggalDisposisi')}
-            label="Tanggal Disposisi"
-            placeholder="Pilih tanggal"
-            valueFormat="DD-MM-YYYY"
-            clearable
-            mb="md"
-          />
-
-          <Box mb="md">
-            <Text size="sm" fw={500} mb="sm">Didisposisikan Ke</Text>
-            <Text size="xs" c="dimmed" mb="sm">Pilih tujuan disposisi (bisa lebih dari satu)</Text>
-
-            <Checkbox.Group
-              {...form.getInputProps('tujuanDisposisi')}
-            >
-              <Group mt="xs">
-                {DEPARTMENT_OPTIONS.map((dept) => (
-                  <Checkbox key={dept.value} value={dept.value} label={dept.label} />
-                ))}
-              </Group>
-            </Checkbox.Group>
-
-            {form.errors.tujuanDisposisi && (
-              <Text size="xs" c="red" mt="xs">{form.errors.tujuanDisposisi}</Text>
-            )}
-          </Box>
-
-          <Textarea
-            {...form.getInputProps('isiDisposisi')}
-            label="Isi Disposisi"
-            placeholder="Tulis isi disposisi di sini"
-            autosize
-            minRows={4}
-            mb="xs"
-          />
-          <Text size="xs" c="dimmed" mb="md">
-            {form.values.isiDisposisi.length}/500 karakter
-          </Text>
-        </Box>
-
-				{/* Action Buttons */}
-				<Group justify="flex-start" gap="md" mt="lg">
-					<Button
-						type="submit"
-						loading={loading}
-						disabled={!letterFound}
-					>
-						{loading ? 'Menyimpan...' : 'Simpan'}
-					</Button>
-					<Button
-						variant="outline"
-						onClick={resetForm}
-						style={{
-							backgroundColor: '#f2f2f2',
-              borderColor: '#a2a2a2',
-              color: '#000',
-						}}
-					>
-						Reset
-					</Button>
-				</Group>
+        {renderLetterDataSection()}
+        {renderDisposisiSection()}
+        {renderActionButtons()}
       </Box>
     </Paper>
   );

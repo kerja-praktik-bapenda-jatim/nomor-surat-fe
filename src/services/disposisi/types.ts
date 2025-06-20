@@ -1,44 +1,54 @@
+// types/disposisi.ts - CLEAN VERSION
+
+// ========================== CORE ENTITIES =============================
+
 export interface Disposisi {
   id: string;
   noDispo: number;
   tglDispo: string;
-  dispoKe: string[]; // Array untuk multiple departments
+  dispoKe: string[];
   isiDispo: string;
   letterIn_id: string;
   createdAt: string;
   updatedAt: string;
   userId: string;
   updateUserId: string;
-
-  // Relations
-  LetterIn: {
-    id: string;
-    tahun: number;
-    noAgenda: number;
-    noSurat: string;
-    suratDari: string;
-    perihal: string;
-    tglSurat: string;
-    diterimaTgl: string;
-    ditujukanKe: string;
-    classificationId: string;
-    letterTypeId: string;
-    Classification: {
-      id: string;
-      name: string;
-    };
-    LetterType: {
-      id: string;
-      name: string;
-    };
-  };
-  CreateUser: {
-    username: string;
-  };
-  UpdateUser: {
-    username: string;
-  };
+  LetterIn: LetterInDetail;
+  CreateUser: UserBasic;
+  UpdateUser: UserBasic;
 }
+
+export interface LetterInDetail {
+  id: string;
+  tahun: number;
+  noAgenda: number;
+  noSurat: string;
+  suratDari: string;
+  perihal: string;
+  tglSurat: string;
+  diterimaTgl: string;
+  ditujukanKe: string;
+  classificationId: string;
+  letterTypeId: string;
+  Classification: Classification;
+  LetterType: LetterType;
+}
+
+export interface UserBasic {
+  username: string;
+}
+
+export interface Classification {
+  id: string;
+  name: string;
+}
+
+export interface LetterType {
+  id: string;
+  name: string;
+}
+
+// ========================== API RESPONSES =============================
 
 export interface DisposisiResponse {
   id: string;
@@ -50,66 +60,26 @@ export interface DisposisiResponse {
   createdAt: string;
   updatedAt: string;
   userId: string;
-
-  // Relations
-  LetterIn: {
-    id: string;
-    tahun: number;
-    noAgenda: number;
-    noSurat: string;
-    suratDari: string;
-    perihal: string;
-    tglSurat: string;
-    diterimaTgl: string;
-    ditujukanKe: string;
-    classificationId: string;
-    letterTypeId: string;
-    Classification: {
-      id: string;
-      name: string;
-    };
-    LetterType: {
-      id: string;
-      name: string;
-    };
-  };
+  LetterIn: LetterInDetail;
 }
 
-// Response wrapper untuk pagination
 export interface DisposisiListResponse {
   data: Disposisi[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalRows: number;
-    rowsPerPage: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-    nextPage: number | null;
-    prevPage: number | null;
-  };
+  pagination: PaginationInfo;
   success: boolean;
 }
 
-// Interface untuk create disposisi
-export interface CreateDisposisiRequest {
-  noDispo?: number; // Optional, bisa auto-generate
-  tglDispo: string;
-  dispoKe: string[]; // Array of department names
-  isiDispo: string;
-  letterIn_id: string; // Required - ID dari surat masuk
+export interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalRows: number;
+  rowsPerPage: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  nextPage: number | null;
+  prevPage: number | null;
 }
 
-// Interface untuk update disposisi
-export interface UpdateDisposisiRequest {
-  noDispo?: number;
-  tglDispo?: string;
-  dispoKe?: string[];
-  isiDispo?: string;
-  letterIn_id?: string;
-}
-
-// Interface untuk response pencarian surat berdasarkan agenda
 export interface LetterSearchResponse {
   id: string;
   tahun: number;
@@ -128,69 +98,66 @@ export interface LetterSearchResponse {
   filePath: string | null;
   createdAt: string;
   updatedAt: string;
-
-  // Relations
-  Classification: {
-    id: string;
-    name: string;
-  };
-  LetterType: {
-    id: string;
-    name: string;
-  };
-  Agenda?: {
-    id: string;
-    tglMulai: string;
-    tglSelesai: string;
-    jamMulai: string;
-    jamSelesai: string;
-    tempat: string;
-    acara: string;
-    catatan: string;
-    letterIn_id: string;
-  };
+  Classification: Classification;
+  LetterType: LetterType;
+  Agenda?: AgendaInfo;
 }
 
-// Interface untuk filter/export disposisi
+export interface AgendaInfo {
+  id: string;
+  tglMulai: string;
+  tglSelesai: string;
+  jamMulai: string;
+  jamSelesai: string;
+  tempat: string;
+  acara: string;
+  catatan: string;
+  letterIn_id: string;
+}
+
+// ========================== REQUEST PAYLOADS =============================
+
+export interface CreateDisposisiRequest {
+  noDispo?: number;
+  tglDispo: string;
+  dispoKe: string[];
+  isiDispo: string;
+  letterIn_id: string;
+}
+
+export interface UpdateDisposisiRequest {
+  noDispo?: number;
+  tglDispo?: string;
+  dispoKe?: string[];
+  isiDispo?: string;
+  letterIn_id?: string;
+}
+
 export interface DisposisiExportRequest {
   startDate: string;
   endDate: string;
   letterIn_id?: string;
-  departmentName?: string; // Filter berdasarkan department yang didisposisi
-  status?: 'active' | 'completed' | 'all';
+  departmentName?: string;
+  status?: DisposisiStatusFilter;
 }
 
-// Interface untuk statistik disposisi
+// ========================== STATISTICS & ANALYTICS =============================
+
 export interface DisposisiStatsResponse {
   totalDisposisi: number;
   disposisiHariIni: number;
   disposisiMingguIni: number;
   disposisiBulanIni: number;
-  departmentStats: {
-    departmentName: string;
-    count: number;
-  }[];
+  departmentStats: DepartmentStats[];
 }
 
-// Department options untuk dropdown
-export interface DepartmentOption {
-  value: string;
-  label: string;
+export interface DepartmentStats {
+  departmentName: string;
+  count: number;
 }
 
-// Constants untuk department yang bisa dipilih (sesuai dengan form)
-export const DEPARTMENT_OPTIONS: DepartmentOption[] = [
-  { value: 'SEKRETARIAT', label: 'Sekretariat' },
-  { value: 'BIDANG PAJAK DAERAH', label: 'Bidang Pajak Daerah' },
-  { value: 'BIDANG PERENCANAAN DAN PENGEMBANGAN', label: 'Bidang Perencanaan dan Pengembangan' },
-  { value: 'BIDANG RETRIBUSI DAN PENDAPATAN LAIN-LAIN', label: 'Bidang Retribusi dan Pendapatan Lain-lain' },
-  { value: 'BIDANG PENGENDALIAN DAN PEMBINAAN', label: 'Bidang Pengendalian dan Pembinaan' },
-];
+// ========================== ENUMS & CONSTANTS =============================
 
-// Export default untuk mudah import
-export default DEPARTMENT_OPTIONS;
-
-// Enum untuk status disposisi (jika diperlukan)
 export enum DisposisiStatus {
   DRAFT = 'draft',
   SENT = 'sent',
@@ -198,7 +165,23 @@ export enum DisposisiStatus {
   CANCELLED = 'cancelled'
 }
 
-// Interface untuk tracking disposisi (future feature)
+export type DisposisiStatusFilter = 'active' | 'completed' | 'all';
+
+export interface DepartmentOption {
+  value: string;
+  label: string;
+}
+
+export const DEPARTMENT_OPTIONS: readonly DepartmentOption[] = [
+  { value: 'SEKRETARIAT', label: 'Sekretariat' },
+  { value: 'BIDANG PAJAK DAERAH', label: 'Bidang Pajak Daerah' },
+  { value: 'BIDANG PERENCANAAN DAN PENGEMBANGAN', label: 'Bidang Perencanaan dan Pengembangan' },
+  { value: 'BIDANG RETRIBUSI DAN PENDAPATAN LAIN-LAIN', label: 'Bidang Retribusi dan Pendapatan Lain-lain' },
+  { value: 'BIDANG PENGENDALIAN DAN PEMBINAAN', label: 'Bidang Pengendalian dan Pembinaan' },
+] as const;
+
+// ========================== TRACKING & WORKFLOW =============================
+
 export interface DisposisiTracking {
   id: string;
   disposisiId: string;
@@ -210,3 +193,53 @@ export interface DisposisiTracking {
   createdAt: string;
   updatedAt: string;
 }
+
+// ========================== UTILITY TYPES =============================
+
+export type DisposisiFormData = Omit<CreateDisposisiRequest, 'letterIn_id'> & {
+  letterIn_id?: string;
+};
+
+export type DisposisiWithoutRelations = Omit<Disposisi, 'LetterIn' | 'CreateUser' | 'UpdateUser'>;
+
+export type DepartmentValue = typeof DEPARTMENT_OPTIONS[number]['value'];
+
+// ========================== TYPE GUARDS =============================
+
+export const isValidDepartment = (value: string): value is DepartmentValue => {
+  return DEPARTMENT_OPTIONS.some(option => option.value === value);
+};
+
+export const isDisposisiComplete = (disposisi: Disposisi): boolean => {
+  return Boolean(
+    disposisi.noDispo &&
+    disposisi.tglDispo &&
+    disposisi.dispoKe.length > 0 &&
+    disposisi.isiDispo &&
+    disposisi.letterIn_id
+  );
+};
+
+// ========================== DEFAULT VALUES =============================
+
+export const createEmptyDisposisi = (): DisposisiFormData => ({
+  noDispo: 0,
+  tglDispo: new Date().toISOString().split('T')[0],
+  dispoKe: [],
+  isiDispo: '',
+});
+
+export const createDefaultPagination = (): PaginationInfo => ({
+  currentPage: 1,
+  totalPages: 1,
+  totalRows: 0,
+  rowsPerPage: 10,
+  hasNextPage: false,
+  hasPrevPage: false,
+  nextPage: null,
+  prevPage: null,
+});
+
+// ========================== EXPORTS =============================
+
+export default DEPARTMENT_OPTIONS;
