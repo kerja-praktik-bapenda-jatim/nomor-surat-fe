@@ -267,12 +267,6 @@ export function DisposisiLetterForm() {
       children: (
         <Box>
           <Text size="sm" mb="sm">Apakah Anda yakin data disposisi sudah benar?</Text>
-          <Text size="xs" c="dimmed">
-            Surat: {letterData.noSurat} - {letterData.perihal}
-          </Text>
-          <Text size="xs" c="dimmed">
-            Tujuan: {values.tujuanDisposisi.join(', ')}
-          </Text>
         </Box>
       ),
       confirmProps: { children: 'Buat Disposisi' },
@@ -302,9 +296,9 @@ export function DisposisiLetterForm() {
       setIsSubmitted(true);
 
       // Get next number for future disposisi forms
-      setTimeout(() => {
-        refetchNextDisposisi();
-      }, 500);
+// ✅ PERBAIKAN: Refresh nomor disposisi LANGSUNG setelah berhasil
+			console.log('🔄 Refreshing next disposisi number...');
+			await refetchNextDisposisi();
 
       // Check if this was saved to localStorage (fallback mode)
       const isLocalStorage = response.id.startsWith('dispo_');
@@ -316,28 +310,6 @@ export function DisposisiLetterForm() {
           <Box>
             <Text size="sm" mb="md">
               Disposisi berhasil {isLocalStorage ? 'disimpan secara lokal' : 'dibuat'} dengan nomor: <strong>{response.noDispo}</strong>
-            </Text>
-
-            {isLocalStorage && (
-              <Alert color="blue" variant="light" mb="md">
-                <Text size="xs">
-                  <strong>Mode Offline:</strong> Data disimpan di browser karena backend belum tersedia.
-                  Data akan hilang jika browser cache dibersihkan.
-                </Text>
-              </Alert>
-            )}
-
-            <Text size="xs" c="dimmed" mb="sm">
-              Detail disposisi:
-            </Text>
-            <Text size="xs" c="dimmed" mb="xs">
-              • Surat: {letterData.noSurat}
-            </Text>
-            <Text size="xs" c="dimmed" mb="xs">
-              • Tujuan: {requestData.dispoKe.join(', ')}
-            </Text>
-            <Text size="xs" c="dimmed" mb="md">
-              • Tanggal: {new Date(requestData.tglDispo).toLocaleDateString('id-ID')}
             </Text>
 
             <Group justify="flex-end" gap="sm">
@@ -458,74 +430,18 @@ export function DisposisiLetterForm() {
   }, []);
 
   const renderDisposisiNumber = () => {
-    if (isNextDisposisiLoading) {
-      return (
-        <Box>
-          <Text size="sm" fw={500} mb={5}>No Disposisi</Text>
-          <Box h={36} bg="blue.0" style={{ borderRadius: 4, border: '1px solid #339af0' }}>
-            <Group gap="xs" h="100%" px="sm">
-              <Loader size="xs" color="blue" />
-              <Text size="sm" c="blue.7">Mengambil nomor urut...</Text>
-            </Group>
-          </Box>
-        </Box>
-      );
-    }
-
-    // Show error state with manual input option
-    if (nextDisposisiError) {
-      return (
-        <Box>
-          <Text size="sm" fw={500} mb={5}>No Disposisi</Text>
-          <Group gap="xs">
-            <TextInput
-              value={form.values.noDisposisi?.toString() || ''}
-              onChange={(event) => form.setFieldValue('noDisposisi', parseInt(event.currentTarget.value) || '')}
-              placeholder="Masukkan nomor manual"
-              style={{ flex: 1 }}
-              styles={{
-                input: {
-                  backgroundColor: '#fff3cd',
-                  borderColor: '#ffc107'
-                }
-              }}
-            />
-            <Text size="xs" c="orange.7" fw={500}>
-              Manual
-            </Text>
-          </Group>
-          <Text size="xs" c="orange.7" mt="xs">
-            API error - masukkan nomor secara manual
-          </Text>
-        </Box>
-      );
-    }
-
     if (form.values.noDisposisi || nextDisposisiData?.noDispo) {
       const displayNumber = form.values.noDisposisi || nextDisposisiData?.noDispo;
       return (
         <Box>
-          <Text size="sm" fw={500} mb={5}>No Disposisi</Text>
+          <Text size="sm" fw={500} mb={5}>Nomor Disposisi</Text>
           <Group gap="xs">
             <TextInput
               value={displayNumber?.toString() || ''}
               placeholder="Nomor sequential"
               style={{ flex: 1 }}
-              styles={{
-                input: {
-                  backgroundColor: '#e8f5e8',
-                  borderColor: '#51cf66',
-                  fontWeight: 600
-                }
-              }}
               readOnly
             />
-            <Group gap="xs">
-              <IconCheck size={16} color="#51cf66" />
-              <Text size="xs" c="green.7" fw={500}>
-                Sequential
-              </Text>
-            </Group>
           </Group>
         </Box>
       );
@@ -534,7 +450,7 @@ export function DisposisiLetterForm() {
     return (
       <TextInput
         value=""
-        label="No Disposisi"
+        label="Nomor Disposisi"
         placeholder="Memuat nomor urut..."
         readOnly
         styles={{
@@ -565,8 +481,8 @@ export function DisposisiLetterForm() {
             <TextInput
               value={searchAgenda}
               onChange={(event) => setSearchAgenda(event.currentTarget.value)}
-              label="No Agenda"
-              placeholder="1"
+              label="Nomor Agenda"
+              placeholder="Ketik nomor agenda surat"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -693,7 +609,7 @@ export function DisposisiLetterForm() {
             {...form.getInputProps('tanggalDisposisi')}
             label="Tanggal Disposisi"
             placeholder="Pilih tanggal"
-            valueFormat="DD/MM/YYYY"
+            valueFormat="DD-MM-YYYY"
             clearable
             mb="md"
           />
@@ -730,27 +646,27 @@ export function DisposisiLetterForm() {
           </Text>
         </Box>
 
-        {/* Action Buttons */}
-        <Group justify="flex-start" gap="md" mt="lg">
-          <Button
-            type="submit"
-            loading={loading}
-            disabled={!letterFound}
-          >
-            {loading ? 'Menyimpan...' : 'Simpan'}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={resetForm}
-            style={{
-              backgroundColor: '#f2f2f2',
+				{/* Action Buttons */}
+				<Group justify="flex-start" gap="md" mt="lg">
+					<Button
+						type="submit"
+						loading={loading}
+						disabled={!letterFound}
+					>
+						{loading ? 'Menyimpan...' : 'Simpan'}
+					</Button>
+					<Button
+						variant="outline"
+						onClick={resetForm}
+						style={{
+							backgroundColor: '#f2f2f2',
               borderColor: '#a2a2a2',
               color: '#000',
-            }}
-          >
-            Reset
-          </Button>
-        </Group>
+						}}
+					>
+						Reset
+					</Button>
+				</Group>
       </Box>
     </Paper>
   );

@@ -9,6 +9,7 @@ import { postLetterins, useNextAgendaNumber } from '@/services/suratin';
 import { modals } from '@mantine/modals';
 import { useClassifications, useLetterTypes } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
+import { LetterTypeManager } from '@/components/Form/Suratin/LetterTypeManager';
 
 interface FormValues {
     noSurat: string;
@@ -35,7 +36,7 @@ interface FormValues {
 
 export function CreateLetterForm() {
     const { data: classificationsData, isLoading: isClassificationsLoading, error: classificationsError } = useClassifications();
-    const { data: letterTypesData, isLoading: isLetterTypesLoading } = useLetterTypes();
+    const { data: letterTypesData, isLoading: isLetterTypesLoading, refetch: refetchLetterTypes } = useLetterTypes();
     // ✅ GUNAKAN HOOK UNTUK GET NEXT AGENDA NUMBER
     const { data: nextAgendaData, isLoading: isNextAgendaLoading, error: nextAgendaError, refetch: refetchNextAgenda } = useNextAgendaNumber();
 
@@ -61,6 +62,7 @@ export function CreateLetterForm() {
     const [agenda, setAgenda] = useState(false);
     const [langsungKe, setLangsungKe] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [letterTypeManagerOpened, setLetterTypeManagerOpened] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -275,48 +277,52 @@ export function CreateLetterForm() {
         router.push('/suratin');
     };
 
-		const resetForm = () => {
-				console.log('🔄 Resetting form...'); // Debug log
+    const resetForm = () => {
+        console.log('🔄 Resetting form...'); // Debug log
 
-				// Method 1: Set values explicitly
-				form.setValues({
-						noSurat: '',
-						suratDari: '',
-						perihal: '',
-						tglSurat: new Date(),
-						diterimaTgl: new Date(),
-						langsungKe: false,
-						ditujukanKe: '',
-						agenda: false,
-						classificationId: null,
-						letterTypeId: null,
-						file: null,
+        // Method 1: Set values explicitly
+        form.setValues({
+            noSurat: '',
+            suratDari: '',
+            perihal: '',
+            tglSurat: new Date(),
+            diterimaTgl: new Date(),
+            langsungKe: false,
+            ditujukanKe: '',
+            agenda: false,
+            classificationId: null,
+            letterTypeId: null,
+            file: null,
 
-						// Agenda fields
-						tglMulai: new Date(),
-						tglSelesai: new Date(),
-						jamMulai: '',
-						jamSelesai: '',
-						tempat: '',
-						acara: '',
-						catatan: '',
-				});
+            // Agenda fields
+            tglMulai: new Date(),
+            tglSelesai: new Date(),
+            jamMulai: '',
+            jamSelesai: '',
+            tempat: '',
+            acara: '',
+            catatan: '',
+        });
 
-				// Method 2: Clear all errors
-				form.clearErrors();
+        // Method 2: Clear all errors
+        form.clearErrors();
 
-				// Method 3: Reset local state
-				setAgenda(false);
-				setLangsungKe(false);
+        // Method 3: Reset local state
+        setAgenda(false);
+        setLangsungKe(false);
 
-				// Method 4: Force re-render dengan timeout
-				setTimeout(() => {
-						form.clearErrors();
-						refetchNextAgenda();
-				}, 100);
+        // Method 4: Force re-render dengan timeout
+        setTimeout(() => {
+            form.clearErrors();
+            refetchNextAgenda();
+        }, 100);
 
-				console.log('✅ Form reset completed'); // Debug log
-		};
+        console.log('✅ Form reset completed'); // Debug log
+    };
+
+    const handleLetterTypeUpdated = async () => {
+        await refetchLetterTypes();
+    };
 
     // ✅ RENDER NOMOR AGENDA DENGAN LOADING YANG LEBIH SMOOTH
     const renderAgendaNumber = () => {
@@ -403,16 +409,32 @@ export function CreateLetterForm() {
                         </Grid.Col>
 
                         <Grid.Col span={6}>
-                            <Select
-                                {...form.getInputProps('letterTypeId')}
-                                label="Jenis Surat"
-                                placeholder="Pilih jenis surat"
-                                data={letterTypeOptions}
-                                clearable
-                                searchable
-                                withAsterisk
-                                nothingFoundMessage="Jenis surat tidak ditemukan..."
-                            />
+                            <Box>
+                                <Text size="sm" fw={500} mb={5}>
+                                    Jenis Surat <Text component="span" c="red">*</Text>
+                                </Text>
+                                <Group gap="xs" align="flex-end">
+                                    <Box style={{ flex: 1 }}>
+                                        <Select
+                                            {...form.getInputProps('letterTypeId')}
+                                            placeholder={isLetterTypesLoading ? "Memuat data..." : "Pilih jenis surat"}
+                                            data={letterTypeOptions}
+                                            clearable
+                                            searchable
+                                            nothingFoundMessage="Jenis surat tidak ditemukan..."
+                                            disabled={isLetterTypesLoading}
+                                        />
+                                    </Box>
+                                    <Button
+                                        size="sm"
+                                        variant="light"
+                                        onClick={() => setLetterTypeManagerOpened(true)}
+                                        style={{ height: 36 }} // Match Select height
+                                    >
+                                        Kelola
+                                    </Button>
+                                </Group>
+                            </Box>
                         </Grid.Col>
 
                         <Grid.Col span={6}>
@@ -584,22 +606,29 @@ export function CreateLetterForm() {
                     <Space h="sm" />
 
                     <Group justify="flex-end" mt="md">
-												<Button
-														variant="outline"
-														onClick={resetForm}
-												>
-														Reset Form
-												</Button>
-												<Button
-														type="submit"
-														loading={loading}
-														disabled={isNextAgendaLoading}
-												>
-														{loading ? 'Menyimpan...' : 'Submit'}
-												</Button>
-										</Group>
+                        <Button
+                            variant="outline"
+                            onClick={resetForm}
+                        >
+                            Reset Form
+                        </Button>
+                        <Button
+                            type="submit"
+                            loading={loading}
+                            disabled={isNextAgendaLoading}
+                        >
+                            {loading ? 'Menyimpan...' : 'Submit'}
+                        </Button>
+                    </Group>
                 </Box>
             </Paper>
+
+            {/* ✅ Letter Type Manager Modal */}
+            <LetterTypeManager
+                opened={letterTypeManagerOpened}
+                onClose={() => setLetterTypeManagerOpened(false)}
+                onLetterTypeAdded={handleLetterTypeUpdated}
+            />
         </>
     );
 }

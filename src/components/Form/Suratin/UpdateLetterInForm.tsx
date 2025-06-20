@@ -9,6 +9,7 @@ import { modals } from '@mantine/modals';
 import { useClassifications, useLetterTypes } from '@/services/data';
 import { getCurrentUser } from '@/services/auth';
 import { useLetterinById, updateLetterIn } from '@/services/suratin';
+import { LetterTypeManager } from '@/components/Form/Suratin/LetterTypeManager';
 import type { UpdateLetterInRequest } from '@/services/suratin/types';
 
 interface FormValues {
@@ -40,8 +41,8 @@ export function UpdateLetterInForm() {
     const letterId = Array.isArray(id) ? id[0] : id;
     const router = useRouter();
 
-    const { data: classificationsData, isLoading: isClassificationsLoading } = useClassifications();
-    const { data: letterTypesData, isLoading: isLetterTypesLoading } = useLetterTypes();
+    const { data: classificationsData, isLoading: isClassificationsLoading, refetch: refetchClassifications } = useClassifications();
+    const { data: letterTypesData, isLoading: isLetterTypesLoading, refetch: refetchLetterTypes } = useLetterTypes();
     const { data: letter, isLoading } = useLetterinById(letterId);
 
     const classificationOptions = classificationsData?.map((classification) => ({
@@ -65,8 +66,8 @@ export function UpdateLetterInForm() {
     const [loading, setLoading] = useState(false);
     const [langsungKe, setLangsungKe] = useState(false);
     const [agenda, setAgenda] = useState(false);
-    const [currentYear] = useState(new Date().getFullYear());
     const [hasExistingFile, setHasExistingFile] = useState(false);
+    const [letterTypeManagerOpened, setLetterTypeManagerOpened] = useState(false);
 
     const form = useForm<FormValues>({
         mode: 'uncontrolled',
@@ -286,6 +287,10 @@ export function UpdateLetterInForm() {
         router.push('/suratin');
     };
 
+    const handleLetterTypeUpdated = async () => {
+        await refetchLetterTypes();
+    };
+
     if (isLoading || isClassificationsLoading || isLetterTypesLoading) {
         return (
             <Paper withBorder shadow="md" p="md">
@@ -295,245 +300,269 @@ export function UpdateLetterInForm() {
     }
 
     return (
-        <Paper withBorder shadow="md" p="md">
-            <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
-                Kembali
-            </Button>
-            <Box component="form" onSubmit={form.onSubmit(handleSubmit)}>
-                <Text component="h2" fw="bold" fz="lg">
-                    Edit Surat Masuk
-                </Text>
+        <>
+            <Paper withBorder shadow="md" p="md">
+                <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
+                    Kembali
+                </Button>
+                <Box component="form" onSubmit={form.onSubmit(handleSubmit)}>
+                    <Text component="h2" fw="bold" fz="lg">
+                        Edit Surat Masuk
+                    </Text>
 
-                <Grid>
-                    {/* ✅ No Agenda - READONLY */}
-                    <Grid.Col span={6}>
-                        <TextInput
-                            value={letter?.noAgenda?.toString()}
-                            label="No Agenda"
-                            readOnly
-                        />
-                    </Grid.Col>
+                    <Grid>
+                        {/* ✅ No Agenda - READONLY */}
+                        <Grid.Col span={6}>
+                            <TextInput
+                                value={letter?.noAgenda?.toString()}
+                                label="No Agenda"
+                                readOnly
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={6}>
-                        <TextInput
-                            {...form.getInputProps('noSurat')}
-                            label="No Surat"
-                            placeholder="Masukkan nomor surat"
-                            withAsterisk
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={6}>
+                            <TextInput
+                                {...form.getInputProps('noSurat')}
+                                label="No Surat"
+                                placeholder="Masukkan nomor surat"
+                                withAsterisk
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={6}>
-                        <Select
-                            {...form.getInputProps('classificationId')}
-                            label="Klasifikasi Surat"
-                            placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih klasifikasi"}
-                            data={classificationOptions}
-                            clearable
-                            searchable
-                            withAsterisk
-                            nothingFoundMessage="Klasifikasi tidak ditemukan..."
-                            disabled={isClassificationsLoading}
-                            defaultValue={letter?.classificationId}
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={6}>
+                            <Select
+                                {...form.getInputProps('classificationId')}
+                                label="Klasifikasi Surat"
+                                placeholder={isClassificationsLoading ? "Memuat data..." : "Pilih klasifikasi"}
+                                data={classificationOptions}
+                                clearable
+                                searchable
+                                withAsterisk
+                                nothingFoundMessage="Klasifikasi tidak ditemukan..."
+                                disabled={isClassificationsLoading}
+                                defaultValue={letter?.classificationId}
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={6}>
-                        <Select
-                            {...form.getInputProps('letterTypeId')}
-                            label="Jenis Surat"
-                            placeholder={isLetterTypesLoading ? "Memuat data..." : "Pilih jenis surat"}
-                            data={letterTypeOptions}
-                            clearable
-                            searchable
-                            withAsterisk
-                            nothingFoundMessage="Jenis surat tidak ditemukan..."
-                            disabled={isLetterTypesLoading}
-                            defaultValue={letter?.letterTypeId?.toString()}
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={6}>
+                            <Box>
+                                <Text size="sm" fw={500} mb={5}>
+                                    Jenis Surat <Text component="span" c="red">*</Text>
+                                </Text>
+                                <Group gap="xs" align="flex-end">
+                                    <Box style={{ flex: 1 }}>
+                                        <Select
+                                            {...form.getInputProps('letterTypeId')}
+                                            placeholder={isLetterTypesLoading ? "Memuat data..." : "Pilih jenis surat"}
+                                            data={letterTypeOptions}
+                                            clearable
+                                            searchable
+                                            nothingFoundMessage="Jenis surat tidak ditemukan..."
+                                            disabled={isLetterTypesLoading}
+                                            defaultValue={letter?.letterTypeId?.toString()}
+                                        />
+                                    </Box>
+                                    <Button
+                                        size="sm"
+                                        variant="light"
+                                        onClick={() => setLetterTypeManagerOpened(true)}
+                                        style={{ height: 36 }} // Match Select height
+                                    >
+                                        Kelola
+                                    </Button>
+                                </Group>
+                            </Box>
+                        </Grid.Col>
 
-                    <Grid.Col span={6}>
-                        <TextInput
-                            {...form.getInputProps('suratDari')}
-                            label="Surat Dari"
-                            placeholder="Asal surat"
-                            withAsterisk
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={6}>
+                            <TextInput
+                                {...form.getInputProps('suratDari')}
+                                label="Surat Dari"
+                                placeholder="Asal surat"
+                                withAsterisk
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={6}>
-                        <TextInput
-                            {...form.getInputProps('perihal')}
-                            label="Perihal"
-                            placeholder="Perihal surat"
-                            withAsterisk
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={6}>
+                            <TextInput
+                                {...form.getInputProps('perihal')}
+                                label="Perihal"
+                                placeholder="Perihal surat"
+                                withAsterisk
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={6}>
-                        <DateInput
-                            {...form.getInputProps('tglSurat')}
-                            label="Tanggal Surat"
-                            placeholder="Pilih tanggal"
-                            valueFormat="DD-MM-YYYY"
-                            clearable
-                            withAsterisk
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={6}>
+                            <DateInput
+                                {...form.getInputProps('tglSurat')}
+                                label="Tanggal Surat"
+                                placeholder="Pilih tanggal"
+                                valueFormat="DD-MM-YYYY"
+                                clearable
+                                withAsterisk
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={6}>
-                        <DateInput
-                            {...form.getInputProps('diterimaTgl')}
-                            label="Tanggal Diterima"
-                            placeholder="Pilih tanggal"
-                            valueFormat="DD-MM-YYYY"
-                            clearable
-                            withAsterisk
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={6}>
+                            <DateInput
+                                {...form.getInputProps('diterimaTgl')}
+                                label="Tanggal Diterima"
+                                placeholder="Pilih tanggal"
+                                valueFormat="DD-MM-YYYY"
+                                clearable
+                                withAsterisk
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={12}>
-                        <FileInput
-                            clearable
-                            {...form.getInputProps('file')}
-                            onChange={handleFileChange}
-                            label="Upload File Baru (Opsional)"
-                            placeholder={hasExistingFile ? "Pilih file untuk mengganti file lama" : "Pilih file"}
-                            accept="image/*,.pdf"
-                            description={hasExistingFile ? `File saat ini: ${letter?.filename || 'Tersedia'}` : "Belum ada file"}
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={12}>
+                            <FileInput
+                                clearable
+                                {...form.getInputProps('file')}
+                                onChange={handleFileChange}
+                                label="Upload File Baru (Opsional)"
+                                placeholder={hasExistingFile ? "Pilih file untuk mengganti file lama" : "Pilih file"}
+                                accept="image/*,.pdf"
+                                description={hasExistingFile ? `File saat ini: ${letter?.filename || 'Tersedia'}` : "Belum ada file"}
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={4}>
-                        <Checkbox
-                            checked={langsungKe}
-                            label="Langsung Ke"
-                            onChange={(e) => {
-                                const isChecked = e.currentTarget.checked;
-                                form.setFieldValue('langsungKe', isChecked);
-                                setLangsungKe(isChecked);
-                                if (!isChecked) {
-                                    form.setFieldValue('ditujukanKe', '');
-                                }
-                            }}
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={4}>
+                            <Checkbox
+                                checked={langsungKe}
+                                label="Langsung Ke"
+                                onChange={(e) => {
+                                    const isChecked = e.currentTarget.checked;
+                                    form.setFieldValue('langsungKe', isChecked);
+                                    setLangsungKe(isChecked);
+                                    if (!isChecked) {
+                                        form.setFieldValue('ditujukanKe', '');
+                                    }
+                                }}
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={8}>
-                        <Select
-                            {...form.getInputProps('ditujukanKe')}
-                            placeholder={langsungKe ? "Pilih tujuan" : ""}
-                            data={departmentOptions}
-                            clearable
-                            searchable
-                            withAsterisk={langsungKe}
-                            disabled={!langsungKe}
-                            nothingFoundMessage="Bidang tidak ditemukan..."
-                            defaultValue={letter?.ditujukanKe}
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={8}>
+                            <Select
+                                {...form.getInputProps('ditujukanKe')}
+                                placeholder={langsungKe ? "Pilih tujuan" : ""}
+                                data={departmentOptions}
+                                clearable
+                                searchable
+                                withAsterisk={langsungKe}
+                                disabled={!langsungKe}
+                                nothingFoundMessage="Bidang tidak ditemukan..."
+                                defaultValue={letter?.ditujukanKe}
+                            />
+                        </Grid.Col>
 
-                    <Grid.Col span={12}>
-                        <Checkbox
-                            checked={agenda}
-                            label="Masukkan ke Agenda"
-                            onChange={(e) => {
-                                const isChecked = e.currentTarget.checked;
-                                form.setFieldValue('agenda', isChecked);
-                                setAgenda(isChecked);
-                            }}
-                        />
-                    </Grid.Col>
+                        <Grid.Col span={12}>
+                            <Checkbox
+                                checked={agenda}
+                                label="Masukkan ke Agenda"
+                                onChange={(e) => {
+                                    const isChecked = e.currentTarget.checked;
+                                    form.setFieldValue('agenda', isChecked);
+                                    setAgenda(isChecked);
+                                }}
+                            />
+                        </Grid.Col>
 
-                    {/* Agenda Fields - hanya muncul jika agenda = true */}
-                    {agenda && (
-                        <>
-                            <Grid.Col span={12}>
-                                <Text fw="bold" size="md" mt="md" mb="sm">Informasi Agenda</Text>
-                            </Grid.Col>
+                        {/* Agenda Fields - hanya muncul jika agenda = true */}
+                        {agenda && (
+                            <>
+                                <Grid.Col span={12}>
+                                    <Text fw="bold" size="md" mt="md" mb="sm">Informasi Agenda</Text>
+                                </Grid.Col>
 
-                            <Grid.Col span={6}>
-                                <DateInput
-                                    {...form.getInputProps('tglMulai')}
-                                    label="Tanggal Mulai"
-                                    placeholder="Pilih tanggal"
-                                    valueFormat="DD-MM-YYYY"
-                                    clearable
-                                    withAsterisk
-                                />
-                            </Grid.Col>
+                                <Grid.Col span={6}>
+                                    <DateInput
+                                        {...form.getInputProps('tglMulai')}
+                                        label="Tanggal Mulai"
+                                        placeholder="Pilih tanggal"
+                                        valueFormat="DD-MM-YYYY"
+                                        clearable
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
 
-                            <Grid.Col span={6}>
-                                <DateInput
-                                    {...form.getInputProps('tglSelesai')}
-                                    label="Tanggal Selesai"
-                                    placeholder="Pilih tanggal"
-                                    valueFormat="DD-MM-YYYY"
-                                    clearable
-                                    withAsterisk
-                                />
-                            </Grid.Col>
+                                <Grid.Col span={6}>
+                                    <DateInput
+                                        {...form.getInputProps('tglSelesai')}
+                                        label="Tanggal Selesai"
+                                        placeholder="Pilih tanggal"
+                                        valueFormat="DD-MM-YYYY"
+                                        clearable
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
 
-                            <Grid.Col span={6}>
-                                <TimeInput
-                                    {...form.getInputProps('jamMulai')}
-                                    label="Jam Mulai"
-                                    withAsterisk
-                                />
-                            </Grid.Col>
+                                <Grid.Col span={6}>
+                                    <TimeInput
+                                        {...form.getInputProps('jamMulai')}
+                                        label="Jam Mulai"
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
 
-                            <Grid.Col span={6}>
-                                <TimeInput
-                                    {...form.getInputProps('jamSelesai')}
-                                    label="Jam Selesai"
-                                    withAsterisk
-                                />
-                            </Grid.Col>
+                                <Grid.Col span={6}>
+                                    <TimeInput
+                                        {...form.getInputProps('jamSelesai')}
+                                        label="Jam Selesai"
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
 
-                            <Grid.Col span={6}>
-                                <TextInput
-                                    {...form.getInputProps('tempat')}
-                                    label="Tempat"
-                                    placeholder="Lokasi kegiatan"
-                                    withAsterisk
-                                />
-                            </Grid.Col>
+                                <Grid.Col span={6}>
+                                    <TextInput
+                                        {...form.getInputProps('tempat')}
+                                        label="Tempat"
+                                        placeholder="Lokasi kegiatan"
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
 
-                            <Grid.Col span={6}>
-                                <TextInput
-                                    {...form.getInputProps('acara')}
-                                    label="Acara"
-                                    placeholder="Nama kegiatan"
-                                    withAsterisk
-                                />
-                            </Grid.Col>
+                                <Grid.Col span={6}>
+                                    <TextInput
+                                        {...form.getInputProps('acara')}
+                                        label="Acara"
+                                        placeholder="Nama kegiatan"
+                                        withAsterisk
+                                    />
+                                </Grid.Col>
 
-                            <Grid.Col span={12}>
-                                <TextInput
-                                    {...form.getInputProps('catatan')}
-                                    label="Catatan"
-                                    placeholder="Catatan tambahan (opsional)"
-                                />
-                            </Grid.Col>
-                        </>
-                    )}
-                </Grid>
+                                <Grid.Col span={12}>
+                                    <TextInput
+                                        {...form.getInputProps('catatan')}
+                                        label="Catatan"
+                                        placeholder="Catatan tambahan (opsional)"
+                                    />
+                                </Grid.Col>
+                            </>
+                        )}
+                    </Grid>
 
-                <Space h="sm" />
+                    <Space h="sm" />
 
-                <Group justify="flex-end" mt="md">
-                    <Button
-                        variant="outline"
-                        onClick={handleBack}
-                    >
-                        Batal
-                    </Button>
-                    <Button type="submit" loading={loading}>
-                        Update
-                    </Button>
-                </Group>
-            </Box>
-        </Paper>
+                    <Group justify="flex-end" mt="md">
+                        <Button
+                            variant="outline"
+                            onClick={handleBack}
+                        >
+                            Batal
+                        </Button>
+                        <Button type="submit" loading={loading}>
+                            Update
+                        </Button>
+                    </Group>
+                </Box>
+            </Paper>
+
+            {/* ✅ Letter Type Manager Modal */}
+            <LetterTypeManager
+                opened={letterTypeManagerOpened}
+                onClose={() => setLetterTypeManagerOpened(false)}
+                onLetterTypeAdded={handleLetterTypeUpdated}
+            />
+        </>
     );
 }
