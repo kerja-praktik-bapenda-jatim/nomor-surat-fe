@@ -65,7 +65,7 @@ interface LetterData {
   diterimaTanggal: Date | null;
   kodeKlasifikasi: string;
   jenisSurat: string;
-  filename: string; // Added filename property
+  filename: string;
 }
 
 interface SearchState {
@@ -75,7 +75,7 @@ interface SearchState {
   isAttempted: boolean;
   isFound: boolean;
   isEnabled: boolean;
-  shouldSearch: boolean; // 🆕 TAMBAHAN: Flag untuk kontrol pencarian
+  shouldSearch: boolean;
 }
 
 interface AppState {
@@ -99,7 +99,7 @@ const createInitialLetterData = (): LetterData => ({
   diterimaTanggal: null,
   kodeKlasifikasi: '',
   jenisSurat: '',
-  filename: '', // Initialize filename
+  filename: '',
 });
 
 const createInitialSearchState = (): SearchState => ({
@@ -109,7 +109,7 @@ const createInitialSearchState = (): SearchState => ({
   isAttempted: false,
   isFound: false,
   isEnabled: false,
-  shouldSearch: false, // 🆕 TAMBAHAN: Default false
+  shouldSearch: false,
 });
 
 const createInitialAppState = (): AppState => ({
@@ -145,7 +145,11 @@ const useDisposisiForm = () => {
 // ========================== UTILITY FUNCTIONS =============================
 
 const formatDateToLocalString = (date: Date | null): string => {
-  return date ? new Date(date).toLocaleDateString('id-ID') : '';
+  return date ?
+    new Date(date)
+      .toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      .replace(/\//g, '-')
+    : '';
 };
 
 const logDebug = (message: string, data?: any) => {
@@ -248,7 +252,7 @@ class ModalHelpers {
           <Text size="sm" mb="sm">Total disposisi tersimpan: {saved.length}</Text>
           {saved.slice(-3).map((item, index) => (
             <Text key={index} size="xs" c="dimmed">
-              • No.{item.noDispo} - {new Date(item.createdAt).toLocaleString('id-ID')}
+              • No.{item.noDispo} - {formatDateToLocalString(new Date(item.createdAt))}
             </Text>
           ))}
         </Box>
@@ -266,7 +270,7 @@ class ModalHelpers {
     }
 
     if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
-      errorMessage += '\n\nSaran: Periksa apakah backend sudah berjalan dan endpoint /api/disposisi tersedia.';
+      errorMessage += 'Saran: Periksa apakah backend sudah berjalan dan endpoint /api/disposisi tersedia.';
     }
 
     modals.open({
@@ -308,7 +312,7 @@ class ModalHelpers {
                   <Text size="sm" c="dimmed">
                     Tanggal: <strong>
                       {dispositionItem.tglDispo ?
-                        new Date(dispositionItem.tglDispo).toLocaleDateString('id-ID') :
+                        formatDateToLocalString(new Date(dispositionItem.tglDispo)) :
                         '-'
                       }
                     </strong>
@@ -360,7 +364,7 @@ export function DisposisiLetterForm() {
   const [letterData, setLetterData] = useState<LetterData>(createInitialLetterData);
   const [searchState, setSearchState] = useState<SearchState>(createInitialSearchState);
   const [appState, setAppState] = useState<AppState>(createInitialAppState);
-  const [isiDisposisiText, setIsiDisposisiText] = useState<string>(''); // 🆕 State untuk character counter
+  const [isiDisposisiText, setIsiDisposisiText] = useState<string>('');
 
   const router = useRouter();
   const form = useDisposisiForm();
@@ -374,7 +378,6 @@ export function DisposisiLetterForm() {
     refetch: refetchNextDisposisi
   } = useNextDisposisiNumberWithFallback();
 
-  // 🔄 PERBAIKAN: Query hanya dijalankan ketika benar-benar diperlukan
   const {
     data: letterDispositionData,
     isLoading: isCheckingDisposition,
@@ -383,7 +386,7 @@ export function DisposisiLetterForm() {
   } = useLetterDispositionCheck(
     searchState.year,
     searchState.agenda,
-    searchState.shouldSearch && Boolean(searchState.agenda) // 🆕 Menggunakan shouldSearch
+    searchState.shouldSearch && Boolean(searchState.agenda)
   );
 
   // ========== SEARCH STATE HELPERS ==========
@@ -401,12 +404,10 @@ export function DisposisiLetterForm() {
     updateAppState({ user: currentUser });
     refetchNextDisposisi();
 
-    // 🆕 RESET STATE SAAT COMPONENT MOUNT
     logDebug('Component mounted, resetting search state...');
     setSearchState(createInitialSearchState());
     setLetterData(createInitialLetterData());
 
-    // Debug endpoint test
     logDebug('Testing disposisi-letterin endpoint...');
     fetch('http://localhost:8080/api/disposisi-letterin/next-number', {
       headers: { 'Authorization': `Bearer ${getTokenFromCookies()}` }
@@ -429,9 +430,9 @@ export function DisposisiLetterForm() {
 
     form.reset();
     setLetterData(createInitialLetterData());
-    setSearchState(createInitialSearchState()); // 🆕 Reset dengan state awal yang benar
+    setSearchState(createInitialSearchState());
     updateAppState({ isSubmitted: false });
-    setIsiDisposisiText(''); // 🆕 Reset character counter
+    setIsiDisposisiText('');
 
     setTimeout(() => {
       refetchNextDisposisi();
@@ -442,18 +443,16 @@ export function DisposisiLetterForm() {
 
   // ========== LETTER DATA AND DISPOSITION CHECK ==========
   useEffect(() => {
-    if (letterDispositionData && searchState.shouldSearch) { // 🔄 PERBAIKAN: Cek shouldSearch
+    if (letterDispositionData && searchState.shouldSearch) {
       logDebug('Letter disposition check result:', letterDispositionData);
 
       if (letterDispositionData.error) {
-        // Letter not found
         updateSearchState({ isFound: false, isAttempted: true });
         setLetterData(createInitialLetterData());
         return;
       }
 
       if (letterDispositionData.letter) {
-        // Letter found, set the data
         setLetterData({
           letterIn_id: letterDispositionData.letter.id || '',
           noSurat: letterDispositionData.letter.noSurat || '',
@@ -463,23 +462,21 @@ export function DisposisiLetterForm() {
           diterimaTanggal: letterDispositionData.letter.diterimaTgl ? new Date(letterDispositionData.letter.diterimaTgl) : null,
           kodeKlasifikasi: letterDispositionData.letter.Classification?.name || '',
           jenisSurat: letterDispositionData.letter.LetterType?.name || '',
-          filename: letterDispositionData.letter.filename || '', // Set filename from API response
+          filename: letterDispositionData.letter.filename || '',
         });
 
         updateSearchState({ isFound: true, isAttempted: true });
 
-        // ✅ IMMEDIATE CHECK: Show warning if letter is already disposed
         if (letterDispositionData.isDisposed) {
           logWarning('Letter already disposed, showing warning');
 
-          // Use a timeout to prevent immediate state update during render
           setTimeout(() => {
             ModalHelpers.showLetterAlreadyDisposed(letterDispositionData, () => {
               form.reset();
               setLetterData(createInitialLetterData());
               setSearchState(createInitialSearchState());
               updateAppState({ isSubmitted: false });
-              setIsiDisposisiText(''); // 🆕 Reset character counter
+              setIsiDisposisiText('');
               setTimeout(() => refetchNextDisposisi(), 100);
             });
           }, 100);
@@ -488,11 +485,11 @@ export function DisposisiLetterForm() {
         }
       }
     }
-  }, [letterDispositionData, searchState.shouldSearch]); // 🔄 PERBAIKAN: Dependency yang tepat
+  }, [letterDispositionData, searchState.shouldSearch]);
 
   // ========== ERROR HANDLING ==========
   useEffect(() => {
-    if (dispositionCheckError && searchState.shouldSearch) { // 🔄 PERBAIKAN: Cek shouldSearch
+    if (dispositionCheckError && searchState.shouldSearch) {
       logError('Letter disposition check error, clearing data');
       updateSearchState({ isFound: false, isAttempted: true });
       setLetterData(createInitialLetterData());
@@ -500,7 +497,6 @@ export function DisposisiLetterForm() {
   }, [dispositionCheckError, searchState.shouldSearch]);
 
   // ========== EVENT HANDLERS ==========
-  // 🔄 PERBAIKAN: Handler pencarian yang lebih eksplisit
   const handleSearchLetter = useCallback(async () => {
     if (!searchState.agenda.trim()) {
       ModalHelpers.showWarning('Masukkan nomor agenda terlebih dahulu');
@@ -509,24 +505,22 @@ export function DisposisiLetterForm() {
 
     logDebug('Starting manual search...', { year: searchState.year, agenda: searchState.agenda });
 
-    // 🆕 Reset state sebelum pencarian
     updateSearchState({
       isLoading: true,
       isFound: false,
       isAttempted: false,
-      shouldSearch: false, // Reset dulu
+      shouldSearch: false,
     });
 
     updateAppState({ isSubmitted: false });
     setLetterData(createInitialLetterData());
 
     try {
-      // 🆕 Delay sebentar untuk memastikan state terupdate
       await new Promise(resolve => setTimeout(resolve, 100));
 
       logDebug('Triggering disposition check...');
       updateSearchState({
-        shouldSearch: true, // 🆕 Aktifkan pencarian
+        shouldSearch: true,
         isAttempted: true
       });
 
@@ -542,18 +536,16 @@ export function DisposisiLetterForm() {
     }
   }, [searchState.agenda, searchState.year]);
 
-  // 🆕 TAMBAHAN: Handler untuk input agenda (tidak auto-search)
   const handleAgendaChange = useCallback((value: string) => {
     updateSearchState({
       agenda: value,
-      shouldSearch: false, // 🆕 Jangan auto-search saat mengetik
+      shouldSearch: false,
       isAttempted: false,
       isFound: false
     });
     setLetterData(createInitialLetterData());
   }, []);
 
-  // 🆕 TAMBAHAN: Handler untuk isi disposisi (character counter)
   const handleIsiDisposisiChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = event.currentTarget.value;
     setIsiDisposisiText(value);
@@ -561,13 +553,11 @@ export function DisposisiLetterForm() {
   }, []);
 
   const handleConfirmSubmit = useCallback((values: FormValues) => {
-    // ✅ ADDITIONAL CHECK: Prevent submission if letter is already disposed
     if (letterDispositionData?.isDisposed) {
       ModalHelpers.showWarning('Surat ini sudah didisposisikan. Silakan pilih surat lain.');
       return;
     }
 
-    // 🔄 PERBAIKAN: Gunakan state terbaru untuk isiDisposisi
     const submitValues = {
       ...values,
       isiDisposisi: isiDisposisiText
@@ -603,7 +593,7 @@ export function DisposisiLetterForm() {
         noDispo: values.noDisposisi as number,
         tglDispo: values.tanggalDisposisi.toISOString(),
         dispoKe: values.tujuanDisposisi,
-        isiDispo: values.isiDisposisi.trim(), // Sudah menggunakan nilai yang benar dari handleConfirmSubmit
+        isiDispo: values.isiDisposisi.trim(),
       };
 
       logDebug('Sending disposisi data:', requestData);
@@ -612,7 +602,6 @@ export function DisposisiLetterForm() {
 
       updateAppState({ isSubmitted: true });
 
-      // Refresh next disposisi number
       logDebug('Refreshing next disposisi number...');
       await refetchNextDisposisi();
 
@@ -675,7 +664,7 @@ export function DisposisiLetterForm() {
       <Grid.Col span={4}>
         <TextInput
           value={searchState.agenda}
-          onChange={(event) => handleAgendaChange(event.currentTarget.value)} // 🔄 PERBAIKAN
+          onChange={(event) => handleAgendaChange(event.currentTarget.value)}
           label="Nomor Agenda"
           placeholder="Ketik nomor agenda surat"
           onKeyPress={(e) => {
@@ -692,7 +681,7 @@ export function DisposisiLetterForm() {
           value={searchState.year}
           onChange={(value) => updateSearchState({
             year: value || CURRENT_YEAR.toString(),
-            shouldSearch: false, // 🆕 Reset search flag saat ganti tahun
+            shouldSearch: false,
             isAttempted: false,
             isFound: false
           })}
@@ -825,9 +814,9 @@ export function DisposisiLetterForm() {
       <TextInput
         value={letterData.filename}
         label="File Digital"
-				placeholder="Akan terisi otomatis setelah pencarian"
+        placeholder="Akan terisi otomatis setelah pencarian"
         readOnly
-				mb="md"
+        mb="md"
       />
     </Box>
   );
@@ -867,9 +856,9 @@ export function DisposisiLetterForm() {
       </Box>
 
       <Textarea
-        value={isiDisposisiText} // 🔄 Menggunakan state terpisah
-        onChange={handleIsiDisposisiChange} // 🔄 Handler custom
-        error={form.errors.isiDisposisi} // Tetap menggunakan form error
+        value={isiDisposisiText}
+        onChange={handleIsiDisposisiChange}
+        error={form.errors.isiDisposisi}
         label="Isi Disposisi"
         placeholder="Tulis isi disposisi di sini"
         autosize
@@ -877,7 +866,7 @@ export function DisposisiLetterForm() {
         mb="xs"
       />
       <Text size="xs" c="dimmed" mb="md">
-        {isiDisposisiText.length}/500 karakter {/* 🔄 Menggunakan state terpisah */}
+        {isiDisposisiText.length}/500 karakter
       </Text>
     </Box>
   );
