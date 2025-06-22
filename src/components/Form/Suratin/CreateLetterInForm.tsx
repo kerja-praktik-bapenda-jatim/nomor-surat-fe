@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from 'react';
 import { Button, FileInput, TextInput, Text, Space, Box, Paper, Group, Select, Grid, Checkbox, Loader, Alert } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
@@ -24,7 +25,6 @@ interface FormValues {
     letterTypeId: string | null;
     file: File | null;
 
-    // Agenda fields (conditional)
     tglMulai: Date;
     tglSelesai: Date;
     jamMulai: string;
@@ -37,7 +37,6 @@ interface FormValues {
 export function CreateLetterForm() {
     const { data: classificationsData, isLoading: isClassificationsLoading, error: classificationsError } = useClassifications();
     const { data: letterTypesData, isLoading: isLetterTypesLoading, refetch: refetchLetterTypes } = useLetterTypes();
-    // ✅ GUNAKAN HOOK UNTUK GET NEXT AGENDA NUMBER
     const { data: nextAgendaData, isLoading: isNextAgendaLoading, error: nextAgendaError, refetch: refetchNextAgenda } = useNextAgendaNumber();
 
     const classificationOptions = classificationsData?.map((classification) => ({
@@ -68,7 +67,6 @@ export function CreateLetterForm() {
     useEffect(() => {
         const user = getCurrentUser();
         setUser(user);
-        // ✅ FORCE REFETCH saat component load
         refetchNextAgenda();
     }, [refetchNextAgenda]);
 
@@ -85,7 +83,6 @@ export function CreateLetterForm() {
             letterTypeId: (value) => (value ? null : 'Pilih jenis surat'),
             file: (value) => (value ? null : 'File tidak boleh kosong'),
 
-            // Agenda validations
             tglMulai: (value) => (agenda && !value ? 'Pilih tanggal mulai' : null),
             tglSelesai: (value) => (agenda && !value ? 'Pilih tanggal selesai' : null),
             jamMulai: (value) => (agenda && !value ? 'Pilih jam mulai' : null),
@@ -106,7 +103,6 @@ export function CreateLetterForm() {
             letterTypeId: null,
             file: null,
 
-            // Agenda fields
             tglMulai: new Date(),
             tglSelesai: new Date(),
             jamMulai: '',
@@ -133,12 +129,11 @@ export function CreateLetterForm() {
                 return;
             }
 
-            // ✅ TAMBAH VALIDASI SIZE dengan modal centered
-            const maxSize = 2 * 1024 * 1024; // 2MB
+            const maxSize = 2 * 1024 * 1024;
             if (file.size > maxSize) {
                 modals.open({
                     title: 'File Terlalu Besar',
-                    centered: true, // ✅ TAMBAH INI untuk center modal
+                    centered: true,
                     children: (
                         <Text size="sm">
                             Ukuran file maksimal 2MB. File Anda: {(file.size / 1024 / 1024).toFixed(2)}MB
@@ -173,13 +168,12 @@ export function CreateLetterForm() {
 
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
-        console.log('🚀 Starting form submission...'); // ✅ DEBUG
+        console.log('🚀 Starting form submission...');
 
         try {
             const formData = new FormData();
-            console.log('📝 Building form data...'); // ✅ DEBUG
+            console.log('📝 Building form data...');
 
-            // ✅ Letter fields TANPA noAgenda (auto-generate di backend)
             formData.append('noSurat', values.noSurat);
             formData.append('suratDari', values.suratDari);
             formData.append('perihal', values.perihal);
@@ -196,13 +190,12 @@ export function CreateLetterForm() {
                 formData.append('letterTypeId', values.letterTypeId);
             }
             if (values.file) {
-                console.log('📎 File size:', (values.file.size / 1024 / 1024).toFixed(2), 'MB'); // ✅ DEBUG
+                console.log('📎 File size:', (values.file.size / 1024 / 1024).toFixed(2), 'MB');
                 formData.append('file', values.file);
             }
 
-            // Agenda fields (hanya jika agenda = true)
             if (agenda) {
-                console.log('📅 Adding agenda data...'); // ✅ DEBUG
+                console.log('📅 Adding agenda data...');
                 formData.append('tglMulai', values.tglMulai.toISOString());
                 formData.append('tglSelesai', values.tglSelesai.toISOString());
                 formData.append('jamMulai', values.jamMulai);
@@ -214,9 +207,9 @@ export function CreateLetterForm() {
                 }
             }
 
-            console.log('🌐 Sending API request...'); // ✅ DEBUG
+            console.log('🌐 Sending API request...');
             const response = await postLetterins(formData);
-            console.log('✅ API response received:', response); // ✅ DEBUG
+            console.log('✅ API response received:', response);
 
             modals.open({
                 title: 'Berhasil',
@@ -281,9 +274,8 @@ export function CreateLetterForm() {
         await refetchLetterTypes();
     };
 
-		const [agendaNumber, setAgendaNumber] = useState("2025/0001");
+    const [agendaNumber, setAgendaNumber] = useState("2025/0001");
 
-    // ✅ RENDER NOMOR AGENDA DENGAN LOADING YANG LEBIH SMOOTH
     const renderAgendaNumber = () => {
         if (isNextAgendaLoading) {
             return (
@@ -339,7 +331,6 @@ export function CreateLetterForm() {
 
                     <Grid>
                         <Grid.Col span={6}>
-                            {/* ✅ TAMPILKAN NOMOR AGENDA FORMAT 2025/0001 */}
                             {renderAgendaNumber()}
                         </Grid.Col>
 
@@ -388,7 +379,7 @@ export function CreateLetterForm() {
                                         size="sm"
                                         variant="light"
                                         onClick={() => setLetterTypeManagerOpened(true)}
-                                        style={{ height: 30 }} // Match Select height
+                                        style={{ height: 30 }}
                                     >
                                         Kelola
                                     </Button>
@@ -488,7 +479,6 @@ export function CreateLetterForm() {
                             />
                         </Grid.Col>
 
-                        {/* Agenda Fields - hanya muncul jika agenda = true */}
                         {agenda && (
                             <>
                                 <Grid.Col span={12}>
@@ -564,19 +554,19 @@ export function CreateLetterForm() {
 
                     <Space h="sm" />
 
-										<Group justify="flex-end" mt="md">
-												<Button
-													variant="outline"
-													onClick={() => {
-														form.reset();
-														form.clearErrors();
-														form.setFieldValue('file', null);
-														setAgenda(false);
-														setLangsungKe(false);
-													}}
-												>
-													Reset Form
-												</Button>
+                    <Group justify="flex-end" mt="md">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                form.reset();
+                                form.clearErrors();
+                                form.setFieldValue('file', null);
+                                setAgenda(false);
+                                setLangsungKe(false);
+                            }}
+                        >
+                            Reset Form
+                        </Button>
                         <Button
                             type="submit"
                             loading={loading}
@@ -588,7 +578,6 @@ export function CreateLetterForm() {
                 </Box>
             </Paper>
 
-            {/* ✅ Letter Type Manager Modal */}
             <LetterTypeManager
                 opened={letterTypeManagerOpened}
                 onClose={() => setLetterTypeManagerOpened(false)}

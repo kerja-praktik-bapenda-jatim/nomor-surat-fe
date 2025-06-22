@@ -3,7 +3,6 @@ export interface BaseString {
     name: string;
 }
 
-// ✅ Tambah interface untuk LetterType
 export interface LetterType {
     id: number;
     name: string;

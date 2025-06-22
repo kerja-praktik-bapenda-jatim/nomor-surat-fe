@@ -53,7 +53,6 @@ export const getStorageLocation = async () => {
     return res;
 };
 
-// ✅ Tambah function untuk Letter Types
 export const getLetterTypes = async () => {
     const res = await ky.get(`${BASE_URL}lettertype`, {
     }).json<LetterType[]>();
@@ -108,7 +107,6 @@ export const useStorageLocations = () =>
         queryFn: () => getStorageLocation(),
     });
 
-// ✅ Tambah hook untuk Letter Types
 export const useLetterTypes = () =>
     useQuery<LetterType[]>({
         queryKey: ["LetterTypes"],

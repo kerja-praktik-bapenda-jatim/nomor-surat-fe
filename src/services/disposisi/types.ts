@@ -1,6 +1,35 @@
-// types/disposisi.ts - CLEAN VERSION
+export interface Letter {
+  id: string;
+  noAgenda: number;
+  tahun: number;
+  noSurat: string;
+  suratDari: string;
+  perihal: string;
+  tglSurat: string;
+  diterimaTgl: string;
+  filename?: string;
+  Classification?: { id: string; name: string };
+  LetterType?: { id: string; name: string };
+}
 
-// ========================== CORE ENTITIES =============================
+export interface CreateDisposisiPayload {
+  letterIn_id: string;
+  noDispo: number;
+  tglDispo: string;
+  dispoKe: string[];
+  isiDispo: string;
+}
+
+export interface LetterDispositionCheck {
+  isDisposed: boolean;
+  dispositions?: Disposisi[];
+  letter?: Letter;
+  error?: string;
+}
+
+export interface NextDisposisiNumber {
+  noDispo: number;
+}
 
 export interface Disposisi {
   id: string;
@@ -47,8 +76,6 @@ export interface LetterType {
   id: string;
   name: string;
 }
-
-// ========================== API RESPONSES =============================
 
 export interface DisposisiResponse {
   id: string;
@@ -115,8 +142,6 @@ export interface AgendaInfo {
   letterIn_id: string;
 }
 
-// ========================== REQUEST PAYLOADS =============================
-
 export interface CreateDisposisiRequest {
   noDispo?: number;
   tglDispo: string;
@@ -141,8 +166,6 @@ export interface DisposisiExportRequest {
   status?: DisposisiStatusFilter;
 }
 
-// ========================== STATISTICS & ANALYTICS =============================
-
 export interface DisposisiStatsResponse {
   totalDisposisi: number;
   disposisiHariIni: number;
@@ -155,8 +178,6 @@ export interface DepartmentStats {
   departmentName: string;
   count: number;
 }
-
-// ========================== ENUMS & CONSTANTS =============================
 
 export enum DisposisiStatus {
   DRAFT = 'draft',
@@ -180,8 +201,6 @@ export const DEPARTMENT_OPTIONS: readonly DepartmentOption[] = [
   { value: 'BIDANG PENGENDALIAN DAN PEMBINAAN', label: 'Bidang Pengendalian dan Pembinaan' },
 ] as const;
 
-// ========================== TRACKING & WORKFLOW =============================
-
 export interface DisposisiTracking {
   id: string;
   disposisiId: string;
@@ -194,17 +213,12 @@ export interface DisposisiTracking {
   updatedAt: string;
 }
 
-// ========================== UTILITY TYPES =============================
-
 export type DisposisiFormData = Omit<CreateDisposisiRequest, 'letterIn_id'> & {
   letterIn_id?: string;
 };
 
 export type DisposisiWithoutRelations = Omit<Disposisi, 'LetterIn' | 'CreateUser' | 'UpdateUser'>;
-
 export type DepartmentValue = typeof DEPARTMENT_OPTIONS[number]['value'];
-
-// ========================== TYPE GUARDS =============================
 
 export const isValidDepartment = (value: string): value is DepartmentValue => {
   return DEPARTMENT_OPTIONS.some(option => option.value === value);
@@ -219,8 +233,6 @@ export const isDisposisiComplete = (disposisi: Disposisi): boolean => {
     disposisi.letterIn_id
   );
 };
-
-// ========================== DEFAULT VALUES =============================
 
 export const createEmptyDisposisi = (): DisposisiFormData => ({
   noDispo: 0,
@@ -239,7 +251,5 @@ export const createDefaultPagination = (): PaginationInfo => ({
   nextPage: null,
   prevPage: null,
 });
-
-// ========================== EXPORTS =============================
 
 export default DEPARTMENT_OPTIONS;

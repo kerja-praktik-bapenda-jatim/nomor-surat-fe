@@ -29,7 +29,7 @@ export function LoginForm() {
 			await login({username, password});
 
 			// On success, redirect to the dashboard
-			router.push("/surat");
+			router.push("/suratin");
 		} catch (err: any) {
 			// Set the error message
 			setError(err.message);

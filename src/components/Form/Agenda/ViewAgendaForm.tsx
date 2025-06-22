@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 import {
   Grid,
   Paper,
@@ -18,7 +19,6 @@ import {
   IconClock,
   IconAlertCircle,
   IconSpeakerphone,
-  IconX
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
@@ -39,25 +39,20 @@ export function ViewAgenda({
   const [selectedAgenda, setSelectedAgenda] = useState<AgendaSurat | null>(null);
   const [modalOpened, setModalOpened] = useState(false);
 
-  // Function untuk filter dan sorting agenda yang akan datang
   const upcomingAgendaItems = useMemo(() => {
     const now = new Date();
-    const currentDate = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    const currentTime = now.toTimeString().split(' ')[0]; // Format: HH:MM:SS
+    const currentDate = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().split(' ')[0];
 
-    // Filter agenda yang akan datang
     const upcomingItems = agendaItems.filter((item) => {
       const itemDate = item.tglMulai ? item.tglMulai.split('T')[0] : '0000-00-00';
       const itemTime = item.jamMulai || '00:00:00';
 
-      // Jika tanggal agenda di masa depan, tampilkan
       if (itemDate > currentDate) {
         return true;
       }
 
-      // Jika tanggal agenda hari ini, cek jam
       if (itemDate === currentDate) {
-        // Convert jam ke format yang bisa dibandingkan
         const formatTime = (timeStr: string) => {
           const parts = timeStr.split(':');
           const hours = parts[0]?.padStart(2, '0') || '00';
@@ -69,26 +64,20 @@ export function ViewAgenda({
         return formatTime(itemTime) > formatTime(currentTime);
       }
 
-      // Jika tanggal sudah lewat, jangan tampilkan
       return false;
     });
 
-    // Sort agenda yang sudah difilter
     return upcomingItems.sort((a, b) => {
-      // Convert tanggal ke format yang bisa dibandingkan (YYYY-MM-DD)
       const dateA = a.tglMulai ? a.tglMulai.split('T')[0] : '0000-00-00';
       const dateB = b.tglMulai ? b.tglMulai.split('T')[0] : '0000-00-00';
 
-      // Bandingkan tanggal terlebih dahulu
       if (dateA !== dateB) {
         return dateA.localeCompare(dateB);
       }
 
-      // Jika tanggal sama, bandingkan jam
       const timeA = a.jamMulai || '00:00:00';
       const timeB = b.jamMulai || '00:00:00';
 
-      // Convert jam ke format yang bisa dibandingkan (HH:MM:SS)
       const formatTime = (timeStr: string) => {
         const parts = timeStr.split(':');
         const hours = parts[0]?.padStart(2, '0') || '00';
@@ -101,27 +90,21 @@ export function ViewAgenda({
     });
   }, [agendaItems]);
 
-  // Removed navigation function since we don't want card click to navigate
-
   const handleDetailClick = (item: AgendaSurat, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedAgenda(item);
     setModalOpened(true);
   };
 
-  // FIXED: Single formatDate function
   const formatDate = (dateString: string) => {
     try {
       if (!dateString) return "Tanggal tidak valid";
 
-      // Parse date sebagai local date, bukan UTC
-      // Jika format YYYY-MM-DD, parse sebagai local
       const dateParts = dateString.split('T')[0].split('-');
       const year = parseInt(dateParts[0]);
-      const month = parseInt(dateParts[1]) - 1; // Month di JavaScript 0-indexed
+      const month = parseInt(dateParts[1]) - 1;
       const day = parseInt(dateParts[2]);
 
-      // Buat date object dengan timezone lokal
       const localDate = new Date(year, month, day);
 
       return localDate.toLocaleDateString("id-ID", {
@@ -136,12 +119,10 @@ export function ViewAgenda({
     }
   };
 
-  // FIXED: Single formatTime function (combined and improved)
   const formatTime = (timeString: string) => {
     if (!timeString) return "00:00";
 
     try {
-      // Handle jika time dalam format HH:MM:SS atau HH:MM
       const timeParts = timeString.split(":");
       const hours = timeParts[0].padStart(2, '0');
       const minutes = timeParts[1] ? timeParts[1].padStart(2, '0') : '00';
@@ -153,7 +134,6 @@ export function ViewAgenda({
     }
   };
 
-  // Helper function untuk format tanggal ke format yang lebih user-friendly
   const formatDateShort = (dateString: string) => {
     try {
       if (!dateString) return "";
@@ -229,10 +209,10 @@ export function ViewAgenda({
                 withBorder
                 p="md"
                 radius="lg"
-                h={270} // Reduced height since we have less content
+                h={270}
                 style={{
                   position: "relative",
-                  cursor: "default", // Changed from pointer to default
+                  cursor: "default",
                   transition: "all 0.3s ease",
                   display: "flex",
                   flexDirection: "column",
@@ -241,7 +221,6 @@ export function ViewAgenda({
                   boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
                   overflow: "hidden",
                 }}
-                // Removed onClick handler
                 className="hover:shadow-lg hover:scale-[1.02]"
               >
                 {selectionMode && (
@@ -266,7 +245,6 @@ export function ViewAgenda({
                 )}
 
                 <Stack gap="sm" style={{ flex: 1, height: "100%" }}>
-                  {/* Header dengan icon megaphone */}
                   <Group justify="space-between" align="flex-start">
                     <Box
                       style={{
@@ -284,7 +262,6 @@ export function ViewAgenda({
                     </Box>
                   </Group>
 
-                  {/* Tanggal Mulai */}
                   <Box>
                     <Text fw={700} size="sm" c="#1e293b" style={{
                       whiteSpace: "nowrap",
@@ -295,7 +272,6 @@ export function ViewAgenda({
                     </Text>
                   </Box>
 
-                  {/* Jam Mulai */}
                   <Group gap={6}>
                     <IconClock size={14} color="#64748b" />
                     <Text size="sm" c="#64748b" fw={500}>
@@ -303,15 +279,13 @@ export function ViewAgenda({
                     </Text>
                   </Group>
 
-									{/* Tempat */}
-									<Group gap={6}>
-										<IconMapPin size={16} stroke={1.5} color="#000000" />
-										<Text size="sm" c="#000000" fw={500}>
-											{item.tempat}
-										</Text>
-									</Group>
+                  <Group gap={6}>
+                    <IconMapPin size={16} stroke={1.5} color="#000000" />
+                    <Text size="sm" c="#000000" fw={500}>
+                      {item.tempat}
+                    </Text>
+                  </Group>
 
-                  {/* Acara */}
                   <Box style={{ flex: 1, minHeight: "40px" }}>
                     <Text
                       fw={700}
@@ -330,7 +304,6 @@ export function ViewAgenda({
                     </Text>
                   </Box>
 
-                  {/* Button Detail Kegiatan */}
                   <Button
                     variant="light"
                     color="blue"
@@ -350,7 +323,6 @@ export function ViewAgenda({
         })}
       </Grid>
 
-      {/* Modal Detail */}
       <Modal
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
@@ -365,7 +337,6 @@ export function ViewAgenda({
       >
         {selectedAgenda && (
           <Stack gap="md">
-            {/* Kegiatan */}
             <Box>
               <Text size="sm" c="dimmed" fw={500} mb={4}>
                 Kegiatan
@@ -375,7 +346,6 @@ export function ViewAgenda({
               </Text>
             </Box>
 
-            {/* Tanggal */}
             <Group grow>
               <Box>
                 <Text size="sm" c="dimmed" fw={500} mb={4}>
@@ -404,7 +374,6 @@ export function ViewAgenda({
               )}
             </Group>
 
-            {/* Waktu */}
             <Group grow>
               <Box>
                 <Text size="sm" c="dimmed" fw={500} mb={4}>
@@ -433,7 +402,6 @@ export function ViewAgenda({
               )}
             </Group>
 
-            {/* Tempat */}
             {selectedAgenda.tempat && (
               <Box>
                 <Text size="sm" c="dimmed" fw={500} mb={4}>
@@ -448,7 +416,6 @@ export function ViewAgenda({
               </Box>
             )}
 
-            {/* Catatan */}
             {selectedAgenda.catatan && (
               <Box>
                 <Text size="sm" c="dimmed" fw={500} mb={4}>
@@ -460,28 +427,6 @@ export function ViewAgenda({
               </Box>
             )}
 
-            {/* Letter info */}
-            {selectedAgenda.LetterIn && (
-              <Box>
-                <Text size="sm" c="dimmed" fw={500} mb={4}>
-                  Surat Terkait
-                </Text>
-                <Box
-                  style={{
-                    background: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                    padding: "12px",
-                  }}
-                >
-                  <Text size="sm" c="#64748b" fw={500}>
-                    📄 {selectedAgenda.LetterIn.subject || selectedAgenda.LetterIn.number}
-                  </Text>
-                </Box>
-              </Box>
-            )}
-
-            {/* Button Close */}
             <Group justify="flex-end" mt="md">
               <Button
                 variant="light"

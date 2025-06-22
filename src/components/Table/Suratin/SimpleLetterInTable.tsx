@@ -4,25 +4,21 @@ import { useLetters } from "@/services/suratin";
 import { Letterins } from "@/services/suratin/types";
 import { convertUTC } from "@/utils/utils";
 import { useRouter } from "next/navigation";
-import { ActionIcon } from "@mantine/core";
-import { IconEye } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Group } from "@mantine/core";
 
 export const SimpleTableLetterIn = () => {
-  const { data, isLoading, error } = useLetters();
+  const { data, error } = useLetters();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   console.log("Surat masuk data:", data);
 
-  // ✅ Clear cache surat keluar saat masuk ke halaman surat masuk
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["LettersOut"] });
     queryClient.removeQueries({ queryKey: ["LettersOut"] });
   }, [queryClient]);
 
-  //should be memoized or stable
   const columns = useMemo<MRT_ColumnDef<Letterins>[]>(
     () => [
       {
@@ -75,7 +71,7 @@ export const SimpleTableLetterIn = () => {
 							<Button
 								size="xs"
 								variant="light"
-								color="red"
+								color="green"  // Ubah dari "red" ke "green"
 								radius="xl"
 								onClick={() =>
 									window.open(`/suratin/print/${row.original.noAgenda}`, "_blank")
@@ -91,12 +87,6 @@ export const SimpleTableLetterIn = () => {
     [router],
   );
 
-  // ✅ Show loading state
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  // ✅ Show error state
   if (error) {
     return <div>Error: {error.message}</div>;
   }

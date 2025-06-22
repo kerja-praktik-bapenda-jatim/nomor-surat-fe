@@ -20,7 +20,6 @@ import { DateInput } from '@mantine/dates';
 import { IconArrowLeft, IconInfoCircle, IconSearch, IconCheck } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 
-// Services
 import { useClassifications } from '@/services/data';
 import { getCurrentUser, getTokenFromCookies } from '@/services/auth';
 import {
@@ -30,8 +29,6 @@ import {
   getDisposisiFromLocalStorage,
   useLetterDispositionCheck
 } from '@/services/disposisi';
-
-// ========================== CONSTANTS =============================
 
 const DEPARTMENT_OPTIONS = [
   { value: 'SEKRETARIAT', label: 'Sekretariat' },
@@ -46,8 +43,6 @@ const YEAR_OPTIONS = Array.from({ length: 11 }, (_, i) => {
   const year = CURRENT_YEAR - 5 + i;
   return { value: year.toString(), label: year.toString() };
 });
-
-// ========================== TYPES =============================
 
 interface FormValues {
   noDisposisi: number | '';
@@ -88,8 +83,6 @@ interface AppState {
   };
 }
 
-// ========================== INITIAL VALUES =============================
-
 const createInitialLetterData = (): LetterData => ({
   letterIn_id: '',
   noSurat: '',
@@ -122,8 +115,6 @@ const createInitialAppState = (): AppState => ({
   },
 });
 
-// ========================== CUSTOM HOOKS =============================
-
 const useDisposisiForm = () => {
   return useForm<FormValues>({
     mode: 'uncontrolled',
@@ -141,8 +132,6 @@ const useDisposisiForm = () => {
     },
   });
 };
-
-// ========================== UTILITY FUNCTIONS =============================
 
 const formatDateToLocalString = (date: Date | null): string => {
   return date ?
@@ -167,8 +156,6 @@ const logError = (message: string, error?: any) => {
 const logWarning = (message: string, data?: any) => {
   console.warn(`⚠️ ${message}`, data);
 };
-
-// ========================== MODAL HELPERS =============================
 
 class ModalHelpers {
   static showWarning(message: string) {
@@ -357,10 +344,7 @@ class ModalHelpers {
   }
 }
 
-// ========================== MAIN COMPONENT =============================
-
 export function DisposisiLetterForm() {
-  // ========== STATE MANAGEMENT ==========
   const [letterData, setLetterData] = useState<LetterData>(createInitialLetterData);
   const [searchState, setSearchState] = useState<SearchState>(createInitialSearchState);
   const [appState, setAppState] = useState<AppState>(createInitialAppState);
@@ -369,7 +353,6 @@ export function DisposisiLetterForm() {
   const router = useRouter();
   const form = useDisposisiForm();
 
-  // ========== REACT QUERY HOOKS ==========
   const { data: classificationsData, isLoading: isClassificationsLoading } = useClassifications();
 
   const {
@@ -389,7 +372,6 @@ export function DisposisiLetterForm() {
     searchState.shouldSearch && Boolean(searchState.agenda)
   );
 
-  // ========== SEARCH STATE HELPERS ==========
   const updateSearchState = useCallback((updates: Partial<SearchState>) => {
     setSearchState(prev => ({ ...prev, ...updates }));
   }, []);
@@ -398,7 +380,6 @@ export function DisposisiLetterForm() {
     setAppState(prev => ({ ...prev, ...updates }));
   }, []);
 
-  // ========== INITIALIZATION ==========
   useEffect(() => {
     const currentUser = getCurrentUser();
     updateAppState({ user: currentUser });
@@ -417,7 +398,6 @@ export function DisposisiLetterForm() {
       .catch(err => logError('Disposisi endpoint test failed:', err));
   }, [refetchNextDisposisi]);
 
-  // ========== FORM INITIALIZATION ==========
   useEffect(() => {
     if (nextDisposisiData?.noDispo && !form.getValues().noDisposisi) {
       logDebug('Setting initial nomor disposisi:', nextDisposisiData.noDispo);
@@ -441,7 +421,6 @@ export function DisposisiLetterForm() {
     logSuccess('Disposisi form reset completed');
   }, [refetchNextDisposisi]);
 
-  // ========== LETTER DATA AND DISPOSITION CHECK ==========
   useEffect(() => {
     if (letterDispositionData && searchState.shouldSearch) {
       logDebug('Letter disposition check result:', letterDispositionData);
@@ -487,7 +466,6 @@ export function DisposisiLetterForm() {
     }
   }, [letterDispositionData, searchState.shouldSearch]);
 
-  // ========== ERROR HANDLING ==========
   useEffect(() => {
     if (dispositionCheckError && searchState.shouldSearch) {
       logError('Letter disposition check error, clearing data');
@@ -496,7 +474,6 @@ export function DisposisiLetterForm() {
     }
   }, [dispositionCheckError, searchState.shouldSearch]);
 
-  // ========== EVENT HANDLERS ==========
   const handleSearchLetter = useCallback(async () => {
     if (!searchState.agenda.trim()) {
       ModalHelpers.showWarning('Masukkan nomor agenda terlebih dahulu');
@@ -625,7 +602,6 @@ export function DisposisiLetterForm() {
     }
   }, [letterData.letterIn_id, refetchNextDisposisi, resetForm, handleBack]);
 
-  // ========== RENDER HELPERS ==========
   const renderDisposisiNumber = () => {
     const displayNumber = form.values.noDisposisi || nextDisposisiData?.noDispo;
 
@@ -894,7 +870,6 @@ export function DisposisiLetterForm() {
     </Group>
   );
 
-  // ========== MAIN RENDER ==========
   return (
     <Paper withBorder shadow="md" p="md">
       <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">

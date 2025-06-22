@@ -12,12 +12,23 @@ export default function SuratinPage() {
         <PageContainer title="Surat Masuk Saya">
             <Paper withBorder radius="md" p="md">
                 <Group>
-                    <Button onClick={() => router.push('/suratin/add')} rightSection= {<IconFilePlus />} color="blue">
-                        Buat Surat Masuk
-                    </Button>
-										<Button onClick={() => router.push('/suratin/export')} rightSection= {<IconFileExport />}>
-                        Ekspor Surat Masuk
-                    </Button>
+                    <Button
+											onClick={() => router.push('/suratin/add')}
+											rightSection={<IconFilePlus />}
+											color="blue"
+											variant="filled"  // Tambahkan ini
+										>
+											Buat Surat Masuk
+										</Button>
+
+										<Button
+											onClick={() => router.push('/suratin/export')}
+											rightSection={<IconFileExport />}
+											color="green"     // Tambahkan color hijau
+											variant="filled"  // Tambahkan ini
+										>
+											Ekspor Surat Masuk
+										</Button>
                 </Group>
                 <SimpleTableLetterIn />
             </Paper>

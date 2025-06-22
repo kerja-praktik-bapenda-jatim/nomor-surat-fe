@@ -1,64 +1,20 @@
-// services/disposisi.ts - REFACTORED CLEAN VERSION
-
 import { useQuery } from "@tanstack/react-query";
 import ky from "ky";
 import { getTokenFromCookies } from "@/services/auth";
-
-// ========================== CONSTANTS =============================
+import type {
+  Letter,
+  Disposisi,
+  CreateDisposisiPayload,
+  LetterDispositionCheck,
+  NextDisposisiNumber
+} from "./types";
 
 const BASE_URL = "http://localhost:8080/api/";
+
 const LOCAL_STORAGE_KEYS = {
   DISPOSISI_LIST: "disposisiList",
   LAST_DISPOSISI_NUMBER: "lastDisposisiNumber",
 } as const;
-
-// ========================== TYPES =============================
-
-export interface Letter {
-  id: string;
-  noAgenda: number;
-  tahun: number;
-  noSurat: string;
-  suratDari: string;
-  perihal: string;
-  tglSurat: string;
-  diterimaTgl: string;
-  filename?: string; // Added filename property
-  Classification?: { id: string; name: string };
-  LetterType?: { id: string; name: string };
-}
-
-export interface Disposisi {
-  id: string;
-  noDispo: number;
-  tglDispo: string;
-  dispoKe: string[];
-  isiDispo: string;
-  letterIn_id: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateDisposisiPayload {
-  letterIn_id: string;
-  noDispo: number;
-  tglDispo: string;
-  dispoKe: string[];
-  isiDispo: string;
-}
-
-export interface LetterDispositionCheck {
-  isDisposed: boolean;
-  dispositions?: Disposisi[];
-  letter?: Letter;
-  error?: string;
-}
-
-export interface NextDisposisiNumber {
-  noDispo: number;
-}
-
-// ========================== UTILITIES =============================
 
 const createAuthHeader = () => ({
   Authorization: `Bearer ${getTokenFromCookies()}`
@@ -80,8 +36,6 @@ const extractDisposisiNumber = (response: any): number => {
 const normalizeDispositionsArray = (response: any): any[] => {
   return Array.isArray(response) ? response : (response.data || []);
 };
-
-// ========================== LOCAL STORAGE HELPERS =============================
 
 class DisposisiLocalStorage {
   static getLastNumber(): number {
@@ -116,8 +70,6 @@ class DisposisiLocalStorage {
     localStorage.removeItem(LOCAL_STORAGE_KEYS.LAST_DISPOSISI_NUMBER);
   }
 }
-
-// ========================== API SERVICES =============================
 
 export class DisposisiApiService {
   static async searchLetterByAgenda(tahun: string, noAgenda: string): Promise<Letter> {
@@ -178,7 +130,6 @@ export class DisposisiApiService {
 
   static async getNextDisposisiNumber(): Promise<NextDisposisiNumber> {
     try {
-      // Always use sequential strategy - get max + 1
       const response = await ky
         .get(`${BASE_URL}disposisi-letterin/next-number`, {
           headers: createAuthHeader()
@@ -186,8 +137,6 @@ export class DisposisiApiService {
         .json<any>();
 
       const backendNumber = extractDisposisiNumber(response);
-
-      // Verify this is truly sequential by checking against max
       const maxNumber = await this.getMaxDisposisiNumber();
       const sequentialNumber = Math.max(backendNumber, maxNumber + 1);
 
@@ -219,7 +168,6 @@ export class DisposisiApiService {
 
   private static async generateFallbackNumber(): Promise<NextDisposisiNumber> {
     try {
-      // Always use max + 1 strategy (no gap filling)
       const response = await ky
         .get(`${BASE_URL}disposisi-letterin`, {
           headers: createAuthHeader()
@@ -274,19 +222,35 @@ export class DisposisiApiService {
       ...payload,
       createdAt: timestamp,
       updatedAt: timestamp,
+      userId: 'offline-user',
+      updateUserId: 'offline-user',
+      LetterIn: {
+        id: payload.letterIn_id,
+        tahun: new Date().getFullYear(),
+        noAgenda: 0,
+        noSurat: '',
+        suratDari: '',
+        perihal: '',
+        tglSurat: '',
+        diterimaTgl: '',
+        ditujukanKe: '',
+        classificationId: '',
+        letterTypeId: '',
+        Classification: { id: '', name: '' },
+        LetterType: { id: '', name: '' }
+      },
+      CreateUser: { username: 'offline-user' },
+      UpdateUser: { username: 'offline-user' }
     };
 
     DisposisiLocalStorage.addDisposisi(disposisi);
     DisposisiLocalStorage.setLastNumber(payload.noDispo);
 
-    // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
     return disposisi;
   }
 }
-
-// ========================== VALIDATION =============================
 
 export class DisposisiValidator {
   static validate(data: CreateDisposisiPayload): string[] {
@@ -320,8 +284,6 @@ export class DisposisiValidator {
   }
 }
 
-// ========================== REACT QUERY HOOKS =============================
-
 export const useLetterByAgenda = (
   tahun: string,
   noAgenda: string,
@@ -346,7 +308,7 @@ export const useLetterDispositionCheck = (
     queryFn: () => DisposisiApiService.checkLetterDisposition(tahun, noAgenda),
     enabled: enabled && Boolean(noAgenda),
     retry: 1,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
   });
 };
 
@@ -369,11 +331,10 @@ export const useNextDisposisiNumberWithFallback = () => {
       }
     },
     retry: false,
-    staleTime: 300000, // 5 minutes
+    staleTime: 300000,
   });
 };
 
-// Hook untuk React Query - untuk mendapatkan disposisi berdasarkan letter ID
 export const useDisposisiByLetterId = (letterIn_id: string, enabled = true) => {
   return useQuery<Disposisi[]>({
     queryKey: ["disposisi-by-letter", letterIn_id],
@@ -384,9 +345,34 @@ export const useDisposisiByLetterId = (letterIn_id: string, enabled = true) => {
   });
 };
 
-// ========================== UTILITY FUNCTIONS =============================
+export const getDisposisiByLetterId = async (letterIn_id: string): Promise<Disposisi[]> => {
+  try {
+    console.log(`🔍 Fetching disposisi for letter: ${letterIn_id}`);
 
-// ✅ DISCOVER AVAILABLE ENDPOINTS
+    const res = await ky.get(`${BASE_URL}disposisi-letterin/check-letter/${letterIn_id}`, {
+      headers: {
+        Authorization: `Bearer ${getTokenFromCookies()}`,
+      },
+      timeout: 10000
+    }).json<any>();
+
+    console.log('✅ Disposisi data:', res);
+
+    if (Array.isArray(res)) {
+      return res;
+    } else if (res.dispositions) {
+      return res.dispositions;
+    } else if (res.data) {
+      return res.data;
+    } else {
+      return [res];
+    }
+  } catch (error) {
+    console.error('❌ Error fetching disposisi:', error);
+    throw error;
+  }
+};
+
 export const discoverBackendEndpoints = async (): Promise<{
   availableRoutes: string[],
   suggestions: string[]
@@ -396,15 +382,11 @@ export const discoverBackendEndpoints = async (): Promise<{
   const availableRoutes: string[] = [];
   const suggestions: string[] = [];
 
-  // Common backend routes to test
   const commonRoutes = [
-    // Letter routes (we know these work)
     'letterin',
     'letterin/search',
     'letterout',
     'letters',
-
-    // Possible disposisi alternatives
     'disposition',
     'dispositions',
     'approval',
@@ -417,20 +399,14 @@ export const discoverBackendEndpoints = async (): Promise<{
     'assignments',
     'task',
     'tasks',
-
-    // Admin routes
     'users',
     'auth',
     'admin',
     'settings',
     'config',
-
-    // Classification (we know this works)
     'classifications',
     'classification',
     'categories',
-
-    // Reports
     'reports',
     'analytics',
     'dashboard'
@@ -446,20 +422,17 @@ export const discoverBackendEndpoints = async (): Promise<{
       availableRoutes.push(`GET ${route}`);
       console.log(`✅ Found: GET ${route}`);
 
-      // If this is a list endpoint, suggest it might be for disposisi
       if (route.includes('disposition') || route.includes('approval') || route.includes('forward')) {
         suggestions.push(`Try using "${route}" for disposisi operations`);
       }
 
     } catch (error: any) {
       if (error.response?.status !== 404) {
-        // Not 404 means endpoint exists but might need different auth/params
         availableRoutes.push(`${route} (exists but needs auth/params)`);
       }
     }
   }
 
-  // Test some endpoints that might be configured differently
   const alternativeTests = [
     { endpoint: 'api/v1/disposisi', description: 'v1 API' },
     { endpoint: 'v1/disposisi', description: 'v1 prefix' },
@@ -479,7 +452,7 @@ export const discoverBackendEndpoints = async (): Promise<{
       suggestions.push(`Found alternative route: ${endpoint}`);
 
     } catch (error: any) {
-      // Ignore 404s for alternatives
+
     }
   }
 
@@ -487,11 +460,9 @@ export const discoverBackendEndpoints = async (): Promise<{
   return { availableRoutes, suggestions };
 };
 
-// ✅ CHECK IF BACKEND HAS DISPOSISI TABLE
 export const checkDisposisiTableStructure = async (): Promise<any> => {
   console.log('🔍 Checking if backend can access disposisi table...');
 
-  // Try direct SQL-like endpoints that might exist
   const testEndpoints = [
     'admin/tables',
     'admin/schema',
@@ -521,7 +492,6 @@ export const checkDisposisiTableStructure = async (): Promise<any> => {
   return null;
 };
 
-// ✅ UTILITY: CHECK API HEALTH
 export const checkDisposisiAPI = async (): Promise<boolean> => {
   try {
     await ky.get(`${BASE_URL}disposisi`, {
@@ -536,39 +506,6 @@ export const checkDisposisiAPI = async (): Promise<boolean> => {
   }
 };
 
-// Fungsi untuk mendapatkan disposisi berdasarkan letter ID
-export const getDisposisiByLetterId = async (letterIn_id: string): Promise<Disposisi[]> => {
-  try {
-    console.log(`🔍 Fetching disposisi for letter: ${letterIn_id}`);
-
-    const res = await ky.get(`${BASE_URL}disposisi-letterin/check-letter/${letterIn_id}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-      timeout: 10000
-    }).json<any>();
-
-    console.log('✅ Disposisi data:', res);
-
-    // Normalize response format
-    if (Array.isArray(res)) {
-      return res;
-    } else if (res.dispositions) {
-      return res.dispositions;
-    } else if (res.data) {
-      return res.data;
-    } else {
-      return [res];
-    }
-  } catch (error) {
-    console.error('❌ Error fetching disposisi:', error);
-    throw error;
-  }
-};
-
-// ========================== LEGACY EXPORTS =============================
-
-// Legacy exports for backward compatibility
 export const searchLetterByAgenda = DisposisiApiService.searchLetterByAgenda;
 export const checkLetterDisposition = DisposisiApiService.checkLetterDisposition;
 export const getNextDisposisiNumber = DisposisiApiService.getNextDisposisiNumber;

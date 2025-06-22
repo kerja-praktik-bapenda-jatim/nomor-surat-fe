@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import {
   Modal,
@@ -21,7 +23,7 @@ import { useLetterTypes, createLetterType, updateLetterType, deleteLetterType } 
 interface LetterTypeManagerProps {
   opened: boolean;
   onClose: () => void;
-  onLetterTypeAdded?: () => void; // Callback untuk refresh data
+  onLetterTypeAdded?: () => void;
 }
 
 interface LetterType {
@@ -37,7 +39,6 @@ export function LetterTypeManager({ opened, onClose, onLetterTypeAdded }: Letter
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  // Form untuk create
   const createForm = useForm({
     initialValues: {
       name: ''
@@ -47,7 +48,6 @@ export function LetterTypeManager({ opened, onClose, onLetterTypeAdded }: Letter
     }
   });
 
-  // Form untuk edit
   const editForm = useForm({
     initialValues: {
       name: ''
@@ -173,7 +173,6 @@ export function LetterTypeManager({ opened, onClose, onLetterTypeAdded }: Letter
       centered
     >
       <Stack gap="md">
-        {/* Add New Button */}
         <Group justify="space-between">
           <Text size="sm" c="dimmed">
             Total: {letterTypes?.length || 0} jenis surat
@@ -188,7 +187,6 @@ export function LetterTypeManager({ opened, onClose, onLetterTypeAdded }: Letter
           </Button>
         </Group>
 
-        {/* Create Form */}
         {creating && (
           <Box p="md" style={{ border: '1px solid #e9ecef', borderRadius: 8 }}>
             <Text fw={500} mb="sm">Tambah Jenis Surat Baru</Text>
@@ -223,7 +221,6 @@ export function LetterTypeManager({ opened, onClose, onLetterTypeAdded }: Letter
 
         <Divider />
 
-        {/* Letter Types List */}
         {isLoading ? (
           <Group justify="center" py="xl">
             <Loader size="sm" />
@@ -317,7 +314,6 @@ export function LetterTypeManager({ opened, onClose, onLetterTypeAdded }: Letter
           </Alert>
         )}
 
-        {/* Footer */}
         <Group justify="flex-end" mt="md">
           <Button variant="outline" onClick={onClose}>
             Tutup

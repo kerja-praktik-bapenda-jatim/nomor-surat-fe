@@ -13,7 +13,7 @@ export function ViewLetterForm() {
     const router = useRouter();
     const { data: letter, isLoading: isLetterLoading, error: letterError } = useNotaById(letterId);
     const { data: fileUrl, isLoading: isFileLoading, error: fileError } = useDownloadNotaFile(letterId);
-    
+
     useEffect(() => {
         return () => {
             if (fileUrl) {
@@ -88,7 +88,7 @@ export function ViewLetterForm() {
 
                 <TextInput value={letter?.date ? convertUTC(letter.date) : ''} label="Tanggal" readOnly />
                 <Space h="sm" />
-                
+
                 <TextInput value={`${letter?.classificationId || ''} - ${letter?.Classification?.name || ''}`} label="Kode Klasifikasi Surat" readOnly />
                 <Space h="sm" />
 
@@ -97,13 +97,13 @@ export function ViewLetterForm() {
 
                 <TextInput value={letter?.to} label="Kepada" readOnly />
                 <Space h="sm" />
-                
+
                 <TextInput value={letter?.subject} label="Perihal" readOnly />
                 <Space h="sm" />
 
                 <TextInput value={letter?.Level?.name} label="Sifat Surat" readOnly />
                 <Space h="sm" />
-                
+
                 <TextInput value={letter?.attachmentCount} label="Jumlah Lampiran" readOnly />
                 <Space h="sm" />
 
@@ -120,16 +120,16 @@ export function ViewLetterForm() {
 
                 <TextInput value={letter?.InactiveRetentionPeriod?.name} label="Jangka Waktu Simpan Inaktif" readOnly />
                 <Space h="sm" />
-                
+
                 <TextInput value={letter?.JraDescription?.name} label="Keterangan di JRA" readOnly />
                 <Space h="sm" />
-                
+
                 <TextInput value={letter?.StorageLocation?.name} label="Lokasi Simpan" readOnly />
                 <Space h="sm" />
 
                 <TextInput value={letter?.filename} label="File" readOnly />
                 <Space h="sm" />
-                
+
                 {fileUrl ? (
                     <iframe src={fileUrl} width="100%" height="600px" title="Surat File" />
                 ) : (

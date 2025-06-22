@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from 'react';
 import { Button, FileInput, TextInput, Text, Space, Box, Paper, Select, Grid, Checkbox, Group, Alert } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
@@ -26,7 +27,6 @@ interface FormValues {
     letterTypeId: string | null;
     file: File | null;
 
-    // Agenda fields (conditional)
     tglMulai: Date;
     tglSelesai: Date;
     jamMulai: string;
@@ -81,7 +81,6 @@ export function UpdateLetterInForm() {
             classificationId: (value) => (value ? null : 'Pilih klasifikasi'),
             letterTypeId: (value) => (value ? null : 'Pilih jenis surat'),
 
-            // Agenda validations
             tglMulai: (value) => (agenda && !value ? 'Pilih tanggal mulai' : null),
             tglSelesai: (value) => (agenda && !value ? 'Pilih tanggal selesai' : null),
             jamMulai: (value) => (agenda && !value ? 'Pilih jam mulai' : null),
@@ -103,7 +102,6 @@ export function UpdateLetterInForm() {
             letterTypeId: null,
             file: null,
 
-            // Agenda fields
             tglMulai: new Date(),
             tglSelesai: new Date(),
             jamMulai: '',
@@ -114,7 +112,6 @@ export function UpdateLetterInForm() {
         },
     });
 
-    // ✅ Load existing data to form dengan fix untuk filename
     useEffect(() => {
         if (letter && classificationsData && letterTypesData) {
             console.log('Loading letter data:', letter);
@@ -132,13 +129,11 @@ export function UpdateLetterInForm() {
                 ditujukanKe: letter.ditujukanKe || '',
                 agenda: letter.agenda || false,
 
-                // ✅ Fix: Pastikan ID match dengan options
                 classificationId: letter.classificationId || null,
                 letterTypeId: letter.letterTypeId ? letter.letterTypeId.toString() : null,
 
                 file: null,
 
-                // Agenda fields from relation
                 tglMulai: letter.Agenda?.tglMulai ? new Date(letter.Agenda.tglMulai) : new Date(),
                 tglSelesai: letter.Agenda?.tglSelesai ? new Date(letter.Agenda.tglSelesai) : new Date(),
                 jamMulai: letter.Agenda?.jamMulai || '',
@@ -151,13 +146,12 @@ export function UpdateLetterInForm() {
             setLangsungKe(letter.langsungKe || false);
             setAgenda(letter.agenda || false);
 
-            // ✅ UBAH: Check filename instead of upload
             setHasExistingFile(!!letter.filename);
 
             console.log('Form values set:', {
                 classificationId: letter.classificationId,
                 letterTypeId: letter.letterTypeId,
-                hasFile: !!letter.filename  // ✅ UBAH dari letter.upload ke letter.filename
+                hasFile: !!letter.filename
             });
         }
     }, [letter, classificationsData, letterTypesData]);
@@ -178,8 +172,7 @@ export function UpdateLetterInForm() {
                 return;
             }
 
-            // ✅ File size validation 2MB
-            const maxSize = 2 * 1024 * 1024; // 2MB
+            const maxSize = 2 * 1024 * 1024;
             if (file.size > maxSize) {
                 modals.open({
                     title: 'File Terlalu Besar',
@@ -206,7 +199,6 @@ export function UpdateLetterInForm() {
 
         try {
             const updateData: UpdateLetterInRequest = {
-                // ✅ No Agenda tidak perlu dikirim karena readonly
                 noSurat: values.noSurat,
                 suratDari: values.suratDari,
                 perihal: values.perihal,
@@ -217,10 +209,9 @@ export function UpdateLetterInForm() {
                 agenda: values.agenda,
                 classificationId: values.classificationId || '',
                 letterTypeId: values.letterTypeId || '',
-                file: values.file, // ✅ Hanya kirim jika user upload file baru
+                file: values.file,
             };
 
-            // Add agenda fields if agenda is true
             if (values.agenda) {
                 updateData.tglMulai = values.tglMulai.toISOString();
                 updateData.tglSelesai = values.tglSelesai.toISOString();
@@ -311,7 +302,6 @@ export function UpdateLetterInForm() {
                     </Text>
 
                     <Grid>
-                        {/* ✅ No Agenda - READONLY */}
                         <Grid.Col span={6}>
                             <TextInput
                                 value={letter?.noAgenda?.toString()}
@@ -366,7 +356,7 @@ export function UpdateLetterInForm() {
                                         size="sm"
                                         variant="light"
                                         onClick={() => setLetterTypeManagerOpened(true)}
-                                        style={{ height: 36 }} // Match Select height
+                                        style={{ height: 36 }}
                                     >
                                         Kelola
                                     </Button>
@@ -467,7 +457,6 @@ export function UpdateLetterInForm() {
                             />
                         </Grid.Col>
 
-                        {/* Agenda Fields - hanya muncul jika agenda = true */}
                         {agenda && (
                             <>
                                 <Grid.Col span={12}>
@@ -557,7 +546,6 @@ export function UpdateLetterInForm() {
                 </Box>
             </Paper>
 
-            {/* ✅ Letter Type Manager Modal */}
             <LetterTypeManager
                 opened={letterTypeManagerOpened}
                 onClose={() => setLetterTypeManagerOpened(false)}

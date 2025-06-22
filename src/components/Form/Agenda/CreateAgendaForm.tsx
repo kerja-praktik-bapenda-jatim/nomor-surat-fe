@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from 'react';
 import {
   Button, TextInput, Text, Box, Paper, Group,
@@ -15,7 +16,6 @@ export function CreateAgendaForm() {
   const [user, setUser] = useState({ userName: "Guest", departmentName: "Unknown Department", isAdmin: false });
 
   useEffect(() => {
-    // Simulasi ambil user
   }, []);
 
   const form = useForm({
@@ -59,7 +59,6 @@ export function CreateAgendaForm() {
   const handleSubmit = async (values: typeof form.values) => {
     setLoading(true);
     try {
-      // Prepare payload sesuai dengan CreateAgendaSuratPayload
       const payload = {
         tglMulai: values.startDate.toISOString(),
         tglSelesai: values.endDate.toISOString(),
@@ -68,10 +67,9 @@ export function CreateAgendaForm() {
         tempat: values.place,
         acara: values.event,
         catatan: values.catatan || '',
-        letterIn_id: null as any, // NULL untuk agenda standalone
+        letterIn_id: null as any,
       };
 
-      // Gunakan service yang sudah ada
       const result = await createAgendaSurat(payload);
 
       modals.open({
@@ -100,7 +98,6 @@ export function CreateAgendaForm() {
       console.error(error);
       let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
 
-      // Handle error dari ky
       if (error.response) {
         try {
           const errorData = await error.response.json();
@@ -150,7 +147,7 @@ export function CreateAgendaForm() {
           </Text>
 
           <Grid>
-						<Grid.Col span={6}>
+            <Grid.Col span={6}>
               <DateInput
                 label="Tanggal Awal"
                 placeholder="Pilih tanggal"

@@ -1,23 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
 import ky from "ky";
-import type {InputExport, LetterResponse, Letterins, LetterinsResponse, UpdateLetterResponse, UpdateLetterInRequest, AgendaResponse, NextAgendaResponse} from "./types";
+import type {
+  InputExport,
+  LetterResponse,
+  Letterins,
+  LetterinsResponse,
+  UpdateLetterResponse,
+  UpdateLetterInRequest,
+  AgendaResponse,
+  NextAgendaResponse
+} from "./types";
 import { currentTimestamp } from "@/utils/utils";
 import { getTokenFromCookies } from "@/services/auth";
 
 const BASE_URL = `${process.env.API_BASE_URL as string}letterin`;
-const BASE_URL_AGENDA = `${process.env.API_BASE_URL as string}agenda`;
+const BASE_URL_AGENDA = `${process.env.API_BASE_URL as string}agenda-letterin`;
+
+const createHeaders = () => ({
+  Authorization: `Bearer ${getTokenFromCookies()}`,
+});
 
 export const getLetters = async (params?: Record<string, string>) => {
   const res = await ky
     .get(`${BASE_URL}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
+      headers: createHeaders(),
       searchParams: params,
     })
-    .json<LetterinsResponse>();  // ✅ Gunakan interface wrapper
+    .json<LetterinsResponse>();
 
-  return res.data;  // ✅ Return array Letterins dari property 'data'
+  return res.data;
 };
 
 export const getAllLetters = async () => {
@@ -25,33 +36,20 @@ export const getAllLetters = async () => {
 };
 
 export const getLetterById = async (id: string): Promise<LetterResponse> => {
-  const res = await ky
-    .get(`${BASE_URL}/${id}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-    })
+  return await ky
+    .get(`${BASE_URL}/${id}`, { headers: createHeaders() })
     .json<LetterResponse>();
-  return res;
 };
 
-// ✅ FUNGSI BARU: Get nomor agenda selanjutnya
 export const getNextAgendaNumber = async (): Promise<NextAgendaResponse> => {
-  const res = await ky
-    .get(`${BASE_URL}/next-agenda`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-    })
+  return await ky
+    .get(`${BASE_URL}/next-agenda`, { headers: createHeaders() })
     .json<NextAgendaResponse>();
-  return res;
 };
 
 export const downloadLetterFile = async (id: string): Promise<string | null> => {
   const res = await ky.get(`${BASE_URL}/download/${id}`, {
-    headers: {
-      Authorization: `Bearer ${getTokenFromCookies()}`,
-    },
+    headers: createHeaders(),
   });
 
   if (res.ok) {
@@ -64,16 +62,14 @@ export const downloadLetterFile = async (id: string): Promise<string | null> => 
 };
 
 export const postLetterins = async (formData: FormData): Promise<LetterResponse> => {
-  const res = await ky.post(`${BASE_URL}`, {
-    headers: {
-      Authorization: `Bearer ${getTokenFromCookies()}`,
-    },
-    body: formData,
-  }).json<LetterResponse>();
-  return res;
+  return await ky
+    .post(`${BASE_URL}`, {
+      headers: createHeaders(),
+      body: formData,
+    })
+    .json<LetterResponse>();
 };
 
-// ✅ PERBAIKAN: Function untuk update surat masuk
 export const updateLetterIn = async (
   id: string,
   data: UpdateLetterInRequest,
@@ -81,7 +77,6 @@ export const updateLetterIn = async (
   try {
     const formData = new FormData();
 
-    // ✅ Letter fields sesuai dengan surat masuk (TANPA noAgenda karena readonly)
     formData.append("noSurat", data.noSurat);
     formData.append("suratDari", data.suratDari);
     formData.append("perihal", data.perihal);
@@ -93,7 +88,6 @@ export const updateLetterIn = async (
     formData.append("classificationId", data.classificationId);
     formData.append("letterTypeId", data.letterTypeId);
 
-    // ✅ Agenda fields (optional, only if agenda is true)
     if (data.agenda) {
       if (data.tglMulai) formData.append("tglMulai", data.tglMulai);
       if (data.tglSelesai) formData.append("tglSelesai", data.tglSelesai);
@@ -104,24 +98,20 @@ export const updateLetterIn = async (
       if (data.catatan) formData.append("catatan", data.catatan);
     }
 
-    // ✅ File upload (optional)
     if (data.file) formData.append("file", data.file);
 
-    const res = await ky.patch(`${BASE_URL}/${id}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-      body: formData,
-    }).json<LetterResponse>();
-
-    return res;
+    return await ky
+      .patch(`${BASE_URL}/${id}`, {
+        headers: createHeaders(),
+        body: formData,
+      })
+      .json<LetterResponse>();
   } catch (error) {
     console.error("Gagal memperbarui surat masuk:", error);
     throw error;
   }
 };
 
-// ✅ Keep old function for backward compatibility (but fix it)
 export const patchLetter = async (
   id: string,
   formData: UpdateLetterResponse,
@@ -129,14 +119,12 @@ export const patchLetter = async (
   try {
     const formDataToSend = new FormData();
 
-    // Validasi field wajib
     if (!formData.noSurat || !formData.suratDari || !formData.perihal ||
         !formData.tglSurat || !formData.diterimaTgl || !formData.ditujukanKe ||
         !formData.classificationId || !formData.letterTypeId) {
       throw new Error('Harap isi kolom wajib pada form');
     }
 
-    // Letter fields (TANPA noAgenda)
     formDataToSend.append("noSurat", formData.noSurat);
     formDataToSend.append("suratDari", formData.suratDari);
     formDataToSend.append("perihal", formData.perihal);
@@ -148,7 +136,6 @@ export const patchLetter = async (
     formDataToSend.append("classificationId", formData.classificationId);
     formDataToSend.append("letterTypeId", formData.letterTypeId);
 
-    // Agenda fields (optional, only if agenda is true)
     if (formData.agenda) {
       if (formData.tglMulai) formDataToSend.append("tglMulai", formData.tglMulai);
       if (formData.tglSelesai) formDataToSend.append("tglSelesai", formData.tglSelesai);
@@ -159,13 +146,10 @@ export const patchLetter = async (
       if (formData.catatan) formDataToSend.append("catatan", formData.catatan);
     }
 
-    // File upload
     if (formData.file) formDataToSend.append("file", formData.file);
 
     await ky.patch(`${BASE_URL}/${id}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
+      headers: createHeaders(),
       body: formDataToSend,
     });
     return true;
@@ -177,11 +161,7 @@ export const patchLetter = async (
 
 export const deleteLetterin = async (id: string) => {
   try {
-    await ky.delete(`${BASE_URL}/${id}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-    });
+    await ky.delete(`${BASE_URL}/${id}`, { headers: createHeaders() });
     return true;
   } catch (error) {
     console.error("Gagal menghapus surat:", error);
@@ -190,92 +170,73 @@ export const deleteLetterin = async (id: string) => {
 };
 
 export const exportLetters = async (values: InputExport) => {
-    const searchParams: Record<string, string> = {
-        startDate: values.startDate,
-        endDate: values.endDate,
-        recursive: 'true',
-    };
+  const searchParams: Record<string, string> = {
+    startDate: values.startDate,
+    endDate: values.endDate,
+    recursive: 'true',
+  };
 
-    // ✅ Parameter untuk surat masuk
-    if (values.classificationId) {
-        searchParams.classificationId = values.classificationId;
+  if (values.classificationId) {
+    searchParams.classificationId = values.classificationId;
+  }
+
+  if (values.letterTypeId) {
+    searchParams.letterTypeId = values.letterTypeId;
+  }
+
+  if (values.suratDari) {
+    searchParams.suratDari = values.suratDari;
+  }
+
+  if (values.perihal) {
+    searchParams.perihal = values.perihal;
+  }
+
+  try {
+    const response = await ky.get(`${BASE_URL}/export`, {
+      headers: createHeaders(),
+      searchParams,
+    });
+
+    const blob = await response.blob();
+    const filename = `Surat-Masuk-${currentTimestamp()}.xlsx`;
+
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    return { message: 'File berhasil diunduh.' };
+  } catch (error: any) {
+    if (error.response) {
+      const errorData = await error.response.json();
+      throw new Error(errorData.message || 'Terjadi kesalahan.');
+    } else {
+      throw new Error('Terjadi kesalahan jaringan.');
     }
-
-    if (values.letterTypeId) {
-        searchParams.letterTypeId = values.letterTypeId;
-    }
-
-    // ✅ Tambahan parameter untuk surat masuk jika ada
-    if (values.suratDari) {
-        searchParams.suratDari = values.suratDari;
-    }
-
-    if (values.perihal) {
-        searchParams.perihal = values.perihal;
-    }
-
-    try {
-        const response = await ky.get(`${BASE_URL}/export`, {
-            headers: {
-                Authorization: `Bearer ${getTokenFromCookies()}`,
-            },
-            searchParams,
-        });
-
-        // Mengonversi respons menjadi Blob untuk file
-        const blob = await response.blob();
-        const filename = `Surat-Masuk-${currentTimestamp()}.xlsx`; // ✅ Ubah nama file
-
-        // Membuat link untuk mengunduh file
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click(); // Memicu klik untuk mengunduh file
-        document.body.removeChild(link);
-
-        return { message: 'File berhasil diunduh.' };
-    } catch (error: any) {
-        if (error.response) {
-            const errorData = await error.response.json();
-            throw new Error(errorData.message || 'Terjadi kesalahan.');
-        } else {
-            throw new Error('Terjadi kesalahan jaringan.');
-        }
-    }
+  }
 };
 
-// Agenda-specific functions
 export const getAgendas = async (params?: Record<string, string>) => {
-  const res = await ky
+  return await ky
     .get(`${BASE_URL_AGENDA}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
+      headers: createHeaders(),
       searchParams: params,
     })
     .json<AgendaResponse[]>();
-  return res;
 };
 
 export const getAgendaById = async (id: string): Promise<AgendaResponse> => {
-  const res = await ky
-    .get(`${BASE_URL_AGENDA}/${id}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-    })
+  return await ky
+    .get(`${BASE_URL_AGENDA}/${id}`, { headers: createHeaders() })
     .json<AgendaResponse>();
-  return res;
 };
 
 export const deleteAgenda = async (id: string) => {
   try {
-    await ky.delete(`${BASE_URL_AGENDA}/${id}`, {
-      headers: {
-        Authorization: `Bearer ${getTokenFromCookies()}`,
-      },
-    });
+    await ky.delete(`${BASE_URL_AGENDA}/${id}`, { headers: createHeaders() });
     return true;
   } catch (error) {
     console.error("Gagal menghapus agenda:", error);
@@ -283,14 +244,13 @@ export const deleteAgenda = async (id: string) => {
   }
 };
 
-// React Query hooks
 export const useLetters = () =>
   useQuery<Letterins[]>({
-    queryKey: ["LettersIn"],  // ✅ Key spesifik untuk surat masuk
-    queryFn: () => getAllLetters(),
-    staleTime: 0,         // ✅ Tidak menyimpan cache
-    refetchOnMount: true, // ✅ Selalu refetch saat component mount
-    refetchOnWindowFocus: false, // ✅ Jangan refetch saat focus window
+    queryKey: ["LettersIn"],
+    queryFn: getAllLetters,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
 export const useLetterinById = (id: string) =>
@@ -300,15 +260,14 @@ export const useLetterinById = (id: string) =>
     enabled: !!id,
   });
 
-// ✅ HOOK BARU: untuk get next agenda number
 export const useNextAgendaNumber = () =>
   useQuery<NextAgendaResponse>({
     queryKey: ["NextAgenda"],
-    queryFn: () => getNextAgendaNumber(),
+    queryFn: getNextAgendaNumber,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     staleTime: 0,
-    enabled: true, // ✅ Selalu enabled
+    enabled: true,
   });
 
 export const useDownloadLetterFile = (id: string) =>

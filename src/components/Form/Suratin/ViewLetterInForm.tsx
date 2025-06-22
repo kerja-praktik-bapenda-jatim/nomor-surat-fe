@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect } from 'react';
 import { TextInput, Text, Space, Box, Paper, Center, Loader, Group, Button, Grid } from '@mantine/core';
 import { useParams, useRouter } from "next/navigation";
@@ -154,7 +155,6 @@ export function ViewLetterInForm() {
                         />
                     </Grid.Col>
 
-                    {/* Tampilkan informasi agenda jika ada */}
                     {letter?.agenda && letter?.Agenda && (
                         <>
                             <Grid.Col span={12}>
