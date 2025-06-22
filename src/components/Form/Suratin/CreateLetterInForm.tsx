@@ -73,7 +73,7 @@ export function CreateLetterForm() {
     }, [refetchNextAgenda]);
 
     const form = useForm<FormValues>({
-        mode: 'uncontrolled',
+        mode: 'controlled',
         validate: {
             noSurat: hasLength({ min: 1 }, 'Nomor surat tidak boleh kosong'),
             suratDari: hasLength({ min: 3 }, 'Surat dari tidak boleh kosong'),
@@ -277,58 +277,11 @@ export function CreateLetterForm() {
         router.push('/suratin');
     };
 
-    const resetForm = () => {
-        console.log('🔄 Resetting form...'); // Debug log
-
-        // Method 1: Set values explicitly
-        form.setValues({
-            noSurat: '',
-            suratDari: '',
-            perihal: '',
-            tglSurat: new Date(),
-            diterimaTgl: new Date(),
-            langsungKe: false,
-            ditujukanKe: '',
-            agenda: false,
-            classificationId: null,
-            letterTypeId: null,
-            file: null,
-
-            // Agenda fields
-            tglMulai: new Date(),
-            tglSelesai: new Date(),
-            jamMulai: '',
-            jamSelesai: '',
-            tempat: '',
-            acara: '',
-            catatan: '',
-        });
-
-        // Method 2: Clear all errors
-        form.clearErrors();
-
-        // Method 3: Reset local state
-        setAgenda(false);
-        setLangsungKe(false);
-
-        // Method 4: Force re-render dengan timeout
-        setTimeout(() => {
-            form.clearErrors();
-            refetchNextAgenda();
-        }, 100);
-
-        console.log('✅ Form reset completed'); // Debug log
-    };
-
     const handleLetterTypeUpdated = async () => {
         await refetchLetterTypes();
     };
 
 		const [agendaNumber, setAgendaNumber] = useState("2025/0001");
-
-		const resetAgendaNumber = () => {
-			setAgendaNumber(""); // atau set ke default: "2025/0001"
-		};
 
     // ✅ RENDER NOMOR AGENDA DENGAN LOADING YANG LEBIH SMOOTH
     const renderAgendaNumber = () => {
@@ -385,21 +338,10 @@ export function CreateLetterForm() {
                     </Text>
 
                     <Grid>
-                        <Grid.Col span={3}>
+                        <Grid.Col span={6}>
                             {/* ✅ TAMPILKAN NOMOR AGENDA FORMAT 2025/0001 */}
                             {renderAgendaNumber()}
                         </Grid.Col>
-
-												<Grid.Col span={3}>
-													  <Button
-															color="gray"
-															variant="light"
-															radius="md"
-															onClick={resetAgendaNumber}
-														>
-															Reset Nomor Agenda
-														</Button>
-												</Grid.Col>
 
                         <Grid.Col span={6}>
                             <TextInput
@@ -427,7 +369,7 @@ export function CreateLetterForm() {
 
                         <Grid.Col span={6}>
                             <Box>
-                                <Text size="sm" fw={500} mb={5}>
+                                <Text size="sm" fw={500}>
                                     Jenis Surat <Text component="span" c="red">*</Text>
                                 </Text>
                                 <Group gap="xs" align="flex-end">
@@ -446,7 +388,7 @@ export function CreateLetterForm() {
                                         size="sm"
                                         variant="light"
                                         onClick={() => setLetterTypeManagerOpened(true)}
-                                        style={{ height: 36 }} // Match Select height
+                                        style={{ height: 30 }} // Match Select height
                                     >
                                         Kelola
                                     </Button>
@@ -622,13 +564,19 @@ export function CreateLetterForm() {
 
                     <Space h="sm" />
 
-                    <Group justify="flex-end" mt="md">
-                        <Button
-                            variant="outline"
-                            onClick={resetForm}
-                        >
-                            Reset Form
-                        </Button>
+										<Group justify="flex-end" mt="md">
+												<Button
+													variant="outline"
+													onClick={() => {
+														form.reset();
+														form.clearErrors();
+														form.setFieldValue('file', null);
+														setAgenda(false);
+														setLangsungKe(false);
+													}}
+												>
+													Reset Form
+												</Button>
                         <Button
                             type="submit"
                             loading={loading}
