@@ -106,6 +106,29 @@ export class DisposisiApiService {
     }
   }
 
+	  static async updateDisposisi(id: string, payload: CreateDisposisiPayload): Promise<Disposisi> {
+    const response = await fetch(`${BASE_URL}disposisi-letterin/${id}`, {
+      method: "PUT",
+      headers: {
+        ...createAuthHeader(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      const errorData = JSON.parse(responseText);
+      throw new Error(errorData.message || `HTTP ${response.status}`);
+    }
+
+    const data = JSON.parse(responseText);
+    DisposisiLocalStorage.setLastNumber(payload.noDispo);
+
+    return data;
+  }
+
   private static async getFallbackLetterDisposition(letter: Letter): Promise<LetterDispositionCheck> {
     try {
       const response = await ky
@@ -515,3 +538,4 @@ export const createDisposisiLocalStorage = DisposisiApiService.createDisposisiOf
 export const getDisposisiFromLocalStorage = DisposisiLocalStorage.getDisposisiList;
 export const clearDisposisiLocalStorage = DisposisiLocalStorage.clear;
 export const validateDisposisiData = DisposisiValidator.validate;
+export const updateDisposisi = DisposisiApiService.updateDisposisi;

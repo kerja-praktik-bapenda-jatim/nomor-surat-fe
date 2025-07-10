@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -17,7 +17,7 @@ import {
 } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
 import { DateInput } from '@mantine/dates';
-import { IconArrowLeft, IconInfoCircle, IconSearch, IconCheck } from '@tabler/icons-react';
+import { IconArrowLeft, IconInfoCircle, IconSearch, IconCheck, IconEdit } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 
 import { useClassifications } from '@/services/data';
@@ -27,9 +27,11 @@ import {
   useNextDisposisiNumberWithFallback,
   validateDisposisiData,
   getDisposisiFromLocalStorage,
-  useLetterDispositionCheck
+  useLetterDispositionCheck,
+  updateDisposisi
 } from '@/services/disposisi';
 
+// Constants
 const DEPARTMENT_OPTIONS = [
   { value: 'SEKRETARIAT', label: 'Sekretariat' },
   { value: 'BIDANG PAJAK DAERAH', label: 'Bidang Pajak Daerah' },
@@ -44,6 +46,7 @@ const YEAR_OPTIONS = Array.from({ length: 11 }, (_, i) => {
   return { value: year.toString(), label: year.toString() };
 });
 
+// Interfaces
 interface FormValues {
   noDisposisi: number | '';
   tanggalDisposisi: Date;
@@ -69,13 +72,14 @@ interface SearchState {
   isLoading: boolean;
   isAttempted: boolean;
   isFound: boolean;
-  isEnabled: boolean;
   shouldSearch: boolean;
 }
 
 interface AppState {
   isSubmitting: boolean;
   isSubmitted: boolean;
+  isEditMode: boolean;
+  editingDisposisi: any | null;
   user: {
     userName: string;
     departmentName: string;
@@ -83,6 +87,7 @@ interface AppState {
   };
 }
 
+// Initial state creators
 const createInitialLetterData = (): LetterData => ({
   letterIn_id: '',
   noSurat: '',
@@ -101,13 +106,14 @@ const createInitialSearchState = (): SearchState => ({
   isLoading: false,
   isAttempted: false,
   isFound: false,
-  isEnabled: false,
   shouldSearch: false,
 });
 
 const createInitialAppState = (): AppState => ({
   isSubmitting: false,
   isSubmitted: false,
+  isEditMode: false,
+  editingDisposisi: null,
   user: {
     userName: "Guest",
     departmentName: "Unknown Department",
@@ -115,6 +121,16 @@ const createInitialAppState = (): AppState => ({
   },
 });
 
+// Utility functions
+const formatDateToLocalString = (date: Date | null): string => {
+  return date ?
+    new Date(date)
+      .toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      .replace(/\//g, '-')
+    : '';
+};
+
+// Form hook
 const useDisposisiForm = () => {
   return useForm<FormValues>({
     mode: 'uncontrolled',
@@ -133,30 +149,7 @@ const useDisposisiForm = () => {
   });
 };
 
-const formatDateToLocalString = (date: Date | null): string => {
-  return date ?
-    new Date(date)
-      .toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
-      .replace(/\//g, '-')
-    : '';
-};
-
-const logDebug = (message: string, data?: any) => {
-  console.log(`🔍 ${message}`, data);
-};
-
-const logSuccess = (message: string, data?: any) => {
-  console.log(`✅ ${message}`, data);
-};
-
-const logError = (message: string, error?: any) => {
-  console.error(`❌ ${message}`, error);
-};
-
-const logWarning = (message: string, data?: any) => {
-  console.warn(`⚠️ ${message}`, data);
-};
-
+// Modal helper class
 class ModalHelpers {
   static showWarning(message: string) {
     modals.open({
@@ -181,14 +174,16 @@ class ModalHelpers {
     });
   }
 
-  static showConfirmSubmit(onConfirm: () => void) {
+  static showConfirmSubmit(onConfirm: () => void, isEdit: boolean = false) {
     modals.openConfirmModal({
-      title: 'Konfirmasi Buat Disposisi',
+      title: isEdit ? 'Konfirmasi Edit Disposisi' : 'Konfirmasi Buat Disposisi',
       centered: true,
       children: (
-        <Text size="sm">Apakah Anda yakin data disposisi sudah benar?</Text>
+        <Text size="sm">
+          Apakah Anda yakin data disposisi sudah benar?
+        </Text>
       ),
-      confirmProps: { children: 'Buat Disposisi' },
+      confirmProps: { children: isEdit ? 'Update Disposisi' : 'Buat Disposisi' },
       cancelProps: { children: 'Batal' },
       onConfirm,
     });
@@ -197,22 +192,21 @@ class ModalHelpers {
   static showSuccessResult(
     response: any,
     onCreateAnother: () => void,
-    onFinish: () => void
+    onFinish: () => void,
+    isEdit: boolean = false
   ) {
     const isLocalStorage = response.id?.startsWith('dispo_');
 
     modals.open({
-      title: isLocalStorage ? 'Berhasil (Mode Offline)' : 'Berhasil',
+      title: isEdit ? 'Berhasil' : (isLocalStorage ? 'Berhasil (Mode Offline)' : 'Berhasil'),
       centered: true,
       children: (
         <Box>
           <Text size="sm" mb="md">
-            Disposisi berhasil {isLocalStorage ? 'disimpan secara lokal' : 'dibuat'}
-            dengan nomor: <strong>{response.noDispo}</strong>
+            Disposisi berhasil diperbarui
           </Text>
-
           <Group justify="flex-end" gap="sm">
-            {isLocalStorage && (
+            {isLocalStorage && !isEdit && (
               <Button
                 variant="outline"
                 size="sm"
@@ -247,8 +241,8 @@ class ModalHelpers {
     });
   }
 
-  static showError(error: any) {
-    let errorMessage = "Terjadi kesalahan saat membuat disposisi.";
+  static showError(error: any, isEdit: boolean = false) {
+    let errorMessage = `Terjadi kesalahan saat ${isEdit ? 'mengupdate' : 'membuat'} disposisi.`;
 
     if (error.message) {
       errorMessage = error.message;
@@ -256,12 +250,16 @@ class ModalHelpers {
       errorMessage = `HTTP ${error.response.status}: ${error.response.statusText}`;
     }
 
+    if (isEdit && errorMessage.includes('sudah didisposisikan')) {
+      errorMessage = 'Tidak dapat mengupdate disposisi. Silakan refresh halaman dan coba lagi.';
+    }
+
     if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
-      errorMessage += 'Saran: Periksa apakah backend sudah berjalan dan endpoint /api/disposisi tersedia.';
+      errorMessage += ' Saran: Periksa apakah backend sudah berjalan dan endpoint tersedia.';
     }
 
     modals.open({
-      title: 'Error Membuat Disposisi',
+      title: `Error ${isEdit ? 'Update' : 'Membuat'} Disposisi`,
       centered: true,
       children: (
         <Box>
@@ -274,77 +272,199 @@ class ModalHelpers {
     });
   }
 
-  static showLetterAlreadyDisposed(letterDispositionData: any, resetFormCallback: () => void) {
+  static showLetterAlreadyDisposed(
+    letterDispositionData: any,
+    resetFormCallback: () => void,
+    onEditDisposisi: (disposisi: any) => void,
+    userIsAdmin: boolean
+  ) {
     modals.open({
-      title: '⚠️ Surat Sudah Didisposisikan',
+      title: 'Surat Sudah Didisposisikan',
       centered: true,
-      size: 'md',
+      size: 'lg',
+      styles: {
+        inner: {
+          padding: '0',
+        },
+        content: {
+          borderRadius: '12px',
+          width: '90vw',
+          maxWidth: '800px',
+        },
+        header: {
+          backgroundColor: '#f8f9fa',
+          borderBottom: '1px solid #e9ecef',
+          borderRadius: '12px 12px 0 0',
+          padding: '16px 20px',
+        },
+        title: {
+          fontWeight: 600,
+          fontSize: '16px',
+          color: '#495057',
+        },
+        body: {
+          padding: '0',
+        },
+      },
       children: (
         <Box>
-          <Alert color="yellow" variant="light" mb="md">
-            <Group gap="xs">
-              <IconInfoCircle size={20} />
-              <Text size="sm" fw={500}>
-                Surat ini sudah pernah didisposisikan sebelumnya
-              </Text>
-            </Group>
-          </Alert>
-
           {letterDispositionData.dispositions && letterDispositionData.dispositions.length > 0 && (
-            <Box mb="md">
-              <Text size="sm" mb="xs"><strong>Detail Disposisi:</strong></Text>
-              {letterDispositionData.dispositions.map((dispositionItem: any, index: number) => (
-                <Box key={dispositionItem.id || index} mb="sm" p="sm" style={{ backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                  <Text size="sm" c="dimmed">Nomor Disposisi: <strong>{dispositionItem.noDispo}</strong></Text>
-                  <Text size="sm" c="dimmed">
-                    Tanggal: <strong>
-                      {dispositionItem.tglDispo ?
-                        formatDateToLocalString(new Date(dispositionItem.tglDispo)) :
-                        '-'
-                      }
-                    </strong>
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    Tujuan: <strong>
-                      {Array.isArray(dispositionItem.dispoKe) ?
-                        dispositionItem.dispoKe.join(', ') :
-                        '-'
-                      }
-                    </strong>
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    Isi: <strong>{dispositionItem.isiDispo || '-'}</strong>
-                  </Text>
-                </Box>
-              ))}
+            <Box>
+              <Box style={{ maxHeight: '400px', overflowY: 'auto', padding: '20px' }}>
+                {letterDispositionData.dispositions.map((dispositionItem: any, index: number) => (
+                  <Box
+                    key={dispositionItem.id || index}
+                    mb="lg"
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <Box
+                      p="md"
+                      style={{
+                        backgroundColor: '#f8f9fa',
+                        borderBottom: '1px solid #e9ecef',
+                      }}
+                    >
+                      <Text size="sm" fw={600} c="#495057">
+                        Detail Disposisi
+                      </Text>
+                    </Box>
+
+                    <Box p="md">
+                      <Box mb="md">
+                        <Text size="xs" fw={500} c="dimmed" mb="xs" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Nomor Disposisi
+                        </Text>
+                        <Text size="sm" style={{ lineHeight: 1.5 }}>
+                          {dispositionItem.noDispo}
+                        </Text>
+                      </Box>
+
+                      <Box mb="md">
+                        <Text size="xs" fw={500} c="dimmed" mb="xs" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Tanggal Disposisi
+                        </Text>
+                        <Text size="sm" style={{ lineHeight: 1.5 }}>
+                          {dispositionItem.tglDispo ?
+                            formatDateToLocalString(new Date(dispositionItem.tglDispo)) :
+                            '-'
+                          }
+                        </Text>
+                      </Box>
+
+                      <Box mb="md">
+                        <Text size="xs" fw={500} c="dimmed" mb="xs" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Tujuan
+                        </Text>
+                        <Text size="sm" style={{ lineHeight: 1.5 }}>
+                          {Array.isArray(dispositionItem.dispoKe) ?
+                            dispositionItem.dispoKe.join(', ') :
+                            'Tidak ada tujuan'
+                          }
+                        </Text>
+                      </Box>
+
+                      <Box mb="lg">
+                        <Text size="xs" fw={500} c="dimmed" mb="xs" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Isi Disposisi
+                        </Text>
+                        <Text size="sm" style={{ lineHeight: 1.5, color: '#495057' }}>
+                          {dispositionItem.isiDispo || 'Tidak ada isi disposisi'}
+                        </Text>
+                      </Box>
+
+                      {userIsAdmin ? (
+                        <Button
+                          size="sm"
+                          variant="light"
+                          color="blue"
+                          leftSection={<IconEdit size={16} />}
+                          onClick={() => {
+                            modals.closeAll();
+                            onEditDisposisi(dispositionItem);
+                          }}
+                          fullWidth
+                          style={{
+                            height: '36px',
+                            borderRadius: '6px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          Edit Disposisi
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="light"
+                          color="gray"
+                          disabled
+                          fullWidth
+                          style={{
+                            height: '36px',
+                            borderRadius: '6px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          Edit (Hanya Admin)
+                        </Button>
+                      )}
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+
+              <Box
+                p="md"
+                style={{
+                  backgroundColor: '#f8f9fa',
+                  borderTop: '1px solid #e9ecef',
+                  borderRadius: '0 0 12px 12px',
+                }}
+              >
+                <Group justify="flex-end" gap="sm">
+                  <Button
+                    variant="outline"
+                    color="gray"
+                    size="sm"
+                    onClick={() => {
+                      modals.closeAll();
+                      resetFormCallback();
+                    }}
+                    style={{
+                      borderColor: '#ced4da',
+                      color: '#6c757d',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Cari Surat Lain
+                  </Button>
+                  <Button
+                    onClick={() => modals.closeAll()}
+                    size="sm"
+                    style={{
+                      backgroundColor: '#007bff',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Tutup
+                  </Button>
+                </Group>
+              </Box>
             </Box>
           )}
-
-          <Group justify="flex-end" gap="sm">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                modals.closeAll();
-                resetFormCallback();
-              }}
-            >
-              Cari Surat Lain
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => modals.closeAll()}
-            >
-              Tutup
-            </Button>
-          </Group>
         </Box>
       )
     });
   }
 }
 
+// Main component
 export function DisposisiLetterForm() {
+  // State management
   const [letterData, setLetterData] = useState<LetterData>(createInitialLetterData);
   const [searchState, setSearchState] = useState<SearchState>(createInitialSearchState);
   const [appState, setAppState] = useState<AppState>(createInitialAppState);
@@ -353,134 +473,100 @@ export function DisposisiLetterForm() {
   const router = useRouter();
   const form = useDisposisiForm();
 
+  // API hooks
   const { data: classificationsData, isLoading: isClassificationsLoading } = useClassifications();
-
   const {
     data: nextDisposisiData,
     isLoading: isNextDisposisiLoading,
     refetch: refetchNextDisposisi
   } = useNextDisposisiNumberWithFallback();
 
+  const shouldEnableLetterCheck = useMemo(() => {
+    return searchState.shouldSearch && Boolean(searchState.agenda.trim());
+  }, [searchState.shouldSearch, searchState.agenda]);
+
   const {
     data: letterDispositionData,
     isLoading: isCheckingDisposition,
     error: dispositionCheckError,
-    refetch: refetchLetterCheck
   } = useLetterDispositionCheck(
     searchState.year,
     searchState.agenda,
-    searchState.shouldSearch && Boolean(searchState.agenda)
+    shouldEnableLetterCheck
   );
 
+  // State update callbacks
   const updateSearchState = useCallback((updates: Partial<SearchState>) => {
-    setSearchState(prev => ({ ...prev, ...updates }));
+    setSearchState(prev => {
+      const newState = { ...prev, ...updates };
+      if (JSON.stringify(prev) !== JSON.stringify(newState)) {
+        return newState;
+      }
+      return prev;
+    });
   }, []);
 
   const updateAppState = useCallback((updates: Partial<AppState>) => {
-    setAppState(prev => ({ ...prev, ...updates }));
+    setAppState(prev => {
+      const newState = { ...prev, ...updates };
+      if (JSON.stringify(prev) !== JSON.stringify(newState)) {
+        return newState;
+      }
+      return prev;
+    });
   }, []);
 
-  useEffect(() => {
-    const currentUser = getCurrentUser();
-    updateAppState({ user: currentUser });
-    refetchNextDisposisi();
-
-    logDebug('Component mounted, resetting search state...');
-    setSearchState(createInitialSearchState());
-    setLetterData(createInitialLetterData());
-
-    logDebug('Testing disposisi-letterin endpoint...');
-    fetch('http://localhost:8080/api/disposisi-letterin/next-number', {
-      headers: { 'Authorization': `Bearer ${getTokenFromCookies()}` }
-    })
-      .then(res => res.json())
-      .then(data => logSuccess('Disposisi endpoint test successful:', data))
-      .catch(err => logError('Disposisi endpoint test failed:', err));
-  }, [refetchNextDisposisi]);
-
-  useEffect(() => {
-    if (nextDisposisiData?.noDispo && !form.getValues().noDisposisi) {
-      logDebug('Setting initial nomor disposisi:', nextDisposisiData.noDispo);
-      form.setFieldValue('noDisposisi', nextDisposisiData.noDispo);
+  // Event handlers
+  const handleEditDisposisi = useCallback((disposisi: any) => {
+    if (!appState.user.isAdmin) {
+      ModalHelpers.showWarning('Akses ditolak. Hanya admin yang dapat mengedit disposisi.');
+      return;
     }
-  }, [nextDisposisiData?.noDispo]);
+
+    form.setValues({
+      noDisposisi: disposisi.noDispo,
+      tanggalDisposisi: new Date(disposisi.tglDispo),
+      tujuanDisposisi: Array.isArray(disposisi.dispoKe) ? disposisi.dispoKe : [],
+      isiDisposisi: disposisi.isiDispo || '',
+    });
+
+    setIsiDisposisiText(disposisi.isiDispo || '');
+    updateAppState({
+      isEditMode: true,
+      editingDisposisi: disposisi
+    });
+  }, [form, updateAppState, appState.user.isAdmin]);
+
+  const handleCancelEdit = useCallback(() => {
+    updateAppState({
+      isEditMode: false,
+      editingDisposisi: null
+    });
+    form.reset();
+    setIsiDisposisiText('');
+  }, [form, updateAppState]);
 
   const resetForm = useCallback(() => {
-    logDebug('Resetting disposisi form...');
-
     form.reset();
     setLetterData(createInitialLetterData());
     setSearchState(createInitialSearchState());
-    updateAppState({ isSubmitted: false });
+    updateAppState({
+      isSubmitted: false,
+      isEditMode: false,
+      editingDisposisi: null
+    });
     setIsiDisposisiText('');
 
     setTimeout(() => {
       refetchNextDisposisi();
     }, 100);
-
-    logSuccess('Disposisi form reset completed');
-  }, [refetchNextDisposisi]);
-
-  useEffect(() => {
-    if (letterDispositionData && searchState.shouldSearch) {
-      logDebug('Letter disposition check result:', letterDispositionData);
-
-      if (letterDispositionData.error) {
-        updateSearchState({ isFound: false, isAttempted: true });
-        setLetterData(createInitialLetterData());
-        return;
-      }
-
-      if (letterDispositionData.letter) {
-        setLetterData({
-          letterIn_id: letterDispositionData.letter.id || '',
-          noSurat: letterDispositionData.letter.noSurat || '',
-          suratDari: letterDispositionData.letter.suratDari || '',
-          perihal: letterDispositionData.letter.perihal || '',
-          tanggalSurat: letterDispositionData.letter.tglSurat ? new Date(letterDispositionData.letter.tglSurat) : null,
-          diterimaTanggal: letterDispositionData.letter.diterimaTgl ? new Date(letterDispositionData.letter.diterimaTgl) : null,
-          kodeKlasifikasi: letterDispositionData.letter.Classification?.name || '',
-          jenisSurat: letterDispositionData.letter.LetterType?.name || '',
-          filename: letterDispositionData.letter.filename || '',
-        });
-
-        updateSearchState({ isFound: true, isAttempted: true });
-
-        if (letterDispositionData.isDisposed) {
-          logWarning('Letter already disposed, showing warning');
-
-          setTimeout(() => {
-            ModalHelpers.showLetterAlreadyDisposed(letterDispositionData, () => {
-              form.reset();
-              setLetterData(createInitialLetterData());
-              setSearchState(createInitialSearchState());
-              updateAppState({ isSubmitted: false });
-              setIsiDisposisiText('');
-              setTimeout(() => refetchNextDisposisi(), 100);
-            });
-          }, 100);
-        } else {
-          logSuccess('Letter found and not disposed, ready for disposition');
-        }
-      }
-    }
-  }, [letterDispositionData, searchState.shouldSearch]);
-
-  useEffect(() => {
-    if (dispositionCheckError && searchState.shouldSearch) {
-      logError('Letter disposition check error, clearing data');
-      updateSearchState({ isFound: false, isAttempted: true });
-      setLetterData(createInitialLetterData());
-    }
-  }, [dispositionCheckError, searchState.shouldSearch]);
+  }, [form, updateAppState, refetchNextDisposisi]);
 
   const handleSearchLetter = useCallback(async () => {
     if (!searchState.agenda.trim()) {
       ModalHelpers.showWarning('Masukkan nomor agenda terlebih dahulu');
       return;
     }
-
-    logDebug('Starting manual search...', { year: searchState.year, agenda: searchState.agenda });
 
     updateSearchState({
       isLoading: true,
@@ -489,21 +575,20 @@ export function DisposisiLetterForm() {
       shouldSearch: false,
     });
 
-    updateAppState({ isSubmitted: false });
+    updateAppState({
+      isSubmitted: false,
+      isEditMode: false,
+      editingDisposisi: null
+    });
     setLetterData(createInitialLetterData());
 
     try {
       await new Promise(resolve => setTimeout(resolve, 100));
-
-      logDebug('Triggering disposition check...');
       updateSearchState({
         shouldSearch: true,
         isAttempted: true
       });
-
-      logSuccess('Manual search initiated');
     } catch (error) {
-      logError('Search error:', error);
       updateSearchState({
         isAttempted: true,
         shouldSearch: false
@@ -511,7 +596,7 @@ export function DisposisiLetterForm() {
     } finally {
       updateSearchState({ isLoading: false });
     }
-  }, [searchState.agenda, searchState.year]);
+  }, [searchState.agenda, searchState.year, updateSearchState, updateAppState]);
 
   const handleAgendaChange = useCallback((value: string) => {
     updateSearchState({
@@ -521,17 +606,17 @@ export function DisposisiLetterForm() {
       isFound: false
     });
     setLetterData(createInitialLetterData());
-  }, []);
+  }, [updateSearchState]);
 
   const handleIsiDisposisiChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = event.currentTarget.value;
     setIsiDisposisiText(value);
     form.setFieldValue('isiDisposisi', value);
-  }, []);
+  }, [form]);
 
   const handleConfirmSubmit = useCallback((values: FormValues) => {
-    if (letterDispositionData?.isDisposed) {
-      ModalHelpers.showWarning('Surat ini sudah didisposisikan. Silakan pilih surat lain.');
+    if (letterDispositionData?.isDisposed && !appState.isEditMode) {
+      ModalHelpers.showWarning('Surat ini sudah didisposisikan. Silakan pilih surat lain atau edit disposisi yang ada.');
       return;
     }
 
@@ -553,8 +638,8 @@ export function DisposisiLetterForm() {
       return;
     }
 
-    ModalHelpers.showConfirmSubmit(() => handleSubmit(submitValues));
-  }, [letterData.letterIn_id, letterDispositionData?.isDisposed, isiDisposisiText]);
+    ModalHelpers.showConfirmSubmit(() => handleSubmit(submitValues), appState.isEditMode);
+  }, [letterData.letterIn_id, letterDispositionData?.isDisposed, isiDisposisiText, appState.isEditMode]);
 
   const handleBack = useCallback(() => {
     router.push('/suratin');
@@ -562,7 +647,6 @@ export function DisposisiLetterForm() {
 
   const handleSubmit = useCallback(async (values: FormValues) => {
     updateAppState({ isSubmitting: true });
-    logDebug('Starting disposisi creation...');
 
     try {
       const requestData = {
@@ -573,14 +657,18 @@ export function DisposisiLetterForm() {
         isiDispo: values.isiDisposisi.trim(),
       };
 
-      logDebug('Sending disposisi data:', requestData);
-      const response = await createDisposisi(requestData);
-      logSuccess('Disposisi created:', response);
+      let response;
+      if (appState.isEditMode && appState.editingDisposisi?.id) {
+        response = await updateDisposisi(appState.editingDisposisi.id, requestData);
+      } else {
+        response = await createDisposisi(requestData);
+      }
 
       updateAppState({ isSubmitted: true });
 
-      logDebug('Refreshing next disposisi number...');
-      await refetchNextDisposisi();
+      if (!appState.isEditMode) {
+        await refetchNextDisposisi();
+      }
 
       ModalHelpers.showSuccessResult(
         response,
@@ -591,18 +679,102 @@ export function DisposisiLetterForm() {
         () => {
           modals.closeAll();
           handleBack();
-        }
+        },
+        appState.isEditMode
       );
 
     } catch (error: any) {
-      logError('Submit error details:', error);
-      ModalHelpers.showError(error);
+      ModalHelpers.showError(error, appState.isEditMode);
     } finally {
       updateAppState({ isSubmitting: false });
     }
-  }, [letterData.letterIn_id, refetchNextDisposisi, resetForm, handleBack]);
+  }, [letterData.letterIn_id, refetchNextDisposisi, resetForm, handleBack, appState.isEditMode, appState.editingDisposisi, updateAppState]);
 
+  // Effects
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    updateAppState({ user: currentUser });
+
+    fetch('http://localhost:8080/api/disposisi-letterin/next-number', {
+      headers: { 'Authorization': `Bearer ${getTokenFromCookies()}` }
+    })
+      .then(res => res.json())
+      .then(data => console.log('✅ Disposisi endpoint test successful:', data))
+      .catch(err => console.error('❌ Disposisi endpoint test failed:', err));
+  }, [updateAppState]);
+
+  useEffect(() => {
+    if (nextDisposisiData?.noDispo && !appState.isEditMode && !form.getValues().noDisposisi) {
+      form.setFieldValue('noDisposisi', nextDisposisiData.noDispo);
+    }
+  }, [nextDisposisiData?.noDispo, appState.isEditMode, form]);
+
+  useEffect(() => {
+    if (letterDispositionData && shouldEnableLetterCheck) {
+      if (letterDispositionData.error) {
+        updateSearchState({ isFound: false, isAttempted: true, shouldSearch: false });
+        setLetterData(createInitialLetterData());
+        return;
+      }
+
+      if (letterDispositionData.letter) {
+        setLetterData({
+          letterIn_id: letterDispositionData.letter.id || '',
+          noSurat: letterDispositionData.letter.noSurat || '',
+          suratDari: letterDispositionData.letter.suratDari || '',
+          perihal: letterDispositionData.letter.perihal || '',
+          tanggalSurat: letterDispositionData.letter.tglSurat ? new Date(letterDispositionData.letter.tglSurat) : null,
+          diterimaTanggal: letterDispositionData.letter.diterimaTgl ? new Date(letterDispositionData.letter.diterimaTgl) : null,
+          kodeKlasifikasi: letterDispositionData.letter.Classification?.name || '',
+          jenisSurat: letterDispositionData.letter.LetterType?.name || '',
+          filename: letterDispositionData.letter.filename || '',
+        });
+
+        updateSearchState({ isFound: true, isAttempted: true, shouldSearch: false });
+
+        if (letterDispositionData.isDisposed) {
+          setTimeout(() => {
+            ModalHelpers.showLetterAlreadyDisposed(
+              letterDispositionData,
+              resetForm,
+              handleEditDisposisi,
+              appState.user.isAdmin
+            );
+          }, 100);
+        }
+      }
+    }
+  }, [letterDispositionData, shouldEnableLetterCheck, updateSearchState, resetForm, handleEditDisposisi, appState.user.isAdmin]);
+
+  useEffect(() => {
+    if (dispositionCheckError && shouldEnableLetterCheck) {
+      updateSearchState({ isFound: false, isAttempted: true, shouldSearch: false });
+      setLetterData(createInitialLetterData());
+    }
+  }, [dispositionCheckError, shouldEnableLetterCheck, updateSearchState]);
+
+  // Render methods
   const renderDisposisiNumber = () => {
+    if (appState.isEditMode) {
+      return (
+        <Box>
+          <Text size="sm" fw={500} mb={5}>Nomor Disposisi (Mode Edit)</Text>
+          <TextInput
+            value={form.values.noDisposisi?.toString() || ''}
+            placeholder="Nomor disposisi"
+            readOnly
+            styles={{
+              input: {
+                backgroundColor: '#fff3cd',
+                borderColor: '#ffc107',
+                color: '#856404'
+              }
+            }}
+          />
+        </Box>
+      );
+    }
+
     const displayNumber = form.values.noDisposisi || nextDisposisiData?.noDispo;
 
     if (displayNumber) {
@@ -643,6 +815,7 @@ export function DisposisiLetterForm() {
           onChange={(event) => handleAgendaChange(event.currentTarget.value)}
           label="Nomor Agenda"
           placeholder="Ketik nomor agenda surat"
+          disabled={appState.isEditMode}
           onKeyPress={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -664,6 +837,7 @@ export function DisposisiLetterForm() {
           label="Tahun"
           placeholder="Pilih tahun"
           data={YEAR_OPTIONS}
+          disabled={appState.isEditMode}
           searchable
         />
       </Grid.Col>
@@ -675,6 +849,7 @@ export function DisposisiLetterForm() {
           mt="24"
           onClick={handleSearchLetter}
           loading={searchState.isLoading || isCheckingDisposition}
+          disabled={appState.isEditMode}
           leftSection={<IconSearch size={16} />}
           style={{
             backgroundColor: '#f2f2f2',
@@ -689,6 +864,32 @@ export function DisposisiLetterForm() {
   );
 
   const renderDispositionStatus = () => {
+    if (appState.isEditMode) {
+      return (
+        <Alert color="blue" variant="light" mb="md">
+          <Group gap="xs">
+            <IconEdit size={16} />
+            <Text size="sm" fw={500}>
+              Mode Edit Disposisi
+            </Text>
+          </Group>
+          <Text size="xs" c="dimmed" mt="xs">
+            Anda sedang mengedit disposisi nomor: {appState.editingDisposisi?.noDispo}
+          </Text>
+          <Group mt="sm">
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              onClick={handleCancelEdit}
+            >
+              Batal Edit
+            </Button>
+          </Group>
+        </Alert>
+      );
+    }
+
     if (!searchState.isAttempted || !letterDispositionData) return null;
 
     if (letterDispositionData.isDisposed) {
@@ -697,11 +898,11 @@ export function DisposisiLetterForm() {
           <Group gap="xs">
             <IconInfoCircle size={16} />
             <Text size="sm" fw={500}>
-              ⚠️ Surat sudah didisposisikan
+              Surat sudah didisposisikan
             </Text>
           </Group>
           <Text size="xs" c="dimmed" mt="xs">
-            Surat ini tidak dapat didisposisi lagi karena sudah pernah didisposisi sebelumnya.
+            Surat ini sudah pernah didisposisi. {appState.user.isAdmin ? 'Anda dapat mengedit disposisi yang ada.' : 'Hanya admin yang dapat mengedit disposisi.'}
           </Text>
         </Alert>
       );
@@ -713,7 +914,7 @@ export function DisposisiLetterForm() {
           <Group gap="xs">
             <IconCheck size={16} />
             <Text size="sm" fw={500}>
-              ✅ Surat dapat didisposisi
+              Surat dapat didisposisi
             </Text>
           </Group>
           <Text size="xs" c="dimmed" mt="xs">
@@ -799,7 +1000,9 @@ export function DisposisiLetterForm() {
 
   const renderDisposisiSection = () => (
     <Box mb="lg">
-      <Text fw={600} mb="md" c="green">Data Disposisi</Text>
+      <Text fw={600} mb="md" c="green">
+        Data Disposisi {appState.isEditMode ? '(Mode Edit)' : ''}
+      </Text>
 
       <Box mb="md">
         {renderDisposisiNumber()}
@@ -852,24 +1055,29 @@ export function DisposisiLetterForm() {
       <Button
         type="submit"
         loading={appState.isSubmitting}
-        disabled={!searchState.isFound || letterDispositionData?.isDisposed}
+        disabled={(!searchState.isFound || letterDispositionData?.isDisposed) && !appState.isEditMode}
+        color={appState.isEditMode ? "blue" : undefined}
       >
-        {appState.isSubmitting ? 'Menyimpan...' : 'Simpan'}
+        {appState.isSubmitting ?
+          (appState.isEditMode ? 'Mengupdate...' : 'Menyimpan...') :
+          (appState.isEditMode ? 'Update Disposisi' : 'Simpan')
+        }
       </Button>
       <Button
         variant="outline"
-        onClick={resetForm}
+        onClick={appState.isEditMode ? handleCancelEdit : resetForm}
         style={{
           backgroundColor: '#f2f2f2',
           borderColor: '#a2a2a2',
           color: '#000',
         }}
       >
-        Reset
+        {appState.isEditMode ? 'Batal Edit' : 'Reset'}
       </Button>
     </Group>
   );
 
+  // Main render
   return (
     <Paper withBorder shadow="md" p="md">
       <Button onClick={handleBack} variant="light" leftSection={<IconArrowLeft />} mb="md">
@@ -878,12 +1086,13 @@ export function DisposisiLetterForm() {
 
       <Box component="form" onSubmit={form.onSubmit(handleConfirmSubmit)}>
         <Text component="h2" fw="bold" fz="lg" mb="md">
-          Disposisi Surat
+          {appState.isEditMode ? 'Edit Disposisi Surat' : 'Disposisi Surat'}
         </Text>
 
         {renderSearchSection()}
         {renderDispositionStatus()}
-        {searchState.isAttempted && !searchState.isFound && !searchState.isLoading && !isCheckingDisposition && (
+
+        {searchState.isAttempted && !searchState.isFound && !searchState.isLoading && !isCheckingDisposition && !appState.isEditMode && (
           <Alert color="yellow" variant="light" mb="md">
             <Group gap="xs">
               <IconInfoCircle size={16} />
@@ -893,6 +1102,7 @@ export function DisposisiLetterForm() {
             </Group>
           </Alert>
         )}
+
         {renderLetterDataSection()}
         {renderDisposisiSection()}
         {renderActionButtons()}
