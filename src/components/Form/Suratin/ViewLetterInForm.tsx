@@ -126,7 +126,7 @@ export function ViewLetterInForm() {
                         <TextInput value={letter?.suratDari || ''} label="Surat Dari" readOnly />
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <TextInput value={letter?.perihal || ''} label="Perihal" readOnly />
+                        <TextInput value={letter?.perihal || ''} label="Perihal (Masukkan Link Google Drive Surat Disini Apabila File Besar)" readOnly />
                     </Grid.Col>
 
                     <Grid.Col span={6}>
