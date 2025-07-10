@@ -947,7 +947,7 @@ export function DisposisiLetterForm() {
 
       <TextInput
         value={letterData.perihal}
-        label="Perihal"
+        label="Perihal (Masukkan Link Google Drive Surat Disini Apabila File Besar)"
         placeholder="Akan terisi otomatis setelah pencarian"
         readOnly
         mb="md"
