@@ -376,8 +376,8 @@ export function UpdateLetterInForm() {
                         <Grid.Col span={6}>
                             <TextInput
                                 {...form.getInputProps('perihal')}
-                                label="Perihal"
-                                placeholder="Perihal surat"
+                                label="Perihal (Masukkan Link Google Drive Surat Disini Apabila File Besar)"
+                                placeholder="Perihal surat (link-google-drive)"
                                 withAsterisk
                             />
                         </Grid.Col>
