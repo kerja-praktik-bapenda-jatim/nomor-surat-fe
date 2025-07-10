@@ -1,10 +1,9 @@
 "use client";
-
 import { useParams } from "next/navigation";
 import { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLetterByAgenda } from '@/services/disposisi';
-import { useDisposisiByLetterId } from '@/services/disposisi'; // Add this import
+import { useDisposisiByLetterId } from '@/services/disposisi';
 import { getCurrentUser } from '@/services/auth';
 
 interface LetterData {
@@ -31,7 +30,6 @@ export default function PrintPage() {
   const { id } = useParams();
   const router = useRouter();
   const contentRef = useRef<HTMLDivElement>(null);
-
   const [searchAgenda, setSearchAgenda] = useState('');
   const [selectedYear, setSelectedYear] = useState('2025');
   const [enableSearch, setEnableSearch] = useState(false);
@@ -39,6 +37,8 @@ export default function PrintPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isBlank, setIsBlank] = useState(false);
+  const [paperSize, setPaperSize] = useState<'a4' | 'f4'>('a4');
 
   const [letterData, setLetterData] = useState<LetterData>({
     letterIn_id: '',
@@ -60,12 +60,10 @@ export default function PrintPage() {
     departmentName: '',
   });
 
-  // Parse ID parameter to extract agenda number and year
   useEffect(() => {
     if (id) {
       const idStr = Array.isArray(id) ? id[0] : id;
       const parts = idStr.split('-');
-
       if (parts.length >= 2) {
         setSearchAgenda(parts[0]);
         setSelectedYear(parts[1]);
@@ -73,18 +71,15 @@ export default function PrintPage() {
         setSearchAgenda(idStr);
         setSelectedYear(new Date().getFullYear().toString());
       }
-
       setEnableSearch(true);
     }
   }, [id]);
 
-  // Load user data
   useEffect(() => {
     const currentUser = getCurrentUser();
     setUser(currentUser);
   }, []);
 
-  // Fetch letter data
   const {
     data: apiLetterData,
     isLoading: isLetterLoading,
@@ -92,18 +87,14 @@ export default function PrintPage() {
     refetch: refetchLetter
   } = useLetterByAgenda(selectedYear, searchAgenda, enableSearch && !!searchAgenda);
 
-  // Fetch disposisi data
   const {
     data: apiDisposisiData,
     isLoading: isDisposisiLoading,
     error: disposisiError
   } = useDisposisiByLetterId(letterData.letterIn_id, !!letterData.letterIn_id);
 
-  // Handle letter data when found
   useEffect(() => {
     if (apiLetterData && enableSearch) {
-      console.log('📝 Setting letter data for PDF:', apiLetterData);
-
       setLetterData({
         letterIn_id: apiLetterData.id || '',
         noSurat: apiLetterData.noSurat || '',
@@ -114,19 +105,13 @@ export default function PrintPage() {
         kodeKlasifikasi: apiLetterData.Classification?.name || '',
         jenisSurat: apiLetterData.LetterType?.name || '',
       });
-
       setLoading(false);
     }
   }, [apiLetterData, enableSearch]);
 
-  // Handle disposisi data
   useEffect(() => {
     if (apiDisposisiData && apiDisposisiData.length > 0) {
-      console.log('📝 Setting disposisi data for PDF:', apiDisposisiData);
-
-      // Ambil disposisi terbaru (index 0)
       const latestDisposisi = apiDisposisiData[0];
-
       setDisposisiData({
         noDisposisi: latestDisposisi.noDispo || 0,
         tanggalDisposisi: latestDisposisi.tglDispo ? new Date(latestDisposisi.tglDispo) : new Date(),
@@ -138,8 +123,6 @@ export default function PrintPage() {
         departmentName: user.departmentName,
       });
     } else if (letterData.letterIn_id && !isDisposisiLoading) {
-      // Jika tidak ada data disposisi tapi letter ID ada
-      console.log('⚠️ No disposisi data found for letter:', letterData.letterIn_id);
       setDisposisiData({
         noDisposisi: 0,
         tanggalDisposisi: new Date(),
@@ -151,47 +134,44 @@ export default function PrintPage() {
     }
   }, [apiDisposisiData, letterData.letterIn_id, isDisposisiLoading, user]);
 
-  // Handle loading and error states
   useEffect(() => {
     if (letterError && enableSearch) {
-      console.error('❌ Letter not found for PDF:', letterError);
       setError('Surat tidak ditemukan');
       setLoading(false);
     }
-
-    if (disposisiError) {
-      console.error('❌ Disposisi error:', disposisiError);
-      // Tidak set error karena mungkin tidak ada disposisi
-    }
-
-    // Set loading false jika semua data sudah selesai loading
     if (!isLetterLoading && !isDisposisiLoading) {
       setLoading(false);
     }
-  }, [letterError, disposisiError, isLetterLoading, isDisposisiLoading, enableSearch]);
-
-  // ... (fungsi handleDownload, handleBack, formatDate, getDepartmentList tetap sama)
+  }, [letterError, isLetterLoading, isDisposisiLoading, enableSearch]);
 
   const handleDownload = async () => {
     if (contentRef.current && !isDownloading) {
       setIsDownloading(true);
       try {
         const html2pdf = (await import('html2pdf.js')).default;
-
         const filename = `Lembar-Disposisi-${searchAgenda}-${selectedYear}.pdf`;
 
+        const pdfOptions = {
+          margin: 1,
+          filename: filename,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: false,
+            letterRendering: false,
+            logging: true,
+            allowTaint: true,
+            text: true
+          },
+          jsPDF: {
+            unit: "cm",
+            format: paperSize === 'a4' ? "a4" : [21, 33],
+            orientation: "portrait"
+          },
+        };
+
         await html2pdf()
-          .set({
-            margin: 1,
-            filename: filename,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              letterRendering: true
-            },
-            jsPDF: { unit: "cm", format: "a4", orientation: "portrait" },
-          })
+          .set(pdfOptions)
           .from(contentRef.current)
           .save();
       } catch (error) {
@@ -208,25 +188,33 @@ export default function PrintPage() {
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return '-';
+    if (!date) return '';
     return new Date(date)
       .toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
       .replace(/\//g, '-');
   };
 
-  const getDepartmentList = () => {
-    const departments = [
-      { key: 'SEKRETARIAT', label: '1. SEKRETARIS' },
-      { key: 'BIDANG PERENCANAAN DAN PENGEMBANGAN', label: '2. KABID PERBANG' },
-      { key: 'BIDANG PAJAK DAERAH', label: '3. KABID PAJAK' },
-      { key: 'BIDANG RETRIBUSI DAN PENDAPATAN LAIN-LAIN', label: '4. KABID PLL' },
-      { key: 'BIDANG PENGENDALIAN DAN PEMBINAAN', label: '5. KABID DALBIN' },
-    ];
+  const getDepartmentId = (departmentName: string) => {
+    const mapping: { [key: string]: number } = {
+      'SEKRETARIAT': 3701,
+      'BIDANG PERENCANAAN DAN PENGEMBANGAN': 3702,
+      'BIDANG PAJAK DAERAH': 3703,
+      'BIDANG RETRIBUSI DAN PENDAPATAN LAIN-LAIN': 3704,
+      'BIDANG PENGENDALIAN DAN PEMBINAAN': 3706,
+    };
+    return mapping[departmentName] || 0;
+  };
 
-    return departments.map(dept => ({
-      ...dept,
-      isChecked: disposisiData.tujuanDisposisi.includes(dept.key)
-    }));
+  const getDispKe = () => {
+    return disposisiData.tujuanDisposisi.length > 0 ? getDepartmentId(disposisiData.tujuanDisposisi[0]) : 0;
+  };
+
+  const renderStaticText = (text: string) => {
+    return !isBlank ? text : "\u00A0";
+  };
+
+  const renderData = (data: string) => {
+    return data || "\u00A0";
   };
 
   if (loading) {
@@ -262,7 +250,7 @@ export default function PrintPage() {
 
   return (
     <div style={{ padding: "40px" }}>
-      <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
+      <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
         <button
           onClick={handleDownload}
           disabled={isDownloading}
@@ -291,193 +279,381 @@ export default function PrintPage() {
         >
           Kembali
         </button>
-      </div>
 
-      <div
-        ref={contentRef}
-        style={{
-          fontFamily: "Arial, sans-serif",
-          padding: "40px",
-          maxWidth: "800px",
-          margin: "auto",
-          border: "1px solid black",
-          backgroundColor: "white",
-        }}
-      >
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <div style={{ fontSize: "14px" }}>
-            PEMERINTAH PROVINSI JAWA TIMUR
-          </div>
-          <div
-            style={{
-              fontWeight: "bold",
-              textDecoration: "underline",
-              fontSize: "16px",
-            }}
-          >
-            DINAS PENDAPATAN
-          </div>
-          <div
-            style={{ fontWeight: "bold", fontSize: "18px", marginTop: "10px" }}
-          >
-            LEMBAR DISPOSISI
-          </div>
-        </div>
-
-        {/* Nomor Disposisi */}
-        <div style={{ textAlign: "right", marginBottom: "10px", fontSize: "12px" }}>
-          <strong>No. Disposisi: {disposisiData.noDisposisi || '-'}</strong>
-        </div>
-
-        {/* Tabel utama */}
-        <table
+        <button
+          onClick={() => setIsBlank(!isBlank)}
           style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginBottom: "10px",
-            fontSize: "12px",
+            padding: "8px 16px",
+            backgroundColor: isBlank ? "#28a745" : "#ffc107",
+            color: isBlank ? "white" : "black",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
           }}
         >
-          <tbody>
-            <tr>
-              <td style={{ width: "20%", padding: "4px 0", verticalAlign: "top" }}>Surat Dari</td>
-              <td style={{ width: "1%", padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td style={{ width: "30%", padding: "4px 0", verticalAlign: "top" }}>
-                <strong>{letterData.suratDari || '-'}</strong>
-              </td>
-              <td style={{ width: "20%", padding: "4px 0", verticalAlign: "top" }}>Diterima tanggal</td>
-              <td style={{ width: "1%", padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>
-                <strong>{formatDate(letterData.diterimaTanggal)}</strong>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>Tanggal Surat</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>
-                <strong>{formatDate(letterData.tanggalSurat)}</strong>
-              </td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>Nomor Agenda</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>
-                <strong>{searchAgenda}</strong>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>Nomor Surat</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>
-                <strong>{letterData.noSurat || '-'}</strong>
-              </td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>Diteruskan kepada</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>
-                <table style={{ margin: 0, width: "100%" }}>
-                  <tbody>
-                    {getDepartmentList().map((item, index) => (
-                      <tr key={index}>
-                        <td style={{ whiteSpace: "nowrap", fontSize: "11px", padding: "2px 0" }}>
-                          {item.label}
-                        </td>
-                        <td style={{ paddingLeft: "10px", padding: "2px 0" }}>
-                          <div
-                            style={{
-                              width: "15px",
-                              height: "15px",
-                              border: "1px solid black",
-                              display: "inline-block",
-                              backgroundColor: item.isChecked ? "#000" : "transparent",
-                              position: "relative",
-                            }}
-                          >
-                            {item.isChecked && (
-                              <div
-                                style={{
-                                  color: "white",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  position: "absolute",
-                                  top: "50%",
-                                  left: "50%",
-                                  transform: "translate(-50%, -50%)",
-                                }}
-                              >
-                                ✓
-                              </div>
-                            )}
+          {isBlank ? "Normal Mode" : "Blank Mode"}
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <label htmlFor="paperSize" style={{ fontSize: "14px", fontWeight: "500" }}>
+            Ukuran Kertas:
+          </label>
+          <select
+            id="paperSize"
+            value={paperSize}
+            onChange={(e) => setPaperSize(e.target.value as 'a4' | 'f4')}
+            style={{
+              padding: "8px 16px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+            aria-label="Pilih ukuran kertas"
+          >
+            <option value="a4">A4</option>
+            <option value="f4">F4</option>
+          </select>
+        </div>
+      </div>
+
+      <div ref={contentRef} style={{
+        width: '750px',
+        margin: '0px',
+        color: '#000',
+        fontFamily: '"Times New Roman", Times, serif',
+        lineHeight: '1.2'
+      }}>
+        {/* Header */}
+        <div style={{
+          marginTop: '0px',
+          textAlign: 'center',
+          marginBottom: '5px',
+          fontFamily: '"Times New Roman", Times, serif'
+        }}>
+          <div style={{
+            fontSize: '18px',
+            fontFamily: '"Times New Roman", Times, serif'
+          }}>
+            {renderStaticText("PEMERINTAH PROVINSI JAWA TIMUR")}
+          </div>
+          <div style={{
+            fontSize: '22px',
+            fontWeight: 'bold',
+            textDecoration: 'underline',
+            margin: '2px',
+            fontFamily: '"Times New Roman", Times, serif'
+          }}>
+            {renderStaticText("DINAS PENDAPATAN")}
+          </div>
+          <div style={{
+            fontSize: '27px',
+            fontWeight: 'bold',
+            fontFamily: '"Times New Roman", Times, serif',
+            padding: '5px 0'
+          }}>
+            {renderStaticText("LEMBAR DISPOSISI")}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{
+          fontSize: '13px',
+          fontFamily: '"Times New Roman", Times, serif',
+          width: '100%',
+          margin: '5px 0'
+        }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse'
+          }}>
+            <tbody>
+              <tr style={{ height: '20px' }}>
+                <td style={{
+                  padding: '4px 6px',
+                  width: '18%',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText("Surat Dari")}
+                </td>
+                <td style={{
+                  padding: '4px 2px',
+                  width: '2%',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText(":")}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  width: '30%',
+                  borderRight: `1.5px solid ${isBlank ? '#fff' : '#000'}` ,
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  fontSize: '12px'
+                }}>
+                  {renderData(letterData.suratDari)}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  width: '21%',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText("Diterima tanggal")}
+                </td>
+                <td style={{
+                  padding: '4px 2px',
+                  width: '2%',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText(":")}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  width: '27%',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  fontSize: '12px'
+                }}>
+                  {renderData(formatDate(letterData.diterimaTanggal))}
+                </td>
+              </tr>
+
+              <tr style={{ height: '20px' }}>
+                <td style={{
+                  padding: '4px 6px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText("Tanggal Surat")}
+                </td>
+                <td style={{
+                  padding: '4px 2px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText(":")}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  borderRight: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  fontSize: '12px'
+                }}>
+                  {renderData(formatDate(letterData.tanggalSurat))}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText("Nomor Agenda")}
+                </td>
+                <td style={{
+                  padding: '4px 2px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText(":")}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  fontSize: '12px'
+                }}>
+                  {renderData(letterData.noSurat && searchAgenda ? `${letterData.noSurat.split('/')[0]}/${searchAgenda}` : "")}
+                </td>
+              </tr>
+
+              <tr style={{ height: '20px' }}>
+                <td style={{
+                  padding: '4px 6px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText("Nomor Surat")}
+                </td>
+                <td style={{
+                  padding: '4px 2px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText(":")}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  borderRight: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  fontSize: '12px'
+                }}>
+                  {renderData(letterData.noSurat)}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText("Diteruskan kepada")}
+                </td>
+                <td style={{
+                  padding: '4px 2px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText(":")}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  fontSize: '12px'
+                }}>
+                  {"\u00A0"}
+                </td>
+              </tr>
+
+              <tr style={{ height: '20px' }}>
+                <td style={{
+                  padding: '4px 6px',
+                  verticalAlign: 'top',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText("Perihal")}
+                </td>
+                <td style={{
+                  padding: '4px 2px',
+                  verticalAlign: 'top',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`
+                }}>
+                  {renderStaticText(":")}
+                </td>
+                <td style={{
+                  padding: '4px 6px',
+                  verticalAlign: 'top',
+                  borderTop: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  borderRight: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  fontSize: '12px'
+                }}>
+                  {renderData(letterData.perihal)}
+                </td>
+                <td style={{
+                  padding: '2px 6px 2px 8px',
+                  borderBottom: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  fontSize: '12px'
+                }} rowSpan={2} colSpan={3}>
+                  <table style={{ width: '100%', borderSpacing: '0' }}>
+                    <tbody>
+                      <tr style={{ verticalAlign: 'top', textAlign: 'justify' }}>
+                        <td style={{ width: '4%', padding: '0' }}>{renderStaticText("1.")}</td>
+                        <td style={{ width: '71%', padding: '0' }}>{renderStaticText("Sekretaris (Sekt)")}</td>
+                        <td style={{ width: '25%', textAlign: 'center', verticalAlign: 'middle', padding: '0' }}>
+                          <div style={{
+                            border: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                            width: '35px',
+                            height: '20px',
+                            display: 'inline-block',
+                            lineHeight: '20px'
+                          }}>
+                           {!isBlank && getDispKe() === 3701 ? "V" : ""}
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>Perihal</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td colSpan={4} style={{ padding: "4px 0", verticalAlign: "top" }}>
-                <strong>{letterData.perihal || '-'}</strong>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>Klasifikasi</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td colSpan={4} style={{ padding: "4px 0", verticalAlign: "top" }}>
-                <strong>{letterData.kodeKlasifikasi || '-'}</strong>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>Jenis Surat</td>
-              <td style={{ padding: "4px 0", verticalAlign: "top" }}>:</td>
-              <td colSpan={4} style={{ padding: "4px 0", verticalAlign: "top" }}>
-                <strong>{letterData.jenisSurat || '-'}</strong>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                      <tr style={{ verticalAlign: 'top', textAlign: 'justify' }}>
+                        <td style={{ padding: '0' }}>{renderStaticText("2.")}</td>
+                        <td style={{ padding: '0' }}>{renderStaticText("Ka. Bidang Perencanaan dan Pengembangan (PERBANG)")}</td>
+                        <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '0' }}>
+                          <div style={{
+                            border: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                            width: '35px',
+                            height: '20px',
+                            display: 'inline-block',
+                            lineHeight: '20px'
+                          }}>
+                           {!isBlank && getDispKe() === 3702 ? "V" : ""}
+                          </div>
+                        </td>
+                      </tr>
+                      <tr style={{ verticalAlign: 'top', textAlign: 'justify' }}>
+                        <td style={{ padding: '0' }}>{renderStaticText("3.")}</td>
+                        <td style={{ padding: '0' }}>{renderStaticText("Ka. Bidang Pajak Daerah (PD)")}</td>
+                        <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '0' }}>
+                          <div style={{
+                            border: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                            width: '35px',
+                            height: '20px',
+                            display: 'inline-block',
+                            lineHeight: '20px'
+                          }}>
+                           {!isBlank && getDispKe() === 3703 ? "V" : ""}
+                          </div>
+                        </td>
+                      </tr>
+                      <tr style={{ verticalAlign: 'top', textAlign: 'justify' }}>
+                        <td style={{ padding: '0' }}>{renderStaticText("4.")}</td>
+                        <td style={{ padding: '0' }}>{renderStaticText("Ka. Bidang Retribusi dan Penerimaan Lain-Lain (PLL)")}</td>
+                        <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '0' }}>
+                          <div style={{
+                            border: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                            width: '35px',
+                            height: '20px',
+                            display: 'inline-block',
+                            lineHeight: '20px'
+                          }}>
+                           {!isBlank && getDispKe() === 3704 ? "V" : ""}
+                          </div>
+                        </td>
+                      </tr>
+                      <tr style={{ verticalAlign: 'top', textAlign: 'justify' }}>
+                        <td style={{ padding: '0' }}>{renderStaticText("5.")}</td>
+                        <td style={{ padding: '0' }}>{renderStaticText("Ka. Bidang Pengendalian dan Pembinaan (DALBIN)")}</td>
+                        <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '0' }}>
+                          <div style={{
+                            border: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                            width: '35px',
+                            height: '20px',
+                            display: 'inline-block',
+                            lineHeight: '20px'
+                          }}>
+                           {!isBlank && getDispKe() === 3706 ? "V" : ""}
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
 
-        {/* Isi Disposisi */}
-        <div
-          style={{
-            fontWeight: "bold",
-            textAlign: "center",
-            marginTop: "20px",
-            borderTop: "1px solid black",
-            paddingTop: "10px",
-            fontSize: "14px",
-            marginBottom: "10px",
-          }}
-        >
-          ISI DISPOSISI
+              <tr style={{ height: '20px' }}>
+                <td style={{
+                  padding: '4px 6px',
+                  borderBottom: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  borderRight: `1.5px solid ${isBlank ? '#fff' : '#000'}`,
+                  verticalAlign: 'top'
+                }} colSpan={3}>
+                  {"\u00A0"}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div
-          style={{
-            border: "1px solid black",
-            minHeight: "150px",
-            padding: "10px",
-            fontSize: "12px",
-            whiteSpace: "pre-wrap",
-            lineHeight: "1.5",
-          }}
-        >
-          {disposisiData.isiDisposisi || ''}
-        </div>
-
-        {/* Footer dengan tanggal dan pembuat disposisi */}
-        <div style={{ marginTop: "30px", display: "flex", justifyContent: "space-between" }}>
-          <div style={{ fontSize: "12px" }}>
-            <div>Tanggal Disposisi:</div>
-            <div><strong>{formatDate(disposisiData.tanggalDisposisi)}</strong></div>
+        {/* Footer */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: '10px',
+          fontFamily: '"Times New Roman", Times, serif'
+        }}>
+          <div style={{
+            fontSize: '20px',
+            fontWeight: 'bold',
+            marginBottom: '5px'
+          }}>
+            {renderStaticText("ISI DISPOSISI")}
           </div>
-
-          <div style={{ fontSize: "12px", textAlign: "right" }}>
-            <div>{disposisiData.departmentName}</div>
-            <div style={{ marginTop: "40px", borderTop: "1px solid black", paddingTop: "5px" }}>
-              <strong>{disposisiData.createdBy}</strong>
-            </div>
+          <div style={{
+            marginLeft: '20px',
+            textAlign: 'left',
+            fontSize: '12px',
+            minHeight: '60px'
+          }}>
+            {(disposisiData.isiDisposisi && disposisiData.isiDisposisi !== 'Tidak ada data disposisi') ? (
+              <div>
+                <h4 style={{ margin: '5px 0' }}>
+                  {!isBlank && `DARI ${disposisiData.departmentName} KE ${disposisiData.tujuanDisposisi.join(", ")}`}
+                </h4>
+                <i style={{ display: 'block', marginBottom: '5px' }}>
+                  {!isBlank && `tgl disposisi : ${formatDate(disposisiData.tanggalDisposisi)}`}
+                </i>
+                <p style={{ margin: 0 }}>{disposisiData.isiDisposisi}</p>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
